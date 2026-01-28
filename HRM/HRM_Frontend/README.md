@@ -1,8 +1,8 @@
 This is HRM System. This project used for SWP391 course in FPT UNIVERSITY. Developed by Group3
 
 ## Instruction run project
-First, clone project. After that run ``` npm i```` to install library:
-Second run
+First, clone project. 
+Second donwload node to set up enviroment. After finish install, run npm i in terminal
 ```bash
 npm run dev
 ```
