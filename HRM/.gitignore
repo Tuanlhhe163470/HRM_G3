@@ -28,3 +28,8 @@ Thumbs.db
 # ===== Editor =====
 .vscode/
 .idea/
+.vs/
+**/bin/
+**/obj/
+*.user
+*.suo
