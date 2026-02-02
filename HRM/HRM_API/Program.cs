@@ -1,9 +1,32 @@
+﻿using AutoMapper;
+using HRM_Application.Contracts.Repositories;
+using HRM_Application.Contracts.Services;
+using HRM_Application.Mappings;
+using HRM_Application.Services.TimeAttendance;
+using HRM_Infrastructure.Data;
+using HRM_Infrastructure.Repositories.TimeAttendance;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// 1. Kết nối DB
+builder.Services.AddDbContext<HRMDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("MyCon")));
+
+// 2. Đăng ký AutoMapper
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+// 3. Đăng ký Repository & Service
+builder.Services.AddScoped<IShiftRepository, ShiftRepository>();
+builder.Services.AddScoped<IShiftService, ShiftService>();
 
 var app = builder.Build();
 
@@ -15,6 +38,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.MapControllers();
 
 var summaries = new[]
 {
