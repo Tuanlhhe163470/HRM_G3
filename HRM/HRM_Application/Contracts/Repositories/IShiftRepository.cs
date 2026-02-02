@@ -1,4 +1,5 @@
-﻿using HRM_Domain.Entities.TimeAttendance;
+﻿using HRM_Application.Commons.Pagination;
+using HRM_Domain.Entities.TimeAttendance;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ namespace HRM_Application.Contracts.Repositories
 {
     public interface IShiftRepository
     {
-        Task<List<ShiftConfig>> GetAllShiftsAsync();
+        Task<PagedResponse<ShiftConfig>> GetAllShiftsAsync(PaginationFilter filter);
         Task<ShiftConfig?> GetShiftByIdAsync(int id);
         Task AddShiftAsync(ShiftConfig shift);
         Task UpdateShiftAsync(ShiftConfig shift);

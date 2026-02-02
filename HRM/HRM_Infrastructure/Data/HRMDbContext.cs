@@ -14,5 +14,6 @@ namespace HRM_Infrastructure.Data
         {
         }
         public DbSet<ShiftConfig> ShiftConfigs { get; set; }
+        public DbSet<AttendanceLog> AttendanceLogs { get; set; }
     }
 }
