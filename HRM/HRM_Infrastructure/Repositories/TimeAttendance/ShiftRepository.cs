@@ -1,6 +1,8 @@
-﻿using HRM_Application.Contracts.Repositories;
+﻿using HRM_Application.Commons.Pagination;
+using HRM_Application.Contracts.Repositories;
 using HRM_Domain.Entities.TimeAttendance;
 using HRM_Infrastructure.Data;
+using HRM_Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -29,9 +31,11 @@ namespace HRM_Infrastructure.Repositories.TimeAttendance
             throw new NotImplementedException();
         }
 
-        public async Task<List<ShiftConfig>> GetAllShiftsAsync()
+        public async Task<PagedResponse<ShiftConfig>> GetAllShiftsAsync(PaginationFilter filter)
         {
-            return await _context.ShiftConfigs.ToListAsync();
+            var query = _context.ShiftConfigs.AsQueryable();
+
+            return await query.ToPagedListAsync(filter.PageNumber, filter.PageSize);
         }
 
         public Task<ShiftConfig?> GetShiftByIdAsync(int id)

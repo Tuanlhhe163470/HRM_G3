@@ -1,4 +1,5 @@
-﻿using HRM_Application.Contracts.Services;
+﻿using HRM_Application.Commons.Pagination;
+using HRM_Application.Contracts.Services;
 using HRM_Application.DTOs.Shift.Requests;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,9 +16,9 @@ namespace HRM_API.Controllers
             _shiftService = shiftService;
         }
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] PaginationFilter filter)
         {
-            var result = await _shiftService.GetAllShiftsAsync();
+            var result = await _shiftService.GetAllShiftsAsync(filter);
             return Ok(result);
         }
 

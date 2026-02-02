@@ -28,6 +28,17 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddScoped<IShiftRepository, ShiftRepository>();
 builder.Services.AddScoped<IShiftService, ShiftService>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        builder =>
+        {
+            builder.AllowAnyOrigin()    // Cho phép mọi nguồn (Frontend nào cũng gọi được)
+                   .AllowAnyMethod()    // Cho phép GET, POST, PUT, DELETE...
+                   .AllowAnyHeader();   // Cho phép mọi Header
+        });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -60,6 +71,8 @@ app.MapGet("/weatherforecast", () =>
 })
 .WithName("GetWeatherForecast")
 .WithOpenApi();
+
+app.UseCors("AllowAll");
 
 app.Run();
 

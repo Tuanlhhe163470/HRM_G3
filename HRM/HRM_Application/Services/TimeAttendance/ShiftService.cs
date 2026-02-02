@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using HRM_Application.Commons.Pagination;
 using HRM_Application.Contracts.Repositories;
 using HRM_Application.Contracts.Services;
 using HRM_Application.DTOs.Shift.Requests;
@@ -32,12 +33,16 @@ namespace HRM_Application.Services.TimeAttendance
             throw new NotImplementedException();
         }
 
-        public async Task<List<ShiftResponse>> GetAllShiftsAsync()
+        public async Task<PagedResponse<ShiftResponse>> GetAllShiftsAsync(PaginationFilter filter)
         {
-            var shifts = await _repository.GetAllShiftsAsync();
-            var result = _mapper.Map<List<ShiftResponse>>(shifts);
+            var shifts = await _repository.GetAllShiftsAsync(filter);
+            var result = _mapper.Map<List<ShiftResponse>>(shifts.Data);
 
-            return result;
+            return new PagedResponse<ShiftResponse>(
+                result,
+                shifts.PageNumber,
+                shifts.PageSize,
+                shifts.TotalRecords);
         }
 
         public Task<ShiftResponse?> GetShiftByIdAsync(int id)
