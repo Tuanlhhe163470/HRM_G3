@@ -28,4 +28,8 @@
     <ProjectReference Include="..\HRM_Infrastructure\HRM_Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Configurations\" />
+  </ItemGroup>
+
 </Project>
