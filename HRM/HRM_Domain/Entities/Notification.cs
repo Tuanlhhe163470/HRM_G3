@@ -11,7 +11,7 @@ namespace HRM_Domain.Entities
     public class Notification
     {
         [Key]
-        public long NotificationID { get; set; }
+        public int NotificationID { get; set; }
 
         public int UserID { get; set; }
         [ForeignKey("UserID")]

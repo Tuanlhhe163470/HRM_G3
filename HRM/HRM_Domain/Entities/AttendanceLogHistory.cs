@@ -12,7 +12,7 @@ namespace HRM_Domain.Entities
     public class AttendanceLogHistory
     {
         [Key]
-        public long HistoryID { get; set; }
+        public int HistoryID { get; set; }
 
         public int LogID { get; set; }
         [ForeignKey("LogID")]

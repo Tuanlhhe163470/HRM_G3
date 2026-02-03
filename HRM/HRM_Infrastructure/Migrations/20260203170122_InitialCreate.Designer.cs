@@ -4,6 +4,7 @@ using HRM_Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HRM_Infrastructure.Migrations
 {
     [DbContext(typeof(HRMDbContext))]
-    partial class HRMDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260203170122_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -631,7 +634,7 @@ namespace HRM_Infrastructure.Migrations
 
                     b.HasIndex("UserID");
 
-                    b.ToTable("Notification");
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("HRM_Domain.Entities.Offer", b =>
@@ -839,7 +842,6 @@ namespace HRM_Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal?>("FinalScore")
-                        .HasPrecision(5, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime?>("FinalizedAt")
@@ -1195,11 +1197,9 @@ namespace HRM_Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("ProgressPercent")
-                        .HasPrecision(5, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal?>("QuizScore")
-                        .HasPrecision(5, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Status")
@@ -1482,13 +1482,12 @@ namespace HRM_Infrastructure.Migrations
                     b.HasOne("HRM_Domain.Entities.Employee", "Employee")
                         .WithMany()
                         .HasForeignKey("EmployeeID")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("HRM_Domain.Entities.Employee", "Manager")
                         .WithMany()
-                        .HasForeignKey("ManagerID")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("ManagerID");
 
                     b.Navigation("Employee");
 
@@ -1508,7 +1507,7 @@ namespace HRM_Infrastructure.Migrations
                     b.HasOne("HRM_Domain.Entities.Review", "Review")
                         .WithMany()
                         .HasForeignKey("ReviewID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("PerformanceGoal");
@@ -1560,8 +1559,7 @@ namespace HRM_Infrastructure.Migrations
                 {
                     b.HasOne("HRM_Domain.Entities.Review", "AssignedByReview")
                         .WithMany()
-                        .HasForeignKey("AssignedByReviewID")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("AssignedByReviewID");
 
                     b.HasOne("HRM_Domain.Entities.TrainingCourse", "TrainingCourse")
                         .WithMany()
