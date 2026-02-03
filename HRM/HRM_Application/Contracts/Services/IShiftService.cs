@@ -14,7 +14,7 @@ namespace HRM_Application.Contracts.Services
         Task<PagedResponse<ShiftResponse>> GetAllShiftsAsync(PaginationFilter filter);
         Task<ShiftResponse?> GetShiftByIdAsync(int id);
         Task CreateShiftAsync(CreateShiftRequest request);
-        Task<ShiftResponse?> UpdateShiftAsync(int id, CreateShiftRequest request);
-        Task<bool> DeleteShiftAsync(int id);
+        Task UpdateShiftAsync(int id, CreateShiftRequest request);
+        Task DeleteShiftAsync(int id);
     }
 }
