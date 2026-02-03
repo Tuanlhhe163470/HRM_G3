@@ -358,7 +358,7 @@ namespace HRM_Infrastructure.Migrations
                 name: "MonthlyTimesheets",
                 columns: table => new
                 {
-                    TimesheetID = table.Column<long>(type: "bigint", nullable: false)
+                    TimesheetID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     EmployeeID = table.Column<int>(type: "int", nullable: false),
                     Month = table.Column<int>(type: "int", nullable: false),
@@ -385,7 +385,7 @@ namespace HRM_Infrastructure.Migrations
                 name: "PerformanceGoals",
                 columns: table => new
                 {
-                    GoalID = table.Column<long>(type: "bigint", nullable: false)
+                    GoalID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     EmployeeID = table.Column<int>(type: "int", nullable: false),
                     CycleID = table.Column<int>(type: "int", nullable: false),
@@ -417,7 +417,7 @@ namespace HRM_Infrastructure.Migrations
                 name: "Requests",
                 columns: table => new
                 {
-                    RequestID = table.Column<long>(type: "bigint", nullable: false)
+                    RequestID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     EmployeeID = table.Column<int>(type: "int", nullable: false),
                     RequestType = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
@@ -457,7 +457,7 @@ namespace HRM_Infrastructure.Migrations
                 name: "Reviews",
                 columns: table => new
                 {
-                    ReviewID = table.Column<long>(type: "bigint", nullable: false)
+                    ReviewID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     CycleID = table.Column<int>(type: "int", nullable: false),
                     EmployeeID = table.Column<int>(type: "int", nullable: false),
@@ -553,10 +553,10 @@ namespace HRM_Infrastructure.Migrations
                 name: "MonthlyPayrolls",
                 columns: table => new
                 {
-                    PayrollID = table.Column<long>(type: "bigint", nullable: false)
+                    PayrollID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     EmployeeID = table.Column<int>(type: "int", nullable: false),
-                    TimesheetID = table.Column<long>(type: "bigint", nullable: false),
+                    TimesheetID = table.Column<int>(type: "int", nullable: false),
                     Month = table.Column<int>(type: "int", nullable: false),
                     Year = table.Column<int>(type: "int", nullable: false),
                     BaseSalary = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
@@ -591,10 +591,10 @@ namespace HRM_Infrastructure.Migrations
                 name: "ReviewDetails",
                 columns: table => new
                 {
-                    DetailID = table.Column<long>(type: "bigint", nullable: false)
+                    DetailID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    ReviewID = table.Column<long>(type: "bigint", nullable: false),
-                    GoalID = table.Column<long>(type: "bigint", nullable: false),
+                    ReviewID = table.Column<int>(type: "int", nullable: false),
+                    GoalID = table.Column<int>(type: "int", nullable: false),
                     SelfScore = table.Column<int>(type: "int", nullable: true),
                     SelfComment = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     ManagerScore = table.Column<int>(type: "int", nullable: true),
@@ -621,7 +621,7 @@ namespace HRM_Infrastructure.Migrations
                 name: "UserTrainings",
                 columns: table => new
                 {
-                    RecordID = table.Column<long>(type: "bigint", nullable: false)
+                    RecordID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     EmployeeID = table.Column<int>(type: "int", nullable: false),
                     CourseID = table.Column<int>(type: "int", nullable: false),
@@ -630,7 +630,7 @@ namespace HRM_Infrastructure.Migrations
                     QuizScore = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     CertificateUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     CompletedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    AssignedByReviewID = table.Column<long>(type: "bigint", nullable: true),
+                    AssignedByReviewID = table.Column<int>(type: "int", nullable: true),
                     DueDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
@@ -659,7 +659,7 @@ namespace HRM_Infrastructure.Migrations
                 name: "AttendanceLogHistories",
                 columns: table => new
                 {
-                    HistoryID = table.Column<long>(type: "bigint", nullable: false)
+                    HistoryID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     LogID = table.Column<int>(type: "int", nullable: false),
                     ModifiedBy = table.Column<int>(type: "int", nullable: true),
@@ -688,7 +688,7 @@ namespace HRM_Infrastructure.Migrations
                 name: "Notifications",
                 columns: table => new
                 {
-                    NotificationID = table.Column<long>(type: "bigint", nullable: false)
+                    NotificationID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserID = table.Column<int>(type: "int", nullable: false),
                     Title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
@@ -787,9 +787,9 @@ namespace HRM_Infrastructure.Migrations
                 name: "EmployeeSalaryDetails",
                 columns: table => new
                 {
-                    DetailID = table.Column<long>(type: "bigint", nullable: false)
+                    DetailID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    PayrollID = table.Column<long>(type: "bigint", nullable: false),
+                    PayrollID = table.Column<int>(type: "int", nullable: false),
                     ComponentID = table.Column<int>(type: "int", nullable: false),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
                 },

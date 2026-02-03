@@ -59,11 +59,11 @@ namespace HRM_Infrastructure.Migrations
 
             modelBuilder.Entity("HRM_Domain.Entities.AttendanceLogHistory", b =>
                 {
-                    b.Property<long>("HistoryID")
+                    b.Property<int>("HistoryID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("HistoryID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("HistoryID"));
 
                     b.Property<int>("LogID")
                         .HasColumnType("int");
@@ -308,11 +308,11 @@ namespace HRM_Infrastructure.Migrations
 
             modelBuilder.Entity("HRM_Domain.Entities.EmployeeSalaryDetail", b =>
                 {
-                    b.Property<long>("DetailID")
+                    b.Property<int>("DetailID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("DetailID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DetailID"));
 
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18,2)");
@@ -320,8 +320,8 @@ namespace HRM_Infrastructure.Migrations
                     b.Property<int>("ComponentID")
                         .HasColumnType("int");
 
-                    b.Property<long>("PayrollID")
-                        .HasColumnType("bigint");
+                    b.Property<int>("PayrollID")
+                        .HasColumnType("int");
 
                     b.HasKey("DetailID");
 
@@ -488,11 +488,11 @@ namespace HRM_Infrastructure.Migrations
 
             modelBuilder.Entity("HRM_Domain.Entities.MonthlyPayroll", b =>
                 {
-                    b.Property<long>("PayrollID")
+                    b.Property<int>("PayrollID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("PayrollID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PayrollID"));
 
                     b.Property<decimal>("ActualWorkDays")
                         .HasColumnType("decimal(18,2)");
@@ -526,8 +526,8 @@ namespace HRM_Infrastructure.Migrations
                     b.Property<decimal>("TaxAmount")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<long>("TimesheetID")
-                        .HasColumnType("bigint");
+                    b.Property<int>("TimesheetID")
+                        .HasColumnType("int");
 
                     b.Property<decimal>("TotalAllowance")
                         .HasColumnType("decimal(18,2)");
@@ -549,11 +549,11 @@ namespace HRM_Infrastructure.Migrations
 
             modelBuilder.Entity("HRM_Domain.Entities.MonthlyTimesheet", b =>
                 {
-                    b.Property<long>("TimesheetID")
+                    b.Property<int>("TimesheetID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("TimesheetID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TimesheetID"));
 
                     b.Property<int>("EmployeeID")
                         .HasColumnType("int");
@@ -593,11 +593,11 @@ namespace HRM_Infrastructure.Migrations
 
             modelBuilder.Entity("HRM_Domain.Entities.Notification", b =>
                 {
-                    b.Property<long>("NotificationID")
+                    b.Property<int>("NotificationID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("NotificationID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("NotificationID"));
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
@@ -668,11 +668,11 @@ namespace HRM_Infrastructure.Migrations
 
             modelBuilder.Entity("HRM_Domain.Entities.PerformanceGoal", b =>
                 {
-                    b.Property<long>("GoalID")
+                    b.Property<int>("GoalID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("GoalID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("GoalID"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -763,11 +763,11 @@ namespace HRM_Infrastructure.Migrations
 
             modelBuilder.Entity("HRM_Domain.Entities.Request", b =>
                 {
-                    b.Property<long>("RequestID")
+                    b.Property<int>("RequestID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("RequestID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RequestID"));
 
                     b.Property<string>("AttachmentUrl")
                         .HasMaxLength(500)
@@ -826,11 +826,11 @@ namespace HRM_Infrastructure.Migrations
 
             modelBuilder.Entity("HRM_Domain.Entities.Review", b =>
                 {
-                    b.Property<long>("ReviewID")
+                    b.Property<int>("ReviewID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("ReviewID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReviewID"));
 
                     b.Property<int>("CycleID")
                         .HasColumnType("int");
@@ -906,14 +906,14 @@ namespace HRM_Infrastructure.Migrations
 
             modelBuilder.Entity("HRM_Domain.Entities.ReviewDetail", b =>
                 {
-                    b.Property<long>("DetailID")
+                    b.Property<int>("DetailID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("DetailID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DetailID"));
 
-                    b.Property<long>("GoalID")
-                        .HasColumnType("bigint");
+                    b.Property<int>("GoalID")
+                        .HasColumnType("int");
 
                     b.Property<string>("ManagerComment")
                         .HasMaxLength(500)
@@ -922,8 +922,8 @@ namespace HRM_Infrastructure.Migrations
                     b.Property<int?>("ManagerScore")
                         .HasColumnType("int");
 
-                    b.Property<long>("ReviewID")
-                        .HasColumnType("bigint");
+                    b.Property<int>("ReviewID")
+                        .HasColumnType("int");
 
                     b.Property<string>("SelfComment")
                         .HasMaxLength(500)
@@ -1168,14 +1168,14 @@ namespace HRM_Infrastructure.Migrations
 
             modelBuilder.Entity("HRM_Domain.Entities.UserTraining", b =>
                 {
-                    b.Property<long>("RecordID")
+                    b.Property<int>("RecordID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("RecordID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RecordID"));
 
-                    b.Property<long?>("AssignedByReviewID")
-                        .HasColumnType("bigint");
+                    b.Property<int?>("AssignedByReviewID")
+                        .HasColumnType("int");
 
                     b.Property<string>("CertificateUrl")
                         .HasMaxLength(500)

@@ -11,7 +11,7 @@ namespace HRM_Domain.Entities
     public class UserTraining
     {
         [Key]
-        public long RecordID { get; set; }
+        public int RecordID { get; set; }
 
         public int EmployeeID { get; set; }
         [ForeignKey("EmployeeID")]
@@ -36,7 +36,7 @@ namespace HRM_Domain.Entities
         public DateTime? CompletedDate { get; set; }
 
         // Integration Point
-        public long? AssignedByReviewID { get; set; }
+        public int? AssignedByReviewID { get; set; }
         [ForeignKey("AssignedByReviewID")]
         public virtual Review? AssignedByReview { get; set; }
 
