@@ -1,0 +1,80 @@
+// RESPONSIVE XS
+
+@include responsive("xs") {
+  //Contact Form
+  .antd-contact-form {
+    padding: 16px !important;
+
+    .ant-btn-primary {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .ant-row {
+      margin-bottom: 24px;
+    }
+  }
+
+  //Contact Page
+  .contact_container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 50px !important;
+    margin: 0 auto;
+  }
+
+  //Contact Info
+  .contact_info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16;
+
+    &__heading {
+      font-size: 20px;
+      margin-bottom: 0;
+    }
+
+    &__method {
+      margin-bottom: 8px;
+    }
+    &__detail {
+      font-size: 10px;
+    }
+    &__label {
+      font-size: 10px;
+    }
+
+    &__value {
+      font-size: 10px;
+    }
+  }
+
+  //Contact Hero
+  .contact_hero {
+    height: 267px;
+
+    &__image_wrapper {
+      border-radius: 0 0 30px 30px;
+    }
+
+    &__scroll_button {
+      width: 40px;
+      height: 40px;
+    }
+
+    &__heading {
+      transform: translate(-50%);
+    }
+    &__title_primary {
+      font-size: 20px;
+    }
+
+    &__title_secondary {
+      font-size: 30px;
+    }
+  }
+}
+
