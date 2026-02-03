@@ -11,13 +11,13 @@ namespace HRM_Domain.Entities
     public class MonthlyPayroll
     {
         [Key]
-        public long PayrollID { get; set; }
+        public int PayrollID { get; set; }
 
         public int EmployeeID { get; set; }
         [ForeignKey("EmployeeID")]
         public virtual Employee? Employee { get; set; }
 
-        public long TimesheetID { get; set; }
+        public int TimesheetID { get; set; }
         [ForeignKey("TimesheetID")]
         public virtual MonthlyTimesheet? Timesheet { get; set; }
 
