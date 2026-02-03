@@ -1,116 +1,98 @@
-import { LockOutlined, UserOutlined } from "@ant-design/icons"
-import { Button, Checkbox, Divider, Form, Input, Space, Typography } from "antd"
-import CustomModal from "src/components/Modal/CustomModal"
-import "./style.scss"
-import { useState } from "react"
-import { useDispatch } from "react-redux"
-import { loginStart, loginSuccess, loginFailure } from "src/redux/slices/AuthSlice"
+"use client";
 
-const { Text, Link } = Typography
+import { LockOutlined, UserOutlined } from "@ant-design/icons";
+import { Button, Form, Input, Typography, Modal } from "antd";
+import { useState } from "react";
 
-const LoginPage = ({ onCancel }) => {
-  const [form] = Form.useForm()
-  const [loading, setLoading] = useState(false)
-  const dispatch = useDispatch()
-  const handleLogin = async values => {
-    try {
-      dispatch(loginStart())
-      //API
-      dispatch(
-        loginSuccess({
-          user: response.user,
-          userInfo: response.userInfo,
-        }),
-      )
+const { Link } = Typography;
 
-      onCancel?.()
-      setLoading(true)
-    } catch (error) {
-      dispatch(loginFailure(error.message))
-      setLoading(false)
-    } finally {
-      setLoading(false)
-    }
-  }
+const LoginModal = ({ open, onCancel }) => {
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async (values) => {
+    setLoading(true);
+    console.log("Login Values:", values);
+    setTimeout(() => {
+      setLoading(false);
+      onCancel?.();
+    }, 1000);
+  };
 
   return (
-    <CustomModal
-      open={true}
+    <Modal
+      open={open}
       onCancel={onCancel}
       footer={null}
-      closable={false}
-      width={500}
+      centered
+      width={400} 
+      styles={{
+        body: { padding: "0px 24px" } 
+      }}
+      className="custom-login-modal"
     >
-      <div className="login-modal">
-        <Typography.Title level={3} className="login-modal__title">
-          Đăng nhập
-        </Typography.Title>
 
-        <Form
-          form={form}
-          name="login_form"
-          className="login-modal__form"
-          onFinish={handleLogin}
-          layout="vertical"
-          size="large"
-        >
-          <Form.Item
-            name="username"
-            label="Tên đăng nhập"
-            rules={[
-              { required: true, message: "Vui lòng nhập tên đăng nhập!" },
-            ]}
-          >
-            <Input
-              prefix={<UserOutlined className="site-form-item-icon" />}
-              placeholder="Nhập tên đăng nhập"
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="password"
-            label="Mật khẩu"
-            rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}
-          >
-            <Input.Password
-              prefix={<LockOutlined className="site-form-item-icon" />}
-              placeholder="Nhập mật khẩu"
-            />
-          </Form.Item>
-
-          <Form.Item className="login-modal__options">
-            <div className="login-modal__remember-forgot">
-              <Form.Item name="remember" valuePropName="checked" noStyle>
-                <Checkbox>Duy trì đăng nhập</Checkbox>
-              </Form.Item>
-              <Link className="login-modal__forgot-link">Quên mật khẩu ?</Link>
-            </div>
-          </Form.Item>
-
-          <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              className="login-modal__button"
-              loading={loading}
-              block
-            >
-              Đăng nhập
-            </Button>
-          </Form.Item>
-
-          <Divider plain />
-
-          <div className="login-modal__register">
-            <Space>
-              <Text type="secondary">Bạn chưa có tài khoản?</Text>
-              <Link strong>Đăng ký</Link>
-            </Space>
-          </div>
-        </Form>
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold text-gray-800 m-0 tracking-tight">
+          Đăng Nhập
+        </h2>
+        <p className="text-gray-400 text-sm mt-2">Truy cập vào hệ thống HRM của bạn</p>
       </div>
-    </CustomModal>
-  )
-}
 
-export default LoginPage
+      <Form
+        form={form}
+        name="login_form"
+        onFinish={handleLogin}
+        layout="vertical"
+        size="large"
+        requiredMark={false}
+        className="w-full"
+      >
+     
+        <Form.Item
+          name="username"
+          rules={[{ required: true, message: "Vui lòng nhập tên đăng nhập!" }]}
+        >
+          <Input
+            prefix={<UserOutlined className="text-gray-400 mr-2" />}
+            placeholder="Tên đăng nhập"
+            className="rounded-md border-gray-200 hover:border-[#00aeef] focus:border-[#00aeef]"
+          />
+        </Form.Item>
+
+        <Form.Item
+          name="password"
+          rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}
+          className="mb-2" 
+        >
+          <Input.Password
+            prefix={<LockOutlined className="text-gray-400 mr-2" />}
+            placeholder="Mật khẩu"
+            className="rounded-md border-gray-200 hover:border-[#00aeef] focus:border-[#00aeef]"
+          />
+        </Form.Item>
+
+     
+        <div className="flex justify-end mb-6">
+          <Link className="text-[#00aeef] text-sm hover:text-[#0096ce] transition-colors font-medium">
+            Quên mật khẩu?
+          </Link>
+        </div>
+
+        <Form.Item className="mb-0">
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={loading}
+            block
+            className="bg-[#00aeef] border-none h-11 rounded-md font-bold text-base hover:bg-[#0096ce] transition-all flex items-center justify-center shadow-sm"
+          >
+            ĐĂNG NHẬP
+          </Button>
+        </Form.Item>
+      </Form>
+    </Modal>
+  );
+};
+
+export default LoginModal;

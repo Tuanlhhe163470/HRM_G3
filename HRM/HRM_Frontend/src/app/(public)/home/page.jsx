@@ -1,7 +1,9 @@
-import Header from "@/components/Layout/Header";
-import Footer from "@/components/Layout/Footer";
-import JobCard from "@/components/Job/JobCard";
+import React from "react";
+import Link from "next/link";
 import Image from "next/image";
+import { Button, Input } from "antd";
+import { ArrowRightOutlined, SearchOutlined } from "@ant-design/icons";
+import JobCard from "@/components/Job/JobCard";
 
 const jobs = [
   {
@@ -51,6 +53,7 @@ const jobs = [
 export default function HomePage() {
   return (
     <div className="font-sans text-slate-900">
+      {/* HERO SECTION */}
       <section className="bg-white py-20 border-b border-gray-100">
         <div className="container mx-auto px-6 text-center max-w-4xl">
           <h1 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-gray-900">
@@ -64,20 +67,17 @@ export default function HomePage() {
             tôi đều có giải pháp cho bạn.
           </p>
 
-          <div className="flex justify-center gap-3 mb-10">
-            <button className="bg-[#00aeef] text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-[#0096ce] transition-colors">
-              Khám phá việc làm
-            </button>
-            <button className="border border-gray-200 px-6 py-2.5 rounded text-sm font-medium hover:bg-gray-50 transition-colors">
-              Tìm hiểu thêm
-            </button>
-          </div>
-
           <div className="relative max-w-xl mx-auto">
-            <input
-              type="text"
+            <Input
+              size="large"
               placeholder="Tìm kiếm việc làm, công ty hoặc từ khóa..."
-              className="w-full border border-gray-200 rounded-full px-6 py-3 text-sm focus:outline-none focus:border-[#00aeef] transition-all"
+              prefix={<SearchOutlined className="text-gray-400 mr-2" />}
+              className="w-full border border-gray-200 rounded-full px-6 py-3 text-sm focus:outline-none focus:border-[#00aeef] transition-all shadow-sm hover:border-[#00aeef]"
+              variant="borderless"
+              style={{
+                border: "1px solid #e5e7eb",
+                borderRadius: "9999px",
+              }}
             />
           </div>
         </div>
@@ -97,15 +97,18 @@ export default function HomePage() {
           </div>
 
           <div className="text-center mt-12">
-            <button className="border border-gray-200 px-8 py-2.5 rounded text-sm font-medium hover:bg-gray-50 transition-all text-gray-600">
-              Xem tất cả công việc
-            </button>
+            <Link href="/tim-kiem-viec">
+              <Button className="h-11 px-10 rounded border-gray-200 text-gray-600 font-medium hover:border-[#00aeef] hover:text-[#00aeef] flex items-center justify-center mx-auto group">
+                Xem tất cả công việc
+                <ArrowRightOutlined className="ml-2 text-xs group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
 
       {/* DISCOVER SECTION */}
-      <section className="py-20 border-t border-gray-50">
+      <section className="py-20 border-t border-gray-50 bg-gray-50/30">
         <div className="container mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
           <div>
             <h3 className="text-3xl font-bold mb-6 text-gray-900 leading-tight">
@@ -116,17 +119,20 @@ export default function HomePage() {
               cụ tìm kiếm trực quan và bộ lọc mạnh mẽ giúp lộ trình sự nghiệp
               của bạn đơn giản hơn bao giờ hết.
             </p>
-            <button className="border border-gray-200 px-6 py-2 rounded text-sm font-medium hover:bg-gray-50 transition-all">
-              Xem tất cả danh sách
-            </button>
+            <Link href="/tim-kiem-viec">
+              <Button className="h-11 px-8 rounded border-gray-200 text-gray-600 font-medium hover:border-[#00aeef] hover:text-[#00aeef] flex items-center justify-center group">
+                Xem tất cả danh sách
+                <ArrowRightOutlined className="ml-2 text-xs group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
           </div>
           <div className="flex justify-center">
             <Image
               src="/images/homepage-1.png"
-              alt="Discover"
+              alt="Khám phá việc làm"
               width={500}
               height={350}
-              className="rounded-lg shadow-sm"
+              className="rounded-lg shadow-sm object-cover"
             />
           </div>
         </div>
@@ -138,10 +144,10 @@ export default function HomePage() {
           <div className="flex justify-center order-2 md:order-1">
             <Image
               src="/images/homepage-2.png"
-              alt="HRM System"
+              alt="Hệ thống quản trị HRM"
               width={500}
               height={350}
-              className="rounded-lg shadow-sm"
+              className="rounded-lg shadow-sm object-cover"
             />
           </div>
           <div className="order-1 md:order-2">
@@ -153,9 +159,12 @@ export default function HomePage() {
               — tất cả trên một nền tảng tích hợp được thiết kế để vận hành
               chính xác và hiệu quả.
             </p>
-            <button className="border border-gray-200 px-6 py-2 rounded text-sm font-medium hover:bg-gray-50 transition-all">
-              Khám phá giải pháp HRM
-            </button>
+            <Link href="/lien-he">
+              <Button className="h-11 px-8 rounded border-gray-200 text-gray-600 font-medium hover:border-[#00aeef] hover:text-[#00aeef] flex items-center justify-center group">
+                Khám phá giải pháp HRM
+                <ArrowRightOutlined className="ml-2 text-xs group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
