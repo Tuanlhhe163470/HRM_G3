@@ -614,7 +614,7 @@ namespace HRM_Infrastructure.Migrations
                         column: x => x.ReviewID,
                         principalTable: "Reviews",
                         principalColumn: "ReviewID",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(

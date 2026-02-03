@@ -1504,7 +1504,7 @@ namespace HRM_Infrastructure.Migrations
                     b.HasOne("HRM_Domain.Entities.Review", "Review")
                         .WithMany()
                         .HasForeignKey("ReviewID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("PerformanceGoal");

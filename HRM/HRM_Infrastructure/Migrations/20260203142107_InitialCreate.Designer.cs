@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HRM_Infrastructure.Migrations
 {
     [DbContext(typeof(HRMDbContext))]
-    [Migration("20260202174905_InitialCreate")]
+    [Migration("20260203142107_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -1507,7 +1507,7 @@ namespace HRM_Infrastructure.Migrations
                     b.HasOne("HRM_Domain.Entities.Review", "Review")
                         .WithMany()
                         .HasForeignKey("ReviewID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("PerformanceGoal");

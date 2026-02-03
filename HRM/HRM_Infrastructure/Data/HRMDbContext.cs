@@ -101,6 +101,15 @@ namespace HRM_Infrastructure.Data
 
             // ==========================================================
 
+            modelBuilder.Entity<ReviewDetail>(entity =>
+            {
+                // Cấu hình mối quan hệ với Review: Tắt Cascade Delete
+                entity.HasOne(d => d.Review)
+                      .WithMany() // Nếu bên Review có List<ReviewDetail> thì điền vào: .WithMany(r => r.ReviewDetails)
+                      .HasForeignKey(d => d.ReviewID)
+                      .OnDelete(DeleteBehavior.Restrict); // <-- QUAN TRỌNG: Đổi thành Restrict
+            });
+
             // 3. Tự động set kiểu decimal(18,2) cho tất cả các trường tiền tệ
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
