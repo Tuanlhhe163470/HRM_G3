@@ -11,13 +11,13 @@ namespace HRM_Domain.Entities
     public class ReviewDetail
     {
         [Key]
-        public long DetailID { get; set; }
+        public int DetailID { get; set; }
 
-        public long ReviewID { get; set; }
+        public int ReviewID { get; set; }
         [ForeignKey("ReviewID")]
         public virtual Review? Review { get; set; }
 
-        public long GoalID { get; set; }
+        public int GoalID { get; set; }
         [ForeignKey("GoalID")]
         public virtual PerformanceGoal? PerformanceGoal { get; set; }
 

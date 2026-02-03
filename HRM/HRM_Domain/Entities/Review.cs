@@ -11,7 +11,7 @@ namespace HRM_Domain.Entities
     public class Review
     {
         [Key]
-        public long ReviewID { get; set; }
+        public int ReviewID { get; set; }
 
         public int CycleID { get; set; }
         [ForeignKey("CycleID")]
