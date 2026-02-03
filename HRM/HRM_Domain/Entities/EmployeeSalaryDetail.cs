@@ -11,9 +11,9 @@ namespace HRM_Domain.Entities
     public class EmployeeSalaryDetail
     {
         [Key]
-        public long DetailID { get; set; }
+        public int DetailID { get; set; }
 
-        public long PayrollID { get; set; }
+        public int PayrollID { get; set; }
         [ForeignKey("PayrollID")]
         public virtual MonthlyPayroll? MonthlyPayroll { get; set; }
 

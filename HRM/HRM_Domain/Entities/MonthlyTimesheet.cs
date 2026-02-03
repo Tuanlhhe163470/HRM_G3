@@ -11,7 +11,7 @@ namespace HRM_Domain.Entities
     public class MonthlyTimesheet
     {
         [Key]
-        public long TimesheetID { get; set; }
+        public int TimesheetID { get; set; }
 
         public int EmployeeID { get; set; }
         [ForeignKey("EmployeeID")]

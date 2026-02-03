@@ -11,7 +11,7 @@ namespace HRM_Domain.Entities
     public class Request
     {
         [Key]
-        public long RequestID { get; set; }
+        public int RequestID { get; set; }
 
         public int EmployeeID { get; set; }
         [ForeignKey("EmployeeID")]
