@@ -1,0 +1,19 @@
+@include responsive("xs") {
+    .login-modal {
+      padding: 12px;
+      
+      &__remember-forgot {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      
+      &__forgot-link {
+        float: none;
+      }
+    }
+    
+    :global(.ant-modal) {
+      max-width: 95% !important;
+    }
+  }

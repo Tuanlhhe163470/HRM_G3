@@ -25,20 +25,24 @@ const LoginModal = ({ open, onCancel }) => {
       onCancel={onCancel}
       footer={null}
       centered
-      width={400} 
+      width={400}
       styles={{
-        body: { padding: "0px 24px" } 
+        body: { padding: "0px 24px" },
       }}
       className="custom-login-modal"
     >
+      <div className="text-center mb-8 flex flex-col items-center">
+        <div className="inline-block w-fit">
+          <h2 className="text-2xl font-bold text-gray-800 m-0 tracking-tight uppercase">
+            Đăng nhập
+          </h2>
+          <div className="w-full h-1 bg-[#00aeef] mt-1 rounded-full"></div>
+        </div>
 
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-800 m-0 tracking-tight">
-          Đăng Nhập
-        </h2>
-        <p className="text-gray-400 text-sm mt-2">Truy cập vào hệ thống HRM của bạn</p>
+        <p className="text-gray-400 text-sm mt-3">
+          Truy cập vào hệ thống HRM của bạn
+        </p>
       </div>
-
       <Form
         form={form}
         name="login_form"
@@ -48,7 +52,6 @@ const LoginModal = ({ open, onCancel }) => {
         requiredMark={false}
         className="w-full"
       >
-     
         <Form.Item
           name="username"
           rules={[{ required: true, message: "Vui lòng nhập tên đăng nhập!" }]}
@@ -63,7 +66,7 @@ const LoginModal = ({ open, onCancel }) => {
         <Form.Item
           name="password"
           rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}
-          className="mb-2" 
+          className="mb-2"
         >
           <Input.Password
             prefix={<LockOutlined className="text-gray-400 mr-2" />}
@@ -72,7 +75,6 @@ const LoginModal = ({ open, onCancel }) => {
           />
         </Form.Item>
 
-     
         <div className="flex justify-end mb-6">
           <Link className="text-[#00aeef] text-sm hover:text-[#0096ce] transition-colors font-medium">
             Quên mật khẩu?

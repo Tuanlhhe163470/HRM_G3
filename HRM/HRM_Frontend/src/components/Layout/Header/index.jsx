@@ -7,10 +7,12 @@ import { LayoutStyled } from "../styled";
 import "../styles.css";
 import UseWindowSize from "src/lib/useWindowSize";
 import LoginModal from "@/components/Modal/Login/page";
+import ContactModal from "@/components/Modal/Contact/page";
 
 export default function Header() {
   const isMobile = UseWindowSize.isMobile();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isContactOpen, setIsContactOpen] = useState(false);
 
   return (
     <LayoutStyled>
@@ -69,17 +71,21 @@ export default function Header() {
               Đăng nhập
             </button>
             {!isMobile && (
-              <Link
-                href="/signup"
-                className="px-6 py-2 rounded-full bg-[#ed1117] text-white font-bold hover:bg-[#c40e14] shadow-md transition-all duration-300 text-sm"
+              <button
+                onClick={() => setIsContactOpen(true)}
+                className="px-6 py-2 rounded-full bg-[#00aeef] text-white font-bold hover:bg-[#0096ce] shadow-sm transition-all duration-300 text-sm cursor-pointer"
               >
                 Liên hệ mua
-              </Link>
+              </button>
             )}
           </div>
         </div>
       </header>
       <LoginModal open={isLoginOpen} onCancel={() => setIsLoginOpen(false)} />
+      <ContactModal
+        open={isContactOpen}
+        onCancel={() => setIsContactOpen(false)}
+      />
     </LayoutStyled>
   );
 }
