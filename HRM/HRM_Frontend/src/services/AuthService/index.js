@@ -1,4 +1,4 @@
-import http from "../01_axios/index"
+import http from "../../lib/axiosClient"
 import { apiLogin, apiLogout } from "./urls"
 
 const login = payload => http.post(apiLogin, payload)
