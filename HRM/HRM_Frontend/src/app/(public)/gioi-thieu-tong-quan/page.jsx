@@ -9,8 +9,8 @@ import {
   LineChartOutlined,
   SendOutlined,
 } from "@ant-design/icons";
-import { Button, Form, Input, message } from "antd";
-
+import { Button, Form, Input, message, Breadcrumb } from "antd";
+import Link from "next/link";
 
 const hrmModules = [
   {
@@ -51,6 +51,26 @@ export default function HRMOverviewPage() {
 
   return (
     <div className="bg-white min-h-screen font-sans">
+      <div className="max-w-7xl mx-auto px-6 pt-8">
+        <Breadcrumb
+          items={[
+            {
+              title: (
+                <Link href="/" className="text-gray-400">
+                  Trang chủ
+                </Link>
+              ),
+            },
+            {
+              title: (
+                <span className="font-bold text-[#00aeef]">
+                  Bộ giải pháp HRM
+                </span>
+              ),
+            },
+          ]}
+        />
+      </div>
       {/* 1. Header Section */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-6 text-center">
@@ -122,8 +142,8 @@ export default function HRMOverviewPage() {
               Liên hệ ngay
             </h2>
             <p className="text-gray-500 leading-relaxed">
-              Liên hệ với chúng tôi ngay để trải nghiệm demo 
-              về cách hệ thống có thể tối ưu hóa vận hành cho tổ chức của bạn.
+              Liên hệ với chúng tôi ngay để trải nghiệm demo về cách hệ thống có
+              thể tối ưu hóa vận hành cho tổ chức của bạn.
             </p>
           </div>
 

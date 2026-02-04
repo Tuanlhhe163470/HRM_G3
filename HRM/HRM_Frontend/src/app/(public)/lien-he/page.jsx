@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Form, Input, Button, message } from "antd";
+import { Form, Input, Button, message, Breadcrumb } from "antd";
 import {
   MailOutlined,
   PhoneOutlined,
@@ -11,6 +11,7 @@ import {
   HeartOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
+import Link from "next/link";
 
 export default function AboutAndContactPage() {
   const [form] = Form.useForm();
@@ -25,6 +26,24 @@ export default function AboutAndContactPage() {
 
   return (
     <div className="bg-white min-h-screen font-sans">
+      <div className="max-w-7xl mx-auto px-6 pt-8">
+        <Breadcrumb
+          items={[
+            {
+              title: (
+                <Link href="/" className="text-gray-400">
+                  Trang chủ
+                </Link>
+              ),
+            },
+            {
+              title: (
+                <span className="font-bold text-[#00aeef]">Về chúng tôi</span>
+              ),
+            },
+          ]}
+        />
+      </div>
       {/* 1. HERO SECTION */}
       <section className="bg-gray-50/50 py-20 border-b border-gray-100">
         <div className="container mx-auto px-6 text-center">
