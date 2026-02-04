@@ -2,8 +2,10 @@
 using HRM_Application.Contracts.Repositories;
 using HRM_Application.Contracts.Services;
 using HRM_Application.Mappings;
+using HRM_Application.Services.PayRoll;
 using HRM_Application.Services.TimeAttendance;
 using HRM_Infrastructure.Data;
+using HRM_Infrastructure.Repositories.PayRoll;
 using HRM_Infrastructure.Repositories.TimeAttendance;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,7 +31,13 @@ builder.Services.AddScoped<IShiftRepository, ShiftRepository>();
 builder.Services.AddScoped<IShiftService, ShiftService>();
 builder.Services.AddScoped<IPublicHolidayRepository, PublicHolidayRepository>();
 builder.Services.AddScoped<IPublicHolidayService, PublicHolidaysService>();
+builder.Services.AddScoped<ISalaryComponentRepository, SalaryComponentRepository>();
 
+// 2. Add Service
+builder.Services.AddScoped<ISalaryComponentService, SalaryComponentService>();
+
+// 3. Add AutoMapper
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",

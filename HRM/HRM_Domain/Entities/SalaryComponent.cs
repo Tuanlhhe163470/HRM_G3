@@ -23,5 +23,7 @@ namespace HRM_Domain.Entities
         public decimal Amount { get; set; }
 
         public bool IsFixed { get; set; }
+
+        public bool IsActive { get; set; } = true;
     }
 }
