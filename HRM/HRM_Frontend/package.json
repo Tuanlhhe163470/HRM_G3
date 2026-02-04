@@ -10,9 +10,11 @@
   },
   "dependencies": {
     "antd": "^6.2.2",
+    "crypto-js": "^4.2.0",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "sass": "^1.97.3",
     "styled-components": "^6.3.8"
   },
   "devDependencies": {
