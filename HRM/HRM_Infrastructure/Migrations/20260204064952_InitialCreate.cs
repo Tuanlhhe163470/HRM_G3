@@ -115,7 +115,8 @@ namespace HRM_Infrastructure.Migrations
                     ComponentName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Type = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    IsFixed = table.Column<bool>(type: "bit", nullable: false)
+                    IsFixed = table.Column<bool>(type: "bit", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {

@@ -981,6 +981,9 @@ namespace HRM_Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsFixed")
                         .HasColumnType("bit");
 

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HRM_Infrastructure.Migrations
 {
     [DbContext(typeof(HRMDbContext))]
-    [Migration("20260204051301_InitialCreate")]
+    [Migration("20260204064952_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -983,6 +983,9 @@ namespace HRM_Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsFixed")
                         .HasColumnType("bit");
