@@ -100,10 +100,12 @@ const ContactModal = ({ open, onCancel }) => {
           />
         </Form.Item>
 
-        <Form.Item name="company">
+        <Form.Item name="company"
+         rules={[{ required: true, message: "Vui lòng nhập tên công ty!" }]}
+         >
           <Input
             prefix={<BankOutlined className="text-gray-400 mr-2" />}
-            placeholder="Tên công ty / Tổ chức (không bắt buộc)"
+            placeholder="Tên công ty / Tổ chức "
             className="rounded-md border-gray-200"
           />
         </Form.Item>
