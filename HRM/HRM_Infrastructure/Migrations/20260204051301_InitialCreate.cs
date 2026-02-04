@@ -64,7 +64,9 @@ namespace HRM_Infrastructure.Migrations
                 {
                     HolidayID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    HolidayName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    HolidayName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    StartDate = table.Column<DateTime>(type: "datetime2", maxLength: 100, nullable: false),
+                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Date = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Year = table.Column<int>(type: "int", nullable: false),
                     IsRecurring = table.Column<bool>(type: "bit", nullable: false)
