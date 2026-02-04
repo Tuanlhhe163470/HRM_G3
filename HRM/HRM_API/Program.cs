@@ -27,6 +27,8 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 // 3. Đăng ký Repository & Service
 builder.Services.AddScoped<IShiftRepository, ShiftRepository>();
 builder.Services.AddScoped<IShiftService, ShiftService>();
+builder.Services.AddScoped<IPublicHolidayRepository, PublicHolidayRepository>();
+builder.Services.AddScoped<IPublicHolidayService, PublicHolidaysService>();
 
 builder.Services.AddCors(options =>
 {

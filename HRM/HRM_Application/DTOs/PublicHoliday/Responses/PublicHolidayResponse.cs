@@ -5,20 +5,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HRM_Domain.Entities
+namespace HRM_Application.DTOs.PublicHoliday.Responses
 {
-    public class PublicHoliday
+    public class PublicHolidayResponse
     {
-        [Key]
         public int HolidayID { get; set; }
 
-        public string HolidayName { get; set; }
+        public string HolidayName { get; set; } = string.Empty;
 
-        [StringLength(100)]
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
-
-        public DateTime Date { get; set; }
         public int Year { get; set; }
         public bool IsRecurring { get; set; }
     }

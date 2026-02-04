@@ -26,9 +26,14 @@ namespace HRM_Infrastructure.Repositories.TimeAttendance
             await _context.SaveChangesAsync();
         }
 
-        public Task DeleteShiftAsync(int id)
+        public async Task DeleteShiftAsync(int id)
         {
-            throw new NotImplementedException();
+            var entity = await _context.ShiftConfigs.FindAsync(id);
+            if (entity != null)
+            {
+                _context.ShiftConfigs.Remove(entity);
+                await _context.SaveChangesAsync();
+            }
         }
 
         public async Task<PagedResponse<ShiftConfig>> GetAllShiftsAsync(PaginationFilter filter)
@@ -38,14 +43,15 @@ namespace HRM_Infrastructure.Repositories.TimeAttendance
             return await query.ToPagedListAsync(filter.PageNumber, filter.PageSize);
         }
 
-        public Task<ShiftConfig?> GetShiftByIdAsync(int id)
+        public async Task<ShiftConfig?> GetShiftByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            return await _context.ShiftConfigs.FindAsync(id);
         }
 
-        public Task UpdateShiftAsync(ShiftConfig shift)
+        public async Task UpdateShiftAsync(ShiftConfig shift)
         {
-            throw new NotImplementedException();
+            _context.ShiftConfigs.Update(shift);
+            await _context.SaveChangesAsync();
         }
     }
 }
