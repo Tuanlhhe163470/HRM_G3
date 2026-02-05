@@ -2,9 +2,11 @@
 using HRM_Application.Contracts.Repositories;
 using HRM_Application.Contracts.Services;
 using HRM_Application.Mappings;
+using HRM_Application.Services.CoreHR;
 using HRM_Application.Services.PayRoll;
 using HRM_Application.Services.TimeAttendance;
 using HRM_Infrastructure.Data;
+using HRM_Infrastructure.Repositories.CoreHR;
 using HRM_Infrastructure.Repositories.PayRoll;
 using HRM_Infrastructure.Repositories.TimeAttendance;
 using Microsoft.EntityFrameworkCore;
@@ -32,6 +34,8 @@ builder.Services.AddScoped<IShiftService, ShiftService>();
 builder.Services.AddScoped<IPublicHolidayRepository, PublicHolidayRepository>();
 builder.Services.AddScoped<IPublicHolidayService, PublicHolidaysService>();
 builder.Services.AddScoped<ISalaryComponentRepository, SalaryComponentRepository>();
+builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 
 // 2. Add Service
 builder.Services.AddScoped<ISalaryComponentService, SalaryComponentService>();
