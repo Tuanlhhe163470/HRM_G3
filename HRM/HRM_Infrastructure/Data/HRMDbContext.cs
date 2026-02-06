@@ -52,7 +52,7 @@ namespace HRM_Infrastructure.Data
         public DbSet<CourseMaterial> CourseMaterials { get; set; }
         public DbSet<CourseQuestion> CourseQuestions { get; set; }
         public DbSet<UserTraining> UserTrainings { get; set; }
-
+        public DbSet<Notification> Notification { get; set; } 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -123,6 +123,53 @@ namespace HRM_Infrastructure.Data
                         .HasColumnType("decimal(18,2)");
                 }
             }
+
+            // module 5: 
+            // 1. Config for Review (Tránh lỗi Multiple Cascade Paths)
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.Employee)
+                .WithMany()
+                .HasForeignKey(r => r.EmployeeID)
+                .OnDelete(DeleteBehavior.Restrict); // Xóa User không xóa Review
+
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.Manager)
+                .WithMany()
+                .HasForeignKey(r => r.ManagerID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // 2. Config for ReviewDetail
+            modelBuilder.Entity<ReviewDetail>()
+                .HasOne(rd => rd.Review)
+                .WithMany()
+                .HasForeignKey(rd => rd.ReviewID)
+                .OnDelete(DeleteBehavior.Cascade); // Xóa Review thì xóa luôn chi tiết
+
+            // 3. Config for PerformanceGoal
+            modelBuilder.Entity<PerformanceGoal>()
+                .Property(g => g.Weight)
+                .IsRequired(); // Bắt buộc nhập trọng số
+
+            // 4. Config for UserTraining (Integration Logic)
+            modelBuilder.Entity<UserTraining>()
+                .HasOne(ut => ut.AssignedByReview)
+                .WithMany()
+                .HasForeignKey(ut => ut.AssignedByReviewID)
+                .OnDelete(DeleteBehavior.SetNull);
+            // Nếu xóa phiếu đánh giá, lịch sử đào tạo vẫn còn (nhưng mất link)
+
+            // 5. Config Money/Decimal Precision
+            modelBuilder.Entity<Review>()
+                .Property(r => r.FinalScore)
+                .HasPrecision(5, 2);
+
+            modelBuilder.Entity<UserTraining>()
+                .Property(ut => ut.ProgressPercent)
+                .HasPrecision(5, 2);
+
+            modelBuilder.Entity<UserTraining>()
+                .Property(ut => ut.QuizScore)
+                .HasPrecision(5, 2);
         }
     }
 }
