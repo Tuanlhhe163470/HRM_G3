@@ -745,13 +745,19 @@ namespace HRM_Infrastructure.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("HolidayName")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsRecurring")
                         .HasColumnType("bit");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasMaxLength(100)
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("Year")
                         .HasColumnType("int");
@@ -975,6 +981,9 @@ namespace HRM_Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsFixed")
                         .HasColumnType("bit");

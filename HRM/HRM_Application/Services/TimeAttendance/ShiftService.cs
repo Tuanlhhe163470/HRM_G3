@@ -2,6 +2,7 @@
 using HRM_Application.Commons.Pagination;
 using HRM_Application.Contracts.Repositories;
 using HRM_Application.Contracts.Services;
+using HRM_Application.DTOs.PublicHoliday.Responses;
 using HRM_Application.DTOs.Shift.Requests;
 using HRM_Application.DTOs.Shift.Responses;
 using HRM_Domain.Entities.TimeAttendance;
@@ -28,9 +29,17 @@ namespace HRM_Application.Services.TimeAttendance
             await _repository.AddShiftAsync(shiftEntity);
         }
 
-        public Task<bool> DeleteShiftAsync(int id)
+        public async Task DeleteShiftAsync(int id)
         {
-            throw new NotImplementedException();
+            var shiftEntity = await _repository.GetShiftByIdAsync(id);
+            if (shiftEntity == null)
+            {
+                throw new KeyNotFoundException($"Không tìm thấy Ca làm việc với ID: {id}");
+            }
+            else
+            {
+                await _repository.DeleteShiftAsync(id);
+            }
         }
 
         public async Task<PagedResponse<ShiftResponse>> GetAllShiftsAsync(PaginationFilter filter)
@@ -45,14 +54,27 @@ namespace HRM_Application.Services.TimeAttendance
                 shifts.TotalRecords);
         }
 
-        public Task<ShiftResponse?> GetShiftByIdAsync(int id)
+        public async Task<ShiftResponse?> GetShiftByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            var shiftEntity = await _repository.GetShiftByIdAsync(id);
+            if (shiftEntity == null)
+            {
+                throw new KeyNotFoundException($"Không tìm thấy Ca làm việc với ID: {id}");
+            }
+            return _mapper.Map<ShiftResponse>(shiftEntity);
         }
 
-        public Task<ShiftResponse?> UpdateShiftAsync(int id, CreateShiftRequest request)
+        public async Task UpdateShiftAsync(int id, CreateShiftRequest request)
         {
-            throw new NotImplementedException();
+            var shiftEntity = await _repository.GetShiftByIdAsync(id);
+            if (shiftEntity == null)
+            {
+                throw new KeyNotFoundException($"Không tìm thấy ngày Ca làm việc với ID: {id}");
+            }
+
+            _mapper.Map(request, shiftEntity);
+
+            await _repository.UpdateShiftAsync(shiftEntity);
         }
     }
 }

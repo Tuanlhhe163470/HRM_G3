@@ -1,0 +1,79 @@
+// Variables 
+$primary-text: #1f2937; // Gray-800
+$secondary-text: #9ca3af; // Gray-400
+$brand-cyan: #00aeef;
+$brand-cyan-hover: #0096ce;
+$border-color: #e5e7eb; // Gray-200
+
+// Import responsive mixins 
+@import "/src/assets/scss/responsive/responsive.scss";
+@import "./responsive/sm.scss";
+@import "./responsive/xs.scss";
+
+// Mixin cho các modal dùng chung style
+%modal-shared {
+  text-align: center;
+  
+  .ant-modal-content {
+    border-radius: 8px !important;
+    overflow: hidden;
+  }
+
+  &__title {
+    color: $primary-text;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: -0.025em;
+    margin-bottom: 8px !important;
+  }
+
+  &__subtitle {
+    color: $secondary-text;
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  &__form {
+    width: 100%;
+    margin: 0 auto;
+    text-align: left; 
+    input:-webkit-autofill {
+      -webkit-box-shadow: 0 0 0 30px white inset !important;
+      box-shadow: 0 0 0 30px white inset !important;
+      -webkit-text-fill-color: $primary-text !important;
+    }
+
+    .ant-input-affix-wrapper {
+      border-radius: 6px;
+      border-color: $border-color;
+      
+      &:hover, &-focused {
+        border-color: $brand-cyan !important;
+      }
+    }
+  }
+
+  &__button {
+    height: 44px !important;
+    background-color: $brand-cyan !important;
+    border: none !important;
+    border-radius: 6px !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+    
+    &:hover, &:focus {
+      background-color: $brand-cyan-hover !important;
+    }
+  }
+}
+
+.contact-modal {
+  @extend %modal-shared;
+  
+  &__form {
+    .ant-form-item {
+      margin-bottom: 16px;
+    }
+  }
+}

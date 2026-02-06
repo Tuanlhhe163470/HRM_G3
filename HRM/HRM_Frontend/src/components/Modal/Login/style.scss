@@ -1,0 +1,63 @@
+// Variables
+$primary-color: #154398;
+$button-color: #1976D2;
+
+// Import responsive mixins
+@import "/src/assets/scss/responsive/responsive.scss";
+@import "./responsive/sm.scss";
+@import "./responsive/xs.scss";
+.login-modal {
+  padding: 24px;
+  text-align: center;
+  
+  &__title {
+    color: $primary-color;
+    margin-bottom: 24px;
+  }
+  
+  &__form {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    
+    // Fix for autofill background color
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 30px white inset !important;
+      box-shadow: 0 0 0 30px white inset !important;
+      -webkit-text-fill-color: rgba(0, 0, 0, 0.88) !important;
+    }
+  }
+  
+  &__options {
+    margin-bottom: 24px;
+  }
+  
+  &__remember-forgot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  &__button {
+    height: 40px;
+    background-color: $button-color !important;
+    border-color: $button-color !important;
+    
+    &:hover, &:focus {
+      background-color: darken($button-color, 10%) !important;
+      border-color: darken($button-color, 10%) !important;
+    }
+  }
+  
+  &__forgot-link {
+    float: right;
+  }
+  
+  &__register {
+    margin-top: 16px;
+    text-align: center;
+  }
+}

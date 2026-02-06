@@ -12,8 +12,11 @@ namespace HRM_Domain.Entities
         [Key]
         public int HolidayID { get; set; }
 
+        public string HolidayName { get; set; }
+
         [StringLength(100)]
-        public string HolidayName { get; set; } = string.Empty;
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
 
         public DateTime Date { get; set; }
         public int Year { get; set; }
