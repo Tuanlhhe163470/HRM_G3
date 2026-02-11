@@ -13,11 +13,11 @@ namespace HRM_Domain.Entities
         [Key]
         public int GoalID { get; set; }
 
-        public int EmployeeID { get; set; }
+        public int? EmployeeID { get; set; }
         [ForeignKey("EmployeeID")]
         public virtual Employee? Employee { get; set; }
 
-        public int CycleID { get; set; }
+        public int? CycleID { get; set; }
         [ForeignKey("CycleID")]
         public virtual ReviewCycle? ReviewCycle { get; set; }
 

@@ -1,6 +1,8 @@
-﻿using AutoMapper;
-using HRM_Application.Contracts.Repositories;
+﻿using HRM_Application.Contracts.Repositories;
 using HRM_Application.Contracts.Services;
+using HRM_Application.Services.TimeAttendance;
+using HRM_Infrastructure.Data;
+using HRM_Infrastructure.Extensions; // <--- BẮT BUỘC PHẢI CÓ
 using HRM_Application.Mappings;
 using HRM_Application.Services.PayRoll;
 using HRM_Application.Services.TimeAttendance;
@@ -9,44 +11,38 @@ using HRM_Infrastructure.Repositories.PayRoll;
 using HRM_Infrastructure.Repositories.Recruitment;
 using HRM_Infrastructure.Repositories.TimeAttendance;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
-
 // Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 1. Kết nối DB
-builder.Services.AddDbContext<HRMDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("MyCon")));
+// --- QUAN TRỌNG: GỌI HÀM EXTENSION ĐỂ ĐĂNG KÝ SERVICE ---
+// Dòng này sẽ tự động đăng ký: DbContext, AutoMapper, PerformanceGoalRepository, GoalService...
+builder.Services.AddInfrastructure(builder.Configuration); 
 
-// 2. Đăng ký AutoMapper
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
-// 3. Đăng ký Repository & Service
+// Đăng ký các Service khác chưa có trong Extension (nếu cần)
 builder.Services.AddScoped<IShiftRepository, ShiftRepository>();
 builder.Services.AddScoped<IShiftService, ShiftService>();
 builder.Services.AddScoped<IPublicHolidayRepository, PublicHolidayRepository>();
 builder.Services.AddScoped<IPublicHolidayService, PublicHolidaysService>();
 builder.Services.AddScoped<ISalaryComponentRepository, SalaryComponentRepository>();
-builder.Services.AddScoped<IJobPostingRepository, JobPostingRepository>();
+
 // 2. Add Service
 builder.Services.AddScoped<ISalaryComponentService, SalaryComponentService>();
-builder.Services.AddScoped<JobRequisitionService>();
+
 // 3. Add AutoMapper
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
-        builder =>
+        b =>
         {
-            builder.AllowAnyOrigin()    // Cho phép mọi nguồn (Frontend nào cũng gọi được)
-                   .AllowAnyMethod()    // Cho phép GET, POST, PUT, DELETE...
-                   .AllowAnyHeader();   // Cho phép mọi Header
+            b.AllowAnyOrigin()
+             .AllowAnyMethod()
+             .AllowAnyHeader();
         });
 });
 
@@ -61,33 +57,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapControllers();
-
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
-
 app.UseCors("AllowAll");
 
-app.Run();
+app.MapControllers();
 
-internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+app.Run();
