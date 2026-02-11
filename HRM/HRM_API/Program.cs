@@ -6,6 +6,7 @@ using HRM_Application.Services.PayRoll;
 using HRM_Application.Services.TimeAttendance;
 using HRM_Infrastructure.Data;
 using HRM_Infrastructure.Repositories.PayRoll;
+using HRM_Infrastructure.Repositories.Recruitment;
 using HRM_Infrastructure.Repositories.TimeAttendance;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,10 +33,10 @@ builder.Services.AddScoped<IShiftService, ShiftService>();
 builder.Services.AddScoped<IPublicHolidayRepository, PublicHolidayRepository>();
 builder.Services.AddScoped<IPublicHolidayService, PublicHolidaysService>();
 builder.Services.AddScoped<ISalaryComponentRepository, SalaryComponentRepository>();
-
+builder.Services.AddScoped<IJobPostingRepository, JobPostingRepository>();
 // 2. Add Service
 builder.Services.AddScoped<ISalaryComponentService, SalaryComponentService>();
-
+builder.Services.AddScoped<JobRequisitionService>();
 // 3. Add AutoMapper
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddCors(options =>
