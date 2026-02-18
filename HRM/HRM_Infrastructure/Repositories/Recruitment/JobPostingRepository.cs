@@ -19,12 +19,6 @@ namespace HRM_Infrastructure.Repositories.Recruitment
             _context = context;
         }
 
-        public async Task UpdateAsync(JobPosting job)
-        {
-            _context.JobPostings.Update(job); //
-            await _context.SaveChangesAsync();
-        }
-
         public async Task<IEnumerable<JobPosting>> GetByStatusAsync(string status)
         {
             return await _context.JobPostings
@@ -33,10 +27,14 @@ namespace HRM_Infrastructure.Repositories.Recruitment
         }
         public async Task AddAsync(JobPosting job)
         {
-            await _context.JobPostings.AddAsync(job); // Ánh xạ bảng JobPostings
+            await _context.JobPostings.AddAsync(job); 
             await _context.SaveChangesAsync();
         }
-
+        public async Task UpdateAsync(JobPosting job)
+        {
+            _context.Entry(job).State = EntityState.Modified; 
+            await _context.SaveChangesAsync();
+        }
         public async Task<JobPosting?> GetByIdAsync(int id)
         {
             return await _context.JobPostings.FindAsync(id);

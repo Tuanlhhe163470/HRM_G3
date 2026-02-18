@@ -34,6 +34,7 @@ namespace HRM_Infrastructure.Extensions
             services.AddScoped<IPerformanceGoalRepository, PerformanceGoalRepository>();
             services.AddScoped<JobRequisitionService>();
             services.AddScoped<IJobPostingRepository, JobPostingRepository>();
+            services.AddScoped<JobPostingService>();
             // services.AddScoped<IShiftRepository, ShiftRepository>(); 
 
             // 4. SERVICES (Business Logic Layer)

@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace HRM_API.Controllers
 {
     [ApiController]
-    [Route("api/v1/[controller]")]
+    [Route("api/[controller]")]
     public class JobRequisitionsController : ControllerBase
     {
         private readonly JobRequisitionService _requisitionService;
