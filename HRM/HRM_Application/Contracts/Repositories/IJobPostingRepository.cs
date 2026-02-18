@@ -9,8 +9,9 @@ namespace HRM_Application.Contracts.Repositories
 {
     public interface IJobPostingRepository
     {
-        Task AddAsync(JobPosting job); //
+        Task AddAsync(JobPosting job); 
         Task<JobPosting?> GetByIdAsync(int id);
-        // Các phương thức hỗ trợ khác
+        Task UpdateAsync(JobPosting job); 
+        Task<IEnumerable<JobPosting>> GetByStatusAsync(string status);
     }
 }

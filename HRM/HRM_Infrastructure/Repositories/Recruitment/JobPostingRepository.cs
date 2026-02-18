@@ -1,6 +1,7 @@
 ﻿using HRM_Application.Contracts.Repositories;
 using HRM_Domain.Entities;
 using HRM_Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,18 @@ namespace HRM_Infrastructure.Repositories.Recruitment
             _context = context;
         }
 
+        public async Task UpdateAsync(JobPosting job)
+        {
+            _context.JobPostings.Update(job); //
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<JobPosting>> GetByStatusAsync(string status)
+        {
+            return await _context.JobPostings
+                .Where(j => j.Status == status)
+                .ToListAsync();
+        }
         public async Task AddAsync(JobPosting job)
         {
             await _context.JobPostings.AddAsync(job); // Ánh xạ bảng JobPostings
