@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HRM_Domain.Entities
 {
@@ -25,15 +22,21 @@ namespace HRM_Domain.Entities
         [ForeignKey("PositionID")]
         public virtual Position? Position { get; set; }
 
-        public string Description { get; set; } = string.Empty; // ntext
+        public string Description { get; set; } = string.Empty;
 
         [StringLength(50)]
-        public string Status { get; set; } = "Open";
+        public string Status { get; set; } = "Draft"; // Mặc định là Draft cho Requisition nội bộ
 
         public int? CreatedBy { get; set; }
         [ForeignKey("CreatedBy")]
         public virtual Employee? Creator { get; set; }
 
+        // --- CÁC TRƯỜNG QUẢN LÝ THỜI GIAN ---
+
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+        public DateTime? UpdatedAt { get; set; } // Sẽ cập nhật khi Approve, Publish hoặc Reopen
+
+        public DateTime? ExpiryDate { get; set; } // Ngày hết hạn tin tuyển dụng
     }
 }

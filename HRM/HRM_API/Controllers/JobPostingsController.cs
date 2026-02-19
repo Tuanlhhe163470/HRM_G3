@@ -8,47 +8,29 @@ namespace HRM_API.Controllers
     [Route("api/[controller]")]
     public class JobPostingsController : ControllerBase
     {
-        private readonly JobPostingService _jobService;
+        private readonly JobPostingService _service;
+        public JobPostingsController(JobPostingService service) => _service = service;
 
-        public JobPostingsController(JobPostingService jobService)
+        [HttpPatch("{id}/publish")] // Công khai tin đăng
+        public async Task<IActionResult> Publish(int id, [FromBody] string description)
+            => await _service.PublishJobPostingAsync(id, description) ? Ok() : BadRequest();
+
+        [HttpGet("published")]
+        public async Task<IActionResult> GetPublished()
         {
-            _jobService = jobService;
+            var jobs = await _service.GetPublishedJobsAsync();
+
+            if (jobs == null || !jobs.Any())
+                return Ok(new List<JobPosting>()); // Trả về mảng rỗng nếu không có tin nào
+
+            return Ok(jobs);
         }
-
-        /// <summary>
-        /// Feature: Job Posting Management
-        /// API để HR chính thức đăng tin tuyển dụng lên website
-        /// </summary>
-        [HttpPatch("{id}/publish")]
-        public async Task<IActionResult> Publish(int id, [FromBody] string jobDescription)
-        {
-            var success = await _jobService.PublishJobPostingAsync(id, jobDescription);
-
-            if (!success)
-                return BadRequest(new { message = "Không thể đăng tin. Vui lòng kiểm tra trạng thái phê duyệt của yêu cầu." });
-
-            return Ok(new { message = "Tin tuyển dụng đã được đăng công khai thành công." });
-        }
-        // PUT: api/v1/JobPostings/{id}
-        // Feature: Update Job Posting
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] JobPosting updatedData)
-        {
-            var success = await _jobService.UpdateJobPostingAsync(id, updatedData);
-            if (!success) return NotFound(new { message = "Không tìm thấy tin tuyển dụng." });
-
-            return Ok(new { message = "Cập nhật tin tuyển dụng thành công." });
-        }
-
-        // PATCH: api/v1/JobPostings/{id}/close
-        // Feature: Close Job Posting
-        [HttpPatch("{id}/close")]
+        [HttpPatch("{id}/close")] // Đóng tin
         public async Task<IActionResult> Close(int id)
-        {
-            var success = await _jobService.CloseJobPostingAsync(id);
-            if (!success) return BadRequest(new { message = "Không thể đóng tin tuyển dụng này." });
+            => await _service.CloseJobPostingAsync(id) ? Ok() : BadRequest();
 
-            return Ok(new { message = "Tin tuyển dụng đã được đóng." });
-        }
+        [HttpPatch("{id}/reopen")] // MỞ LẠI TIN (Yêu cầu của bạn)
+        public async Task<IActionResult> Reopen(int id)
+            => await _service.ReopenJobPostingAsync(id) ? Ok() : BadRequest("Chỉ có thể mở lại tin đã đóng");
     }
 }
