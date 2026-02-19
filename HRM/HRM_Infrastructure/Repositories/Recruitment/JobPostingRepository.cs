@@ -48,6 +48,7 @@ namespace HRM_Infrastructure.Repositories.Recruitment
             {
                 job.Status = "Closed";
                 job.UpdatedAt = DateTime.Now;
+                job.ClosingDate = DateTime.Now;
             }
 
             await _context.SaveChangesAsync();

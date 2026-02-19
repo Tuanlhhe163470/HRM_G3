@@ -29,8 +29,49 @@ namespace HRM_API.Controllers
         public async Task<IActionResult> Close(int id)
             => await _service.CloseJobPostingAsync(id) ? Ok() : BadRequest();
 
-        [HttpPatch("{id}/reopen")] // MỞ LẠI TIN (Yêu cầu của bạn)
-        public async Task<IActionResult> Reopen(int id)
-            => await _service.ReopenJobPostingAsync(id) ? Ok() : BadRequest("Chỉ có thể mở lại tin đã đóng");
+        public class ReopenRequest
+        {
+            public DateTime NewExpiryDate { get; set; }
+        }
+
+        [HttpPatch("{id}/reopen")]
+        public async Task<IActionResult> Reopen(int id, [FromBody] ReopenRequest request)
+        {
+            // Kiểm tra nếu dữ liệu ngày tháng không hợp lệ (null hoặc mặc định)
+            if (request.NewExpiryDate <= DateTime.Now)
+            {
+                return BadRequest(new { message = "Ngày hết hạn mới phải là một ngày trong tương lai." });
+            }
+
+            var result = await _service.ReopenJobPostingAsync(id, request.NewExpiryDate);
+
+            if (!result)
+            {
+                return BadRequest(new
+                {
+                    message = "Không thể mở lại tin. Vui lòng kiểm tra ID hoặc trạng thái tin (chỉ mở lại tin đã Closed)."
+                });
+            }
+
+            return Ok(new { message = "Mở lại tin tuyển dụng thành công." });
+        }
+
+        [HttpPut("{id}")] // Cập nhật tin đăng 
+        public async Task<IActionResult> Update(int id, [FromBody] JobPosting updatedData)
+        {
+            // Gọi service xử lý logic
+            var success = await _service.UpdateJobPostingAsync(id, updatedData);
+
+            if (!success)
+            {
+                // Trả về thông báo lỗi chi tiết
+                return BadRequest(new
+                {
+                    message = "Không thể cập nhật. Tin tuyển dụng không tồn tại hoặc đã bị đóng (Closed)."
+                });
+            }
+
+            return Ok(new { message = "Cập nhật tin tuyển dụng thành công." });
+        }
     }
 }

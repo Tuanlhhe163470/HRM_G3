@@ -37,6 +37,8 @@ namespace HRM_Domain.Entities
 
         public DateTime? UpdatedAt { get; set; } // Sẽ cập nhật khi Approve, Publish hoặc Reopen
 
-        public DateTime? ExpiryDate { get; set; } // Ngày hết hạn tin tuyển dụng
+        public DateTime? ExpiryDate { get; set; } // Ngày hết hạn tin tuyển dụng dự kiến
+
+        public DateTime? ClosingDate { get; set; } // Ngày thực tế đóng tin
     }
 }
