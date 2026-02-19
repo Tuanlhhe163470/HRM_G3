@@ -39,5 +39,18 @@ namespace HRM_Infrastructure.Repositories.Recruitment
         {
             return await _context.JobPostings.FindAsync(id);
         }
+        public async Task CloseExpiredJobsAsync()
+        {
+            var expiredJobs = _context.JobPostings
+                .Where(j => j.Status == "Open" && j.ExpiryDate < DateTime.Now);
+
+            foreach (var job in expiredJobs)
+            {
+                job.Status = "Closed";
+                job.UpdatedAt = DateTime.Now;
+            }
+
+            await _context.SaveChangesAsync();
+        }
     }
 }

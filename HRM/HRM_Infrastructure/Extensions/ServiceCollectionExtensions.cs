@@ -1,6 +1,7 @@
 using HRM_Application.Contracts.Repositories;
 using HRM_Application.Contracts.Services;
 using HRM_Application.Services;
+using HRM_Infrastructure.BackgroundServices;
 using HRM_Infrastructure.Data;
 // using HRM_Application.Contracts.Services; // Uncomment nếu IGoalService nằm ở đây
 using HRM_Infrastructure.Repositories.GoalService; // Nơi chứa class GoalService
@@ -40,7 +41,7 @@ namespace HRM_Infrastructure.Extensions
             // 4. SERVICES (Business Logic Layer)
             // Đăng ký Service GoalService vào đây
             services.AddScoped<IGoalService, GoalService>();
-
+            services.AddHostedService<JobExpirationWorker>();
             return services;
         }
     }

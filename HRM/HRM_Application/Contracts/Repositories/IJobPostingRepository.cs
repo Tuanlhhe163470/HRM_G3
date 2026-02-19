@@ -13,5 +13,6 @@ namespace HRM_Application.Contracts.Repositories
         Task<JobPosting?> GetByIdAsync(int id);
         Task UpdateAsync(JobPosting job); 
         Task<IEnumerable<JobPosting>> GetByStatusAsync(string status);
+        Task CloseExpiredJobsAsync();
     }
 }
