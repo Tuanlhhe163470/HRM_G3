@@ -1,16 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace HRM_Application.DTOs.PublicHoliday.Requests
 {
     public class CreatePublicHolidayRequest
     {
-        public string HolidayName { get; set; }
+        [Required(ErrorMessage = "Tên ngày lễ là bắt buộc")]
+        public string HolidayName { get; set; } = string.Empty;
+
+        [Required]
         public DateTime StartDate { get; set; }
+
+        [Required]
         public DateTime EndDate { get; set; }
-        public bool IsRecurring { get; set; }
+
+        public bool IsRecurring { get; set; } = false;
     }
 }

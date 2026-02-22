@@ -8,6 +8,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using HRM_Application.Services;
+using HRM_Infrastructure.Repositories.TimeAttendance;
+using HRM_Application.Contracts.Services;
+using HRM_Application.Services.TimeAttendance;
 
 namespace HRM_Infrastructure.Extensions
 {
@@ -30,11 +33,13 @@ namespace HRM_Infrastructure.Extensions
 
             // 3. REPOSITORIES (Data Access Layer)
             services.AddScoped<IPerformanceGoalRepository, PerformanceGoalRepository>();
+            services.AddScoped<IAttendanceRepository, AttendanceRepository>();
             // services.AddScoped<IShiftRepository, ShiftRepository>(); 
 
             // 4. SERVICES (Business Logic Layer)
             // Đăng ký Service GoalService vào đây
             services.AddScoped<IGoalService, GoalService>();
+            services.AddScoped<IAttendanceService, AttendanceService>();
 
             return services;
         }

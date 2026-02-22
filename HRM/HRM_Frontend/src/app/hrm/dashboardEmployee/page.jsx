@@ -1,8 +1,159 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import attendanceService from '@/services/TimeAndAttendance/attendanceService';
 
 export default function EmployeeDashboard() {
+  // --- STATE QUẢN LÝ ---
+  const [loading, setLoading] = useState(true);
+  const [attendanceStatus, setAttendanceStatus] = useState('LOADING'); // 'NOT_CHECKED_IN', 'CHECKED_IN', 'COMPLETED'
+  const [currentTime, setCurrentTime] = useState(new Date());
+  
+  // Thông tin user hiển thị (Demo)
+  const user = { name: "Nguyen Van A" };
+
+  // --- 1. ĐỒNG HỒ REAL-TIME ---
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // --- 2. KIỂM TRA TRẠNG THÁI HÔM NAY ---
+  const checkTodayStatus = async () => {
+    try {
+      setLoading(true);
+      const today = new Date();
+      // Gọi API lấy lịch sử tháng hiện tại
+      const res = await attendanceService.getMyHistory(today.getMonth() + 1, today.getFullYear());
+      
+      const logs = res.data || []; // Giả sử API trả về { data: [...] }
+      
+      // Tìm log của ngày hôm nay
+      const todayLog = logs.find(log => {
+        const logDate = new Date(log.workDate);
+        return logDate.getDate() === today.getDate() &&
+               logDate.getMonth() === today.getMonth() &&
+               logDate.getFullYear() === today.getFullYear();
+      });
+
+      if (!todayLog) {
+        setAttendanceStatus('NOT_CHECKED_IN');
+      } else if (todayLog.checkInTime && !todayLog.checkOutTime) {
+        setAttendanceStatus('CHECKED_IN');
+      } else if (todayLog.checkInTime && todayLog.checkOutTime) {
+        setAttendanceStatus('COMPLETED');
+      }
+
+    } catch (error) {
+      console.error("Lỗi kiểm tra trạng thái:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    checkTodayStatus();
+  }, []);
+
+  // --- 3. XỬ LÝ CLICK NÚT ---
+  const handleAttendanceClick = async () => {
+    setLoading(true);
+    try {
+      // Lấy tọa độ GPS (Optional)
+      let locationData = {};
+      if ("geolocation" in navigator) {
+         try {
+            const position = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+            });
+            locationData = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
+            };
+         } catch (e) {
+            console.warn("Không lấy được GPS:", e);
+         }
+      }
+
+      if (attendanceStatus === 'NOT_CHECKED_IN') {
+        // ==> GỌI CHECK-IN
+        await attendanceService.checkIn({ 
+            note: "Check-in từ Web Dashboard",
+            ...locationData
+        });
+        alert("✅ Check-in thành công! Chúc bạn một ngày làm việc hiệu quả.");
+        setAttendanceStatus('CHECKED_IN'); // Cập nhật state ngay lập tức
+      } 
+      else if (attendanceStatus === 'CHECKED_IN') {
+        // ==> GỌI CHECK-OUT
+        if (window.confirm("Bạn có chắc chắn muốn kết thúc ca làm việc?")) {
+            await attendanceService.checkOut({ 
+                note: "Check-out từ Web Dashboard",
+                ...locationData
+            });
+            alert("👋 Check-out thành công! Hẹn gặp lại.");
+            setAttendanceStatus('COMPLETED');
+        }
+      }
+
+    } catch (error) {
+      const msg = error.response?.data?.message || error.message;
+      alert(`❌ Có lỗi xảy ra: ${msg}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- HELPER FORMAT ---
+  const formattedDate = currentTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
+  const formattedTime = currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  // --- RENDER NÚT BẤM THEO TRẠNG THÁI ---
+  const renderAttendanceButton = () => {
+    if (loading && attendanceStatus === 'LOADING') {
+        return (
+            <button disabled className="flex items-center gap-2 rounded-xl bg-gray-300 px-8 py-4 text-white">
+                <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                Loading...
+            </button>
+        );
+    }
+
+    if (attendanceStatus === 'COMPLETED') {
+        return (
+            <button disabled className="flex cursor-not-allowed items-center justify-center gap-3 rounded-xl bg-gray-400 px-8 py-4 text-white shadow-sm opacity-80">
+               <span className="material-symbols-outlined text-2xl">task_alt</span>
+               <span className="text-lg font-bold">DONE FOR TODAY</span>
+            </button>
+        );
+    }
+
+    const isCheckIn = attendanceStatus === 'NOT_CHECKED_IN';
+    
+    return (
+        <button 
+            onClick={handleAttendanceClick}
+            disabled={loading}
+            className={`group relative flex items-center justify-center gap-3 overflow-hidden rounded-xl px-8 py-4 text-white shadow-lg transition-all active:scale-95
+                ${loading ? 'opacity-70 cursor-wait' : ''}
+                ${isCheckIn 
+                    ? 'bg-emerald-500 shadow-emerald-500/30 hover:bg-emerald-600' // Style Check-in (Xanh)
+                    : 'bg-orange-500 shadow-orange-500/30 hover:bg-orange-600'   // Style Check-out (Cam)
+                }
+            `}
+        >
+            <span className={`material-symbols-outlined text-2xl ${!loading && 'group-hover:animate-pulse'}`}>
+                {loading ? 'hourglass_top' : (isCheckIn ? 'fingerprint' : 'logout')}
+            </span>
+            <span className="text-lg font-bold tracking-wide">
+                {loading ? 'PROCESSING...' : (isCheckIn ? 'CHECK-IN' : 'CHECK-OUT')}
+            </span>
+        </button>
+    );
+  };
+
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6 pb-10">
       
       {/* --- SECTION 1: HERO CHECK-IN --- */}
       <div className="relative overflow-hidden rounded-xl bg-white p-0 shadow-sm ring-1 ring-black/5 dark:bg-slate-800 dark:ring-white/10">
@@ -11,21 +162,23 @@ export default function EmployeeDashboard() {
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3 text-blue-600">
               <span className="material-symbols-outlined fill">wb_sunny</span>
-              <span className="text-sm font-medium tracking-wide uppercase">Wednesday, Oct 25, 2023</span>
+              <span className="text-sm font-medium tracking-wide uppercase">{formattedDate}</span>
             </div>
-            <h2 className="text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">07:55 AM</h2>
-            <p className="text-lg text-slate-500 dark:text-gray-400">Good morning, Nguyen Van A! Ready to start?</p>
+            {/* Đồng hồ chạy thật */}
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl min-w-[200px]">{formattedTime}</h2>
+            <p className="text-lg text-slate-500 dark:text-gray-400">
+                Good morning, {user.name}! 
+                {attendanceStatus === 'NOT_CHECKED_IN' && " Ready to start?"}
+                {attendanceStatus === 'CHECKED_IN' && " Have a great working day!"}
+                {attendanceStatus === 'COMPLETED' && " See you tomorrow!"}
+            </p>
           </div>
           
           <div className="mt-6 flex items-center gap-4 md:mt-0">
-             {/* Nút Check-in: Sau này ta sẽ gắn sự kiện onClick vào đây */}
-             <button className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-xl bg-emerald-500 px-8 py-4 text-white shadow-lg shadow-emerald-500/30 transition-all hover:bg-emerald-600 active:scale-95">
-                <span className="material-symbols-outlined text-2xl group-hover:animate-pulse">fingerprint</span>
-                <span className="text-lg font-bold tracking-wide">CHECK-IN</span>
-             </button>
+             {/* RENDER NÚT Ở ĐÂY */}
+             {renderAttendanceButton()}
           </div>
         </div>
-        {/* Decorative line */}
         <div className="h-1 w-full bg-gradient-to-r from-emerald-500/50 via-blue-500/50 to-emerald-500/50"></div>
       </div>
 
@@ -41,7 +194,7 @@ export default function EmployeeDashboard() {
               </div>
               <h3 className="font-medium text-slate-900 dark:text-white">Workdays</h3>
             </div>
-            <span className="text-xs font-medium text-slate-500">Oct 2023</span>
+            <span className="text-xs font-medium text-slate-500">Current Month</span>
           </div>
           <div className="flex items-end justify-between">
             <span className="text-3xl font-bold text-slate-900 dark:text-white">18<span className="text-xl font-medium text-slate-500">/22</span></span>

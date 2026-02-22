@@ -36,6 +36,11 @@ namespace HRM_Infrastructure.Repositories.TimeAttendance
             }
         }
 
+        public async Task<List<ShiftConfig>> GetActiveShiftAsync()
+        {
+            return await _context.ShiftConfigs.Where(s => s.IsActive).ToListAsync();
+        }
+
         public async Task<PagedResponse<ShiftConfig>> GetAllShiftsAsync(PaginationFilter filter)
         {
             var query = _context.ShiftConfigs.AsQueryable();
