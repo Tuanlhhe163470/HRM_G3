@@ -339,3 +339,31 @@
     background-color: transparent !important;
   }
 }
+/* Sidebar Menu Custom Styles */
+.custom-sidebar-menu.ant-menu-inline {
+  border-inline-end: none !important;
+}
+
+/* Màu khi item đang được chọn */
+.custom-sidebar-menu .ant-menu-item-selected {
+  background-color: #e6f7ff !important; 
+  color: #00aeef !important; 
+  font-weight: 600;
+}
+
+/* Hiệu ứng hover cho các item con */
+.custom-sidebar-menu .ant-menu-item:hover, 
+.custom-sidebar-menu .ant-menu-submenu-title:hover {
+  color: #00aeef !important;
+  background-color: #f0faff !important;
+}
+
+/* Đường gạch bên trái khi chọn item */
+.custom-sidebar-menu .ant-menu-item-selected::after {
+  border-right: 3px solid #00aeef !important;
+}
+
+/* Chỉnh font icon */
+.custom-sidebar-menu .anticon {
+  font-size: 16px;
+}

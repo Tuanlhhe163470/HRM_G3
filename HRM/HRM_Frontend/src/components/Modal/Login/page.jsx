@@ -6,6 +6,7 @@ import { useState } from "react";
 import { loginApi } from "@/services/AuthService";
 import { useRouter } from "next/navigation";
 import notice from "@/components/Notice";
+
 const { Link } = Typography;
 
 const LoginModal = ({ open, onCancel }) => {
@@ -18,6 +19,7 @@ const LoginModal = ({ open, onCancel }) => {
     try {
       const response = await loginApi(values);
 
+      // response.token ở đây chứa object bao gồm token và employee (theo logic Backend mình đã sửa)
       if (response && response.token) {
         const authData = response.token; 
 
@@ -29,9 +31,27 @@ const LoginModal = ({ open, onCancel }) => {
           isSuccess: true,
         });
         onCancel?.();
+        const role = authData.employee.roleName;
+
+        if (role === "Admin") {
+          router.push("/dashboard");
+        } else if (role === "HR") {
+    
+          router.push("/recruitment");
+        } else if (role === "Manager") {
+          router.push("/approvals");
+        } else {
+          router.push("/attendance");
+        }
+
+        router.refresh();
       }
     } catch (error) {
-      // ... handle error
+      notice({
+        msg: "Lỗi đăng nhập",
+        desc: error.message || "Tài khoản hoặc mật khẩu không chính xác!",
+        isSuccess: false,
+      });
     } finally {
       setLoading(false);
     }
@@ -50,7 +70,7 @@ const LoginModal = ({ open, onCancel }) => {
       className="custom-login-modal"
     >
       <div className="text-center mb-8 flex flex-col items-center">
-        <div className="inline-block w-fit">
+        <div className="inline-block w-fit pt-6">
           <h2 className="text-2xl font-bold text-gray-800 m-0 tracking-tight uppercase">
             Đăng nhập
           </h2>
@@ -61,6 +81,7 @@ const LoginModal = ({ open, onCancel }) => {
           Truy cập vào hệ thống HRM của bạn
         </p>
       </div>
+
       <Form
         form={form}
         name="login_form"
@@ -68,7 +89,7 @@ const LoginModal = ({ open, onCancel }) => {
         layout="vertical"
         size="large"
         requiredMark={false}
-        className="w-full"
+        className="w-full pb-6"
       >
         <Form.Item
           name="username"
@@ -77,7 +98,7 @@ const LoginModal = ({ open, onCancel }) => {
           <Input
             prefix={<UserOutlined className="text-gray-400 mr-2" />}
             placeholder="Tên đăng nhập"
-            className="rounded-md border-gray-200 hover:border-[#00aeef] focus:border-[#00aeef]"
+            className="rounded-md border-gray-200 hover:border-[#00aeef]"
           />
         </Form.Item>
 
@@ -89,12 +110,12 @@ const LoginModal = ({ open, onCancel }) => {
           <Input.Password
             prefix={<LockOutlined className="text-gray-400 mr-2" />}
             placeholder="Mật khẩu"
-            className="rounded-md border-gray-200 hover:border-[#00aeef] focus:border-[#00aeef]"
+            className="rounded-md border-gray-200 hover:border-[#00aeef]"
           />
         </Form.Item>
 
         <div className="flex justify-end mb-6">
-          <Link className="text-[#00aeef] text-sm hover:text-[#0096ce] transition-colors font-medium">
+          <Link className="text-[#00aeef] text-sm hover:text-[#0096ce] font-medium">
             Quên mật khẩu?
           </Link>
         </div>
@@ -105,7 +126,7 @@ const LoginModal = ({ open, onCancel }) => {
             htmlType="submit"
             loading={loading}
             block
-            className="bg-[#00aeef] border-none h-11 rounded-md font-bold text-base hover:bg-[#0096ce] transition-all flex items-center justify-center shadow-sm"
+            className="bg-[#00aeef] border-none h-11 rounded-md font-bold text-base hover:bg-[#0096ce] shadow-sm"
           >
             ĐĂNG NHẬP
           </Button>
