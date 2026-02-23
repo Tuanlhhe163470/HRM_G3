@@ -3,8 +3,8 @@
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import { Button, Form, Input, Typography, Modal } from "antd";
 import { useState } from "react";
-import { loginApi } from "@/services/AuthService"; 
-import { useRouter } from "next/navigation"; 
+import { loginApi } from "@/services/AuthService";
+import { useRouter } from "next/navigation";
 import notice from "@/components/Notice";
 const { Link } = Typography;
 
@@ -13,26 +13,25 @@ const LoginModal = ({ open, onCancel }) => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-const handleLogin = async (values) => {
+  const handleLogin = async (values) => {
     setLoading(true);
     try {
-      const result = await loginApi(values);
-      
-      notice({
-        msg: "Đăng nhập thành công!",
-        desc: "Chào mừng bạn quay trở lại hệ thống HRM.",
-        isSuccess: true
-      });
-      
-      onCancel?.();
-      form.resetFields();
-      router.push("/hrm/dashboard"); 
+      const response = await loginApi(values);
+
+      if (response && response.token) {
+        const authData = response.token; 
+
+        localStorage.setItem("token", authData.token);
+        localStorage.setItem("user", JSON.stringify(authData.employee));
+
+        notice({
+          msg: "Đăng nhập thành công!",
+          isSuccess: true,
+        });
+        onCancel?.();
+      }
     } catch (error) {
-      notice({
-        msg: "Lỗi đăng nhập",
-        desc: error.message || "Tài khoản hoặc mật khẩu không chính xác!",
-        isSuccess: false
-      });
+      // ... handle error
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HRM_Application.DTOs.Authentication;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,6 @@ namespace HRM_Application.Contracts.Services
 {
     public interface IAuthService
     {
-        Task<string?> AuthenticateAsync(string username, string password);
+        Task<LoginResponse?> AuthenticateAsync(string username, string password);
     }
 }

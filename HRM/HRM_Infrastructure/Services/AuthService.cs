@@ -1,4 +1,5 @@
 ﻿using HRM_Application.Contracts.Services;
+using HRM_Application.DTOs.Authentication; 
 using HRM_Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -24,15 +25,22 @@ namespace HRM_Infrastructure.Services
             _config = config;
         }
 
-        public async Task<string?> AuthenticateAsync(string username, string password)
+        // Cập nhật kiểu trả về từ Task<string?> sang Task<LoginResponse?>
+        public async Task<LoginResponse?> AuthenticateAsync(string username, string password)
         {
-            // Tìm user và nạp kèm Role
+            // 1. Tìm user và nạp kèm Role + Thông tin Employee + Department + Position
             var user = await _context.UserAccounts
                 .Include(u => u.Role)
+                .Include(u => u.Employee)
+                    .ThenInclude(e => e.Department)
+                .Include(u => u.Employee)
+                    .ThenInclude(e => e.Position)
                 .FirstOrDefaultAsync(u => u.Username == username && u.IsActive);
 
+            // Kiểm tra mật khẩu (Hiện tại Chiến đang để text thô nên so sánh trực tiếp)
             if (user == null || user.PasswordHash != password) return null;
 
+            // 2. Logic tạo JWT Token
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]!);
 
@@ -41,7 +49,7 @@ namespace HRM_Infrastructure.Services
                 Subject = new ClaimsIdentity(new[]
                 {
                     new Claim(ClaimTypes.Name, user.Username),
-                    new Claim(ClaimTypes.Role, user.Role?.RoleName ?? "Employee"), // Phân quyền dựa trên RoleName
+                    new Claim(ClaimTypes.Role, user.Role?.RoleName ?? "Employee"),
                     new Claim("EmployeeID", user.EmployeeID?.ToString() ?? "")
                 }),
                 Expires = DateTime.UtcNow.AddMinutes(double.Parse(_config["Jwt:DurationInMinutes"]!)),
@@ -51,7 +59,25 @@ namespace HRM_Infrastructure.Services
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
-            return tokenHandler.WriteToken(token);
+            var tokenString = tokenHandler.WriteToken(token);
+
+            // 3. Trả về đối tượng LoginResponse chứa cả Token và Data nhân viên
+            return new LoginResponse
+            {
+                Token = tokenString,
+                Employee = new EmployeeLoginDto
+                {
+                    EmployeeID = user.Employee?.EmployeeID ?? 0,
+                    FullName = user.Employee?.FullName ?? "N/A",
+                    Email = user.Employee?.Email ?? "",
+                    Gender = user.Employee?.Gender,
+                    Phone = user.Employee?.Phone,
+                    AvatarURL = user.Employee?.AvatarURL,
+                    DepartmentName = user.Employee?.Department?.DepartmentName,
+                    PositionName = user.Employee?.Position?.PositionName,
+                    Status = user.Employee?.Status ?? "Active"
+                }
+            };
         }
     }
 }
