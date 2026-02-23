@@ -68,6 +68,7 @@ namespace HRM_Infrastructure.Services
                 Employee = new EmployeeLoginDto
                 {
                     EmployeeID = user.Employee?.EmployeeID ?? 0,
+                    RoleName = user.Role?.RoleName ?? "Employee",
                     FullName = user.Employee?.FullName ?? "N/A",
                     Email = user.Employee?.Email ?? "",
                     Gender = user.Employee?.Gender,

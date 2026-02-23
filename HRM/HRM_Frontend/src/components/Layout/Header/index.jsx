@@ -11,6 +11,10 @@ import {
   SettingOutlined,
   IdcardOutlined,
   DownOutlined,
+  DashboardOutlined,
+  TeamOutlined,
+  FileSearchOutlined,
+  DollarOutlined,
 } from "@ant-design/icons";
 import { LayoutStyled } from "../styled";
 import "../styles.css";
@@ -23,17 +27,12 @@ export default function Header() {
   const router = useRouter();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
-
-  // Trạng thái xác định đã mount thành công trên Client
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState(null);
 
-  // Bước 1: Khởi tạo dữ liệu và xác nhận mount trong cùng một Effect
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userStr = localStorage.getItem("user");
-
-    // Batching: React sẽ nhóm việc cập nhật mounted và user lại để render 1 lần
     if (token && userStr) {
       try {
         const parsedUser = JSON.parse(userStr);
@@ -42,31 +41,18 @@ export default function Header() {
         localStorage.removeItem("user");
       }
     }
-
     setMounted(true);
   }, []);
 
-  // Bước 2: Đồng bộ lại User khi LoginModal đóng
   useEffect(() => {
-    const syncData = () => {
+    if (!isLoginOpen && mounted) {
       const token = localStorage.getItem("token");
       const userStr = localStorage.getItem("user");
-
       if (token && userStr) {
-        try {
-          const currentUser = JSON.parse(userStr);
-          setUser(currentUser);
-        } catch (e) {
-          setUser(null);
-        }
+        setUser(JSON.parse(userStr));
       } else {
         setUser(null);
       }
-    };
-
-    // Chỉ chạy logic đồng bộ khi Modal đăng nhập vừa được đóng lại
-    if (!isLoginOpen && mounted) {
-      syncData();
     }
   }, [isLoginOpen, mounted]);
 
@@ -75,6 +61,112 @@ export default function Header() {
     localStorage.removeItem("user");
     setUser(null);
     router.push("/");
+  };
+
+  // --- HÀM RENDER NAV THEO ROLE ---
+  const renderNavByRole = () => {
+    if (isMobile) return null;
+
+    // Nếu chưa đăng nhập: Hiện menu mặc định
+    if (!user) {
+      return (
+        <nav className="hidden md:flex items-center gap-8">
+          <Link
+            href="/tim-kiem-viec"
+            className="menu-item font-medium hover:text-[#00aeef]"
+          >
+            CÁC CÔNG VIỆC
+          </Link>
+          <Link
+            href="/gioi-thieu-tong-quan"
+            className="menu-item font-medium hover:text-[#00aeef]"
+          >
+            BỘ GIẢI PHÁP
+          </Link>
+          <Link
+            href="/lien-he"
+            className="menu-item font-medium hover:text-[#00aeef]"
+          >
+            VỀ CHÚNG TÔI
+          </Link>
+        </nav>
+      );
+    }
+
+    // Logic giả định: Object user của bạn nên có thêm trường roleName từ Backend
+    // Nếu chưa có, bạn có thể giải mã token hoặc BE trả về thêm nhé.
+    const role = user.roleName || "Employee";
+
+    switch (role) {
+      case "Admin":
+        return (
+          <nav className="hidden md:flex items-center gap-6">
+            <Link
+              href="/hrm/dashboard"
+              className="menu-item font-bold text-[#00aeef]"
+            >
+              <DashboardOutlined /> TỔNG QUAN
+            </Link>
+            <Link href="/hrm/accounts" className="menu-item font-medium">
+              QUẢN TRỊ TÀI KHOẢN
+            </Link>
+            <Link href="/hrm/settings" className="menu-item font-medium">
+              CẤU HÌNH HỆ THỐNG
+            </Link>
+          </nav>
+        );
+      case "HR":
+        return (
+          <nav className="hidden md:flex items-center gap-4 lg:gap-6">
+            <Link href="/hrm/recruitment" className="menu-item font-semibold text-[#00aeef] text-[13px] uppercase tracking-tighter">
+              <FileSearchOutlined /> Tuyển dụng
+            </Link>
+            <Link href="/hrm/core-hr" className="menu-item font-medium hover:text-[#00aeef] text-[13px] uppercase tracking-tighter">
+              <TeamOutlined /> Nhân sự
+            </Link>
+            <Link href="/hrm/attendance" className="menu-item font-medium hover:text-[#00aeef] text-[13px] uppercase tracking-tighter">
+              <DashboardOutlined /> Chấm công
+            </Link>
+            <Link href="/hrm/payroll" className="menu-item font-medium hover:text-[#00aeef] text-[13px] uppercase tracking-tighter">
+              <DollarOutlined /> Lương & Phúc lợi
+            </Link>
+            <Link href="/hrm/training" className="menu-item font-medium hover:text-[#00aeef] text-[13px] uppercase tracking-tighter">
+              <SettingOutlined /> Đào tạo
+            </Link>
+          </nav>
+        );
+      case "Manager":
+        return (
+          <nav className="hidden md:flex items-center gap-6">
+            <Link href="/hrm/team" className="menu-item font-medium">
+              ĐỘI NGŨ
+            </Link>
+            <Link href="/hrm/approvals" className="menu-item font-medium">
+              DUYỆT YÊU CẦU
+            </Link>
+            <Link href="/hrm/reports" className="menu-item font-medium">
+              BÁO CÁO
+            </Link>
+          </nav>
+        );
+      default: // Employee
+        return (
+          <nav className="hidden md:flex items-center gap-8">
+            <Link
+              href="/hrm/attendance"
+              className="menu-item font-medium text-[#00aeef]"
+            >
+              CHẤM CÔNG
+            </Link>
+            <Link href="/hrm/leave" className="menu-item font-medium">
+              NGHỈ PHÉP
+            </Link>
+            <Link href="/hrm/payslip" className="menu-item font-medium">
+              PHIẾU LƯƠNG
+            </Link>
+          </nav>
+        );
+    }
   };
 
   const userMenuItems = [
@@ -93,7 +185,6 @@ export default function Header() {
     },
   ];
 
-  // Fix Hydration: Trả về khung Header trống (Skeleton) khi đang render ở Server
   if (!mounted) {
     return (
       <LayoutStyled>
@@ -106,7 +197,7 @@ export default function Header() {
     <LayoutStyled>
       <header className="admin-header bg-white shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-2">
-          {/* Logo & Brand */}
+          {/* Logo & Dynamic Nav */}
           <div className="flex items-center gap-12">
             <Link href="/" className="flex items-center pointer group">
               <Image
@@ -125,31 +216,11 @@ export default function Header() {
               </div>
             </Link>
 
-            {!isMobile && (
-              <nav className="hidden md:flex items-center gap-8">
-                <Link
-                  href="/tim-kiem-viec"
-                  className="menu-item font-medium hover:text-[#00aeef]"
-                >
-                  CÁC CÔNG VIỆC
-                </Link>
-                <Link
-                  href="/gioi-thieu-tong-quan"
-                  className="menu-item font-medium hover:text-[#00aeef]"
-                >
-                  BỘ GIẢI PHÁP HRM
-                </Link>
-                <Link
-                  href="/lien-he"
-                  className="menu-item font-medium hover:text-[#00aeef]"
-                >
-                  VỀ CHÚNG TÔI
-                </Link>
-              </nav>
-            )}
+            {/* PHẦN THAY ĐỔI THEO ROLE Ở ĐÂY */}
+            {renderNavByRole()}
           </div>
 
-          {/* Authentication Actions */}
+          {/* Authentication Actions (Giữ nguyên giống nhau) */}
           <div className="flex items-center gap-4">
             {user ? (
               <Dropdown
