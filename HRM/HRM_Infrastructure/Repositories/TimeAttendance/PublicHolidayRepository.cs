@@ -3,6 +3,7 @@ using HRM_Application.Contracts.Repositories;
 using HRM_Domain.Entities;
 using HRM_Infrastructure.Data;
 using HRM_Infrastructure.Extensions;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,6 +42,12 @@ namespace HRM_Infrastructure.Repositories.TimeAttendance
             var query = _context.PublicHolidays.AsQueryable();
 
             return await query.ToPagedListAsync(filter.PageNumber, filter.PageSize);
+        }
+
+        public async Task<PublicHoliday?> GetHolidayByDateAsync(DateTime date)
+        {
+            return await _context.PublicHolidays
+                .FirstOrDefaultAsync(h => date.Date >= h.StartDate.Date && date.Date <= h.EndDate.Date);
         }
 
         public async Task<PublicHoliday?> GetPublicHolidayByIdAsync(int id)

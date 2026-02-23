@@ -16,12 +16,18 @@ namespace HRM_Domain.Entities.TimeAttendance
         public int EmployeeId { get; set; }
         public int ShiftId { get; set; }
         [ForeignKey("ShiftId")]
-        public ShiftConfig ShiftConfig { get; set; }
+        public ShiftConfig? ShiftConfig { get; set; }
         public DateTime WorkDate { get; set; }
-        public TimeSpan? CheckInTime { get; set; }
-        public TimeSpan? CheckOutTime { get; set; }
-        public double WorkingHours { get; set; } = 0;
+        public DateTime? CheckInTime { get; set; }
+        public DateTime? CheckOutTime { get; set; }
+
+        [MaxLength(50)]
+        public string? CheckInIp { get; set; }
+        [MaxLength(50)]
+        public string? CheckOutIp { get; set; }
+        public double? WorkingHours { get; set; } = 0;
         public AttendanceStatus Status { get; set; } = AttendanceStatus.Absent;
         public string? Note { get; set; }
+        public bool IsSystemGenerated { get; set; } = false;
     }
 }
