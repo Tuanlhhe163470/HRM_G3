@@ -16,5 +16,6 @@ namespace HRM_Application.Contracts.Repositories
         Task AddPublicHolidayAsync(PublicHoliday publicHoliday);
         Task UpdatePublicHolidayAsync(PublicHoliday publicHoliday);
         Task DeletePublicHolidayAsync(int id);
+        Task<PublicHoliday?> GetHolidayByDateAsync(DateTime date);
     }
 }

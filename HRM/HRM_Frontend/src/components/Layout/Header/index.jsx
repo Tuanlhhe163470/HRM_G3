@@ -92,7 +92,7 @@ export default function Header() {
       );
     }
 
-    const role = user.roleName || "Employee";
+    const role = user.roleName ;
 
     switch (role) {
       case "HR":
@@ -111,7 +111,7 @@ export default function Header() {
               <TeamOutlined /> Nhân sự
             </Link>
             <Link
-              href="/attendance"
+              href="/attendance/checkin"
               className={`menu-item font-medium text-[13px] uppercase tracking-tighter ${pathname.startsWith("/attendance") ? "text-[#00aeef] font-bold" : ""}`}
             >
               <DashboardOutlined /> Chấm công

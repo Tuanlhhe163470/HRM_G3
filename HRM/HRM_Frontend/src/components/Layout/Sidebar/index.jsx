@@ -113,17 +113,6 @@ export default function SidebarHRM() {
 
   const getAttendanceItems = () => [
     {
-      key: "/attendance/config",
-      label: (
-        <Link href="/attendance/config">
-          <span className="font-bold text-[13px] uppercase tracking-tight">
-            Cấu hình chấm công
-          </span>
-        </Link>
-      ),
-      icon: <CalendarOutlined />,
-    },
-    {
       key: "/attendance/checkin",
       label: (
         <Link href="/attendance/checkin">
@@ -133,6 +122,40 @@ export default function SidebarHRM() {
         </Link>
       ),
       icon: <FileAddOutlined />,
+    },
+    {
+      key: "sub-candidate",
+      label: (
+        <span className="font-bold text-[13px] uppercase tracking-tight">
+          Quản lý chấm công
+        </span>
+      ),
+      icon: <UserOutlined />,
+      children: [
+        {
+          key: "/attendance/my-timesheet",
+          label: (
+            <Link href="/attendance/my-timesheet">Bảng chấm công cá nhân</Link>
+          ),
+          icon: <CalendarOutlined />,
+        },
+        {
+          key: "/attendance/overtime",
+          label: <Link href="/attendance/overtime">Đăng ký OT</Link>,
+          icon: <CalendarOutlined />,
+        },
+      ],
+    },
+    {
+      key: "/attendance/config",
+      label: (
+        <Link href="/attendance/config">
+          <span className="font-bold text-[13px] uppercase tracking-tight">
+            Cấu hình chấm công
+          </span>
+        </Link>
+      ),
+      icon: <CalendarOutlined />,
     },
   ];
 
@@ -185,6 +208,7 @@ export default function SidebarHRM() {
       icon: <FileSearchOutlined />,
     },
   ];
+
   const getMenuItems = () => {
     if (pathname.startsWith("/recruitment")) return getRecruitmentItems();
     if (pathname.startsWith("/core-hr")) return getCoreHRItems();

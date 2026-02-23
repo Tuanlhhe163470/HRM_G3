@@ -13,12 +13,18 @@ namespace HRM_Domain.Entities.TimeAttendance
         public int Id { get; set; }
         public string ShiftName { get; set; } = string.Empty;
 
-        public TimeSpan MorningStart { get; set; }
-        public TimeSpan AfternoonEnd { get; set; }
+        public TimeSpan StartTime { get; set; }
+        public TimeSpan EndTime { get; set; }
 
-        public int AllowedLateMinutes { get; set; } // Số phút cho phép đi muộn (VD: 15)
+        public TimeSpan? BreakStartTime { get; set; } // Nghỉ trưa từ (VD: 12:00)
+        public TimeSpan? BreakEndTime { get; set; }   // Đến (VD: 13:30)
 
+        public int AllowedLateMinutes { get; set; } = 0;   // Cho phép đi muộn
+        public int AllowedEarlyLeaveMinutes { get; set; } = 0; // Cho phép về sớm
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+        [MaxLength(20)]
+        public string WorkDays { get; set; } = "1,2,3,4,5";
     }
 }

@@ -12,6 +12,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using HRM_Application.Services;
+using HRM_Infrastructure.Repositories.TimeAttendance;
+using HRM_Application.Contracts.Services;
+using HRM_Application.Services.TimeAttendance;
 
 namespace HRM_Infrastructure.Extensions
 {
@@ -38,12 +42,15 @@ namespace HRM_Infrastructure.Extensions
             services.AddScoped<JobRequisitionService>();
             services.AddScoped<IJobPostingRepository, JobPostingRepository>();
             services.AddScoped<JobPostingService>();
+            services.AddScoped<IAttendanceRepository, AttendanceRepository>();
             // services.AddScoped<IShiftRepository, ShiftRepository>(); 
 
             // 4. SERVICES (Business Logic Layer)
             // Đăng ký Service GoalService vào đây
             services.AddScoped<IGoalService, GoalService>();
             services.AddHostedService<JobExpirationWorker>();
+            services.AddScoped<IAttendanceService, AttendanceService>();
+
             return services;
         }
     }

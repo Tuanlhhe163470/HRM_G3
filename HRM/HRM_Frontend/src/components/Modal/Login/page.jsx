@@ -31,19 +31,8 @@ const LoginModal = ({ open, onCancel }) => {
           isSuccess: true,
         });
         onCancel?.();
-        const role = authData.employee.roleName;
-
-        if (role === "Admin") {
-          router.push("/dashboard");
-        } else if (role === "HR") {
-    
-          router.push("/recruitment");
-        } else if (role === "Manager") {
-          router.push("/approvals");
-        } else {
-          router.push("/attendance");
-        }
-
+        router.push("/attendance/checkin");
+       
         router.refresh();
       }
     } catch (error) {
