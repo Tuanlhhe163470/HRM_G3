@@ -1,5 +1,6 @@
 ﻿using HRM_Application.Contracts.Services;
 using HRM_Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HRM_API.Controllers
@@ -10,10 +11,11 @@ namespace HRM_API.Controllers
     {
         private readonly JobRequisitionService _service;
         public JobRequisitionsController(JobRequisitionService service) => _service = service;
-
+        [Authorize(Roles = "HR")]
         [HttpPost] // Tạo mới yêu cầu
         public async Task<IActionResult> Create([FromBody] JobPosting req) => Ok(await _service.CreateRequisitionAsync(req));
 
+        [Authorize(Roles = "Manager")]
         [HttpPatch("{id}/approve")] // Phê duyệt
         public async Task<IActionResult> Approve(int id, [FromQuery] bool isApproved)
         {

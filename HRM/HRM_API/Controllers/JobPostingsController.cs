@@ -1,11 +1,13 @@
 ﻿using HRM_Application.Contracts.Services;
 using HRM_Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HRM_API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "HR")]
     public class JobPostingsController : ControllerBase
     {
         private readonly JobPostingService _service;
@@ -15,6 +17,7 @@ namespace HRM_API.Controllers
         public async Task<IActionResult> Publish(int id, [FromBody] string description)
             => await _service.PublishJobPostingAsync(id, description) ? Ok() : BadRequest();
 
+        [AllowAnonymous]
         [HttpGet("published")]
         public async Task<IActionResult> GetPublished()
         {

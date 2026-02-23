@@ -1,0 +1,11 @@
+@import "./variables";
+
+@mixin responsive($canvas) {
+  @if $canvas == "sm" {
+    @media only screen and (max-width: $sm) { @content; }
+  } @else if $canvas == "md" {
+    @media only screen and (max-width: $md) { @content; }
+  } @else if $canvas == "lg" {
+    @media only screen and (max-width: $lg) { @content; }
+  }
+}
