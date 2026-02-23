@@ -1,27 +1,45 @@
-import React from 'react';
-import Header from '@/components/layout/Header';
-import Sidebar from '@/components/layout/Sidebar';
-import { EMPLOYEE_MENU } from '@/constants/menuItems'; // Import menu config
+"use client";
+import { Layout } from "antd";
+import Header from "@/components/Layout/Header/index.jsx";
+import SidebarHRM from "@/components/Layout/Sidebar/index.jsx";
+
+const { Content, Sider } = Layout;
 
 export default function HRMLayout({ children }) {
   return (
-    <div className="flex h-screen w-full bg-gray-50 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100">
-      
-      {/* 1. SIDEBAR (Truyền menu items vào) */}
-      <Sidebar menuItems={EMPLOYEE_MENU} />
+    <Layout style={{ minHeight: "100vh" }}>
+      <Header />
+      <Layout hasSider>
+        <Sider
+          width={260}
+          theme="light"
+          style={{
+            overflow: "auto",
+            height: "100vh",
+            position: "fixed",
+            left: 0,
+            top: 85,
+            bottom: 0,
+            borderRight: "1px solid #f0f0f0",
+          }}
+        >
+          <SidebarHRM />
+        </Sider>
 
-      {/* 2. MAIN CONTENT WRAPPER */}
-      <div className="flex flex-1 flex-col overflow-hidden transition-all duration-300">
-        
-        {/* Header nằm trên cùng */}
-        <Header />
-
-        {/* Nội dung thay đổi (Dashboard, Profile...) sẽ hiện ở đây */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          {children}
-        </main>
-
-      </div>
-    </div>
+        <Layout style={{ marginLeft: 260 }}>
+          <Content
+            style={{
+              margin: "24px 16px",
+              padding: 24,
+              minHeight: 280,
+              background: "#fff",
+              borderRadius: "8px",
+            }}
+          >
+            {children}
+          </Content>
+        </Layout>
+      </Layout>
+    </Layout>
   );
 }

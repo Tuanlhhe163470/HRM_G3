@@ -13,7 +13,7 @@ export default function notice({ msg = "", desc, place, isSuccess = true }) {
     className: `notification-custom ${isSuccess ? "success" : "error"}`,
     style,
     placement: place || "bottomRight",
-    message: (
+    title: (
       <div
         dangerouslySetInnerHTML={{
           __html: getMsgClient(msg || ""),
