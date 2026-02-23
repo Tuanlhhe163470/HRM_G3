@@ -15,5 +15,6 @@ namespace HRM_Domain.Entities
         [Required]
         [StringLength(50)]
         public string RoleName { get; set; } = string.Empty; // Admin, HR, Manager, Employee
+        public virtual ICollection<UserAccount> UserAccounts { get; set; } = new List<UserAccount>();
     }
 }

@@ -7,6 +7,7 @@ using HRM_Infrastructure.Data;
 using HRM_Infrastructure.Repositories.GoalService; // Nơi chứa class GoalService
 using HRM_Infrastructure.Repositories.PerformanceGoal;
 using HRM_Infrastructure.Repositories.Recruitment;
+using HRM_Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,6 +33,7 @@ namespace HRM_Infrastructure.Extensions
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             // 3. REPOSITORIES (Data Access Layer)
+            services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IPerformanceGoalRepository, PerformanceGoalRepository>();
             services.AddScoped<JobRequisitionService>();
             services.AddScoped<IJobPostingRepository, JobPostingRepository>();
