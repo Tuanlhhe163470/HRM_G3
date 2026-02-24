@@ -55,7 +55,7 @@ export default function TimesheetPage() {
     for (let i = 1; i <= daysInMonth; i++) {
       const currentDate = new Date(year, month, i);
       // Tìm xem ngày này có log chấm công không
-      const log = logs.find(l => {
+      const dayLogs = logs.filter(l => {
         const lDate = new Date(l.workDate);
         return lDate.getDate() === i;
       });
@@ -65,7 +65,7 @@ export default function TimesheetPage() {
         key: `day-${i}`, 
         day: i, 
         date: currentDate,
-        log: log // Gắn kèm log vào ngày
+        logs: dayLogs
       });
     }
 
@@ -188,31 +188,35 @@ export default function TimesheetPage() {
                  }
 
                  const isSelected = selectedDateLog?.day === item.day;
-                 const log = item.log;
+                 const dayLogs = item.logs;
+
+                 const totalHours = dayLogs.reduce((sum, l) => sum + (l.workingHours || 0), 0).toFixed(1);
 
                  return (
                    <div 
                       key={item.key} 
-                      onClick={() => setSelectedDateLog({ day: item.day, date: item.date, log: log })}
+                      onClick={() => setSelectedDateLog({ day: item.day, date: item.date, logs: dayLogs })} // Truyền logs
                       className={`min-h-[110px] p-2 bg-white hover:bg-blue-50 cursor-pointer transition-colors relative
                         ${isSelected ? 'ring-2 ring-inset ring-blue-500 bg-blue-50/50' : ''}
                       `}
                    >
-                      <span className={`text-sm font-bold ${log?.status === 'Late' ? 'text-orange-500' : 'text-gray-700'}`}>
-                        {item.day}
-                      </span>
+                      <span className="text-sm font-bold text-gray-700">{item.day}</span>
                       
-                      {log && (
+                      {/* HIỂN THỊ MẢNG CA LÀM VIỆC */}
+                      {dayLogs.length > 0 && (
                         <div className="mt-2 flex flex-col gap-1">
                           <span className="text-[10px] text-gray-500 font-medium">
-                            {log.checkInTime ? new Date(log.checkInTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--'} - 
-                            {log.checkOutTime ? new Date(log.checkOutTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--'}
+                            {dayLogs.length} ca làm việc
                           </span>
-                          <div className="flex gap-1 mt-1">
-                            <div className={`w-2 h-2 rounded-full ${getDotColor(log)}`}></div>
+                          
+                          {/* Dùng .map để vẽ số chấm màu tương ứng với số ca */}
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {dayLogs.map((l, idx) => (
+                               <div key={idx} className={`w-2 h-2 rounded-full ${getDotColor(l)}`} title={l.shiftName}></div>
+                            ))}
                           </div>
-                          {/* Hiển thị working hours */}
-                          <span className="text-[10px] font-semibold text-slate-400">{log.workingHours}h</span>
+                          
+                          <span className="text-[10px] font-semibold text-slate-400">{totalHours}h</span>
                         </div>
                       )}
                    </div>
@@ -224,96 +228,93 @@ export default function TimesheetPage() {
 
         {/* === RIGHT: DETAILS PANEL === */}
         <div className="w-full lg:w-[380px] flex flex-col gap-6">
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col h-full overflow-hidden">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col h-full overflow-hidden max-h-[800px]">
             
             {selectedDateLog ? (
               <>
-                <div className="p-6 border-b border-gray-200">
+                <div className="p-6 border-b border-gray-200 bg-gray-50">
                   <h3 className="text-lg font-bold">
                     Details for {selectedDateLog.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </h3>
-                  <p className={`text-sm mt-1 font-medium inline-block px-2 py-1 rounded ${getStatusColor(selectedDateLog.log)}`}>
-                    {selectedDateLog.log ? selectedDateLog.log.status : 'No Data'}
+                  <p className="text-sm text-gray-500 mt-1">
+                    {selectedDateLog.logs && selectedDateLog.logs.length > 0 
+                      ? `Phát hiện ${selectedDateLog.logs.length} ca làm việc` 
+                      : 'Không có lịch trình'}
                   </p>
                 </div>
                 
-                <div className="p-6 flex-1">
-                   {selectedDateLog.log ? (
+                <div className="p-6 flex-1 overflow-y-auto">
+                   {selectedDateLog.logs && selectedDateLog.logs.length > 0 ? (
                       
-                      // NẾU LÀ NGÀY NGHỈ LỄ
-                      selectedDateLog.log.status === 'Holiday' ? (
-                        <div className="flex flex-col items-center justify-center text-center py-8 bg-purple-50 rounded-xl border border-purple-100">
-                           <span className="material-symbols-outlined text-5xl text-purple-500 mb-3">celebration</span>
-                           <h4 className="font-bold text-purple-900 text-lg">Hôm nay là ngày nghỉ Lễ!</h4>
-                           <p className="text-sm text-purple-700 mt-2">{selectedDateLog.log.note}</p>
-                           <p className="text-xs text-purple-500 mt-4 font-semibold">Vẫn được tính {selectedDateLog.log.workingHours}h công hưởng lương</p>
-                        </div>
-                      ) : (
+                      <div className="space-y-10">
+                         {/* LẶP QUA MẢNG LOGS ĐỂ RENDER TỪNG CA */}
+                         {selectedDateLog.logs.map((logItem, index) => (
+                            <div key={index} className="relative">
+                               
+                               {/* NẾU LÀ CA NGHỈ LỄ */}
+                               {logItem.status === 'Holiday' ? (
+                                  <div className="flex flex-col items-center justify-center text-center py-6 bg-purple-50 rounded-xl border border-purple-100">
+                                     <span className="material-symbols-outlined text-4xl text-purple-500 mb-2">celebration</span>
+                                     <h4 className="font-bold text-purple-900 text-base">Nghỉ Lễ: {logItem.shiftName}</h4>
+                                     <p className="text-xs text-purple-700 mt-1">{logItem.note}</p>
+                                     <p className="text-xs text-purple-500 mt-2 font-semibold flex items-center gap-1 justify-center">
+                                       <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                                       Cộng {logItem.workingHours}h công
+                                     </p>
+                                  </div>
+                               ) : (
 
-                      // NẾU LÀ NGÀY ĐI LÀM BÌNH THƯỜNG / ĐI MUỘN / QUÊN CHẤM CÔNG
-                      <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:h-full before:w-0.5 before:bg-gray-100">
-                        
-                        {/* Check In */}
-                        <div className="relative flex items-center justify-between gap-6">
-                          <div className="flex items-center gap-4 z-10">
-                             <div className="flex items-center justify-center w-10 h-10 rounded-full border border-gray-200 bg-white shadow-sm">
-                                <span className="material-symbols-outlined text-blue-600">login</span>
-                             </div>
-                             <div>
-                                <p className="text-sm font-bold">Check-in</p>
-                                <p className="text-xs text-gray-500">
-                                   {selectedDateLog.log.status === 'Absent' ? 'Không có dữ liệu' : 'Hệ thống ghi nhận'}
-                                </p>
-                             </div>
-                          </div>
-                          <span className={`text-sm font-bold ${selectedDateLog.log.status === 'Late' ? 'text-orange-600' : ''}`}>
-                             {selectedDateLog.log.checkInTime ? new Date(selectedDateLog.log.checkInTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--'}
-                          </span>
-                        </div>
+                                  /* NẾU LÀ CA LÀM VIỆC BÌNH THƯỜNG */
+                                  <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:h-full before:w-0.5 before:bg-gray-100">
+                                     
+                                     {/* Tên Ca làm việc & Trạng thái của ca đó */}
+                                     <div className="relative flex items-center justify-between gap-3 z-10 bg-white pr-4">
+                                        <div className="flex items-center gap-3">
+                                          <div className="w-10 flex justify-center"><div className={`w-3 h-3 rounded-full ring-4 ring-white ${getDotColor(logItem)}`}></div></div>
+                                          <h4 className="font-bold text-gray-800 text-sm tracking-wider">{logItem.shiftName}</h4>
+                                        </div>
+                                        <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-md ${getStatusColor(logItem)}`}>
+                                          {logItem.status}
+                                        </span>
+                                     </div>
 
-                        {/* Check Out */}
-                        <div className="relative flex items-center justify-between gap-6">
-                          <div className="flex items-center gap-4 z-10">
-                             {/* Đổi màu icon nếu quên Check-out */}
-                             <div className={`flex items-center justify-center w-10 h-10 rounded-full border shadow-sm
-                                ${selectedDateLog.log.status === 'MissingCheckOut' ? 'border-rose-500 bg-rose-50' : 'border-gray-200 bg-white'}
-                             `}>
-                                <span className={`material-symbols-outlined ${selectedDateLog.log.status === 'MissingCheckOut' ? 'text-rose-600' : 'text-purple-600'}`}>
-                                   {selectedDateLog.log.status === 'MissingCheckOut' ? 'error' : 'logout'}
-                                </span>
-                             </div>
-                             <div>
-                                <p className={`text-sm font-bold ${selectedDateLog.log.status === 'MissingCheckOut' ? 'text-rose-600' : ''}`}>Check-out</p>
-                                <p className="text-xs text-gray-500">
-                                   {selectedDateLog.log.status === 'MissingCheckOut' ? 'Quên chấm công ra' : 'Hệ thống ghi nhận'}
-                                </p>
-                             </div>
-                          </div>
-                          <span className={`text-sm font-bold ${selectedDateLog.log.status === 'MissingCheckOut' ? 'text-rose-600' : ''}`}>
-                             {selectedDateLog.log.checkOutTime ? new Date(selectedDateLog.log.checkOutTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--'}
-                          </span>
-                        </div>
+                                     {/* Check In */}
+                                     <div className="relative flex items-center justify-between gap-6 pl-10">
+                                        <div>
+                                           <p className="text-sm font-bold">Check-in</p>
+                                           <p className="text-xs text-gray-500">{logItem.status === 'Absent' ? 'Không có dữ liệu' : 'Ghi nhận'}</p>
+                                        </div>
+                                        <span className={`text-sm font-bold ${logItem.status === 'Late' ? 'text-orange-600' : ''}`}>
+                                           {logItem.checkInTime ? new Date(logItem.checkInTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--'}
+                                        </span>
+                                     </div>
 
-                         {/* Ca làm việc & Ghi chú */}
-                         <div className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                             <div className="flex justify-between items-center mb-2">
-                                <p className="text-xs text-gray-500 uppercase font-bold">Thông tin ca</p>
-                                <span className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-0.5 rounded">{selectedDateLog.log.workingHours || 0} hrs</span>
-                             </div>
-                             <p className="text-sm font-medium">{selectedDateLog.log.shiftName || 'Standard Shift'}</p>
-                             
-                             {/* Hiện thông báo lỗi từ BE nếu có */}
-                             {selectedDateLog.log.note && (
-                               <p className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200 italic">
-                                 * {selectedDateLog.log.note}
-                               </p>
-                             )}
-                         </div>
+                                     {/* Check Out */}
+                                     <div className="relative flex items-center justify-between gap-6 pl-10">
+                                        <div>
+                                           <p className={`text-sm font-bold ${logItem.status === 'MissingCheckOut' ? 'text-rose-600' : ''}`}>Check-out</p>
+                                           <p className="text-xs text-gray-500">{logItem.status === 'MissingCheckOut' ? 'Quên chấm ra' : 'Ghi nhận'}</p>
+                                        </div>
+                                        <span className={`text-sm font-bold ${logItem.status === 'MissingCheckOut' ? 'text-rose-600' : ''}`}>
+                                           {logItem.checkOutTime ? new Date(logItem.checkOutTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--'}
+                                        </span>
+                                     </div>
+
+                                     {/* Ghi chú & Số giờ */}
+                                     <div className="pl-10 mt-2">
+                                         <div className="inline-block px-2 py-1 bg-gray-100 rounded text-xs font-semibold text-gray-600 border border-gray-200">
+                                             Total: {logItem.workingHours || 0} hrs
+                                         </div>
+                                         {logItem.note && <p className="text-xs text-gray-500 mt-2 italic">* {logItem.note}</p>}
+                                     </div>
+                                  </div>
+                               )}
+                            </div>
+                         ))}
                       </div>
-                      )
+
                    ) : (
-                     // NẾU KHÔNG CÓ DỮ LIỆU (CUỐI TUẦN)
-                     <div className="text-center text-gray-400 py-10">
+                     <div className="text-center text-gray-400 py-10 flex flex-col items-center">
                         <span className="material-symbols-outlined text-4xl mb-2">weekend</span>
                         <p>Ngày nghỉ. Không có dữ liệu chấm công.</p>
                      </div>
@@ -322,8 +323,8 @@ export default function TimesheetPage() {
               </>
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-gray-400 p-10">
-                 <span className="material-symbols-outlined text-5xl mb-3 opacity-20">calendar_today</span>
-                 <p className="text-sm">Select a date to view details</p>
+                 <span className="material-symbols-outlined text-5xl mb-3 opacity-20">touch_app</span>
+                 <p className="text-sm font-medium">Click vào một ngày để xem chi tiết</p>
               </div>
             )}
             

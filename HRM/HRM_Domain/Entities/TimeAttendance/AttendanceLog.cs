@@ -26,6 +26,9 @@ namespace HRM_Domain.Entities.TimeAttendance
         [MaxLength(50)]
         public string? CheckOutIp { get; set; }
         public double? WorkingHours { get; set; } = 0;
+
+        public int LateMinutes { get; set; } = 0;
+        public int EarlyLeaveMinutes { get; set; } = 0;
         public AttendanceStatus Status { get; set; } = AttendanceStatus.Absent;
         public string? Note { get; set; }
         public bool IsSystemGenerated { get; set; } = false;
