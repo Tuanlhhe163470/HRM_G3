@@ -15,6 +15,7 @@ import {
   DollarOutlined,
   SettingOutlined,
   ClockCircleOutlined,
+  TableOutlined,
   CalculatorFilled,
 } from "@ant-design/icons";
 
