@@ -1,6 +1,7 @@
 // File: HRM_Application/Mappings/MappingProfile.cs
 using AutoMapper;
 using HRM_Application.DTOs.Goals;
+using HRM_Application.DTOs.MonthlyTimesheet;
 using HRM_Application.DTOs.TimeAttendance;
 using HRM_Domain.Entities;
 using HRM_Domain.Entities.TimeAttendance;
@@ -19,6 +20,18 @@ namespace HRM_Application.Mappings
             CreateMap<AttendanceLog, AttendanceLogResponse>()
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
                 .ForMember(dest => dest.ShiftName, opt => opt.MapFrom(src => src.ShiftConfig != null ? src.ShiftConfig.ShiftName : "N/A"));
+
+            CreateMap<MonthlyTimesheet, MonthlyTimesheetResponse>()
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
+
+                .ForMember(dest => dest.EmployeeName, opt => opt.MapFrom(src =>
+                    src.Employee != null ? src.Employee.FullName : "Unknown"))
+
+                .ForMember(dest => dest.DepartmentName, opt => opt.MapFrom(src =>
+                    (src.Employee != null && src.Employee.Department != null) ? src.Employee.Department.DepartmentName : "N/A"))
+
+                .ForMember(dest => dest.PositionName, opt => opt.MapFrom(src =>
+                    (src.Employee != null && src.Employee.Position != null) ? src.Employee.Position.PositionName : "N/A"));
         }
     }
 }

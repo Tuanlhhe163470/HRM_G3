@@ -8,12 +8,15 @@ export default function EmployeeDashboard() {
   const [loading, setLoading] = useState(true);
   const [attendanceStatus, setAttendanceStatus] = useState('LOADING'); // 'NOT_CHECKED_IN', 'CHECKED_IN', 'COMPLETED'
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  const [isMounted, setIsMounted] = useState(false);
   
   // Thông tin user hiển thị (Demo)
   const user = { name: "Nguyen Van A" };
 
   // --- 1. ĐỒNG HỒ REAL-TIME ---
   useEffect(() => {
+    setIsMounted(true);
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
@@ -23,25 +26,29 @@ export default function EmployeeDashboard() {
     try {
       setLoading(true);
       const today = new Date();
-      // Gọi API lấy lịch sử tháng hiện tại
       const res = await attendanceService.getMyHistory(today.getMonth() + 1, today.getFullYear());
       
-      const logs = res.data || []; // Giả sử API trả về { data: [...] }
+      const logs = res.data || []; 
       
-      // Tìm log của ngày hôm nay
-      const todayLog = logs.find(log => {
+      // 1. TÌM TẤT CẢ CÁC LOG CỦA NGÀY HÔM NAY (Dùng filter thay vì find)
+      const todayLogs = logs.filter(log => {
         const logDate = new Date(log.workDate);
         return logDate.getDate() === today.getDate() &&
                logDate.getMonth() === today.getMonth() &&
                logDate.getFullYear() === today.getFullYear();
       });
 
-      if (!todayLog) {
-        setAttendanceStatus('NOT_CHECKED_IN');
-      } else if (todayLog.checkInTime && !todayLog.checkOutTime) {
+      // 2. TÌM XEM CÓ CA NÀO ĐANG "TREO" (Chưa check-out) KHÔNG?
+      const activeLog = todayLogs.find(log => log.checkInTime && !log.checkOutTime);
+
+      if (activeLog) {
+        // Đang có 1 ca chưa Check-out -> Trạng thái là CHECKED_IN (để hiện nút Check-out màu cam)
         setAttendanceStatus('CHECKED_IN');
-      } else if (todayLog.checkInTime && todayLog.checkOutTime) {
-        setAttendanceStatus('COMPLETED');
+      } else {
+        // KHÔNG có ca nào đang treo.
+        // Có thể là chưa làm ca nào, hoặc đã làm xong ca 1 và chuẩn bị làm ca 2.
+        // Cứ mở nút Check-in (màu xanh). Backend sẽ tự lo việc kiểm tra xem giờ này có ca nào hợp lệ không!
+        setAttendanceStatus('NOT_CHECKED_IN');
       }
 
     } catch (error) {
@@ -50,7 +57,6 @@ export default function EmployeeDashboard() {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     checkTodayStatus();
   }, []);
@@ -61,19 +67,23 @@ export default function EmployeeDashboard() {
     try {
       // Lấy tọa độ GPS (Optional)
       let locationData = {};
-      if ("geolocation" in navigator) {
-         try {
-            const position = await new Promise((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
-            });
-            locationData = {
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude
-            };
-         } catch (e) {
-            console.warn("Không lấy được GPS:", e);
-         }
-      }
+      // if ("geolocation" in navigator) {
+      //    try {
+      //       const position = await new Promise((resolve, reject) => {
+      //           navigator.geolocation.getCurrentPosition(
+      //               (pos) => resolve(pos), 
+      //               (err) => reject(err), 
+      //               { timeout: 3000, maximumAge: 300000 } // Chấp nhận vị trí cũ trong vòng 5 phút
+      //           );
+      //       });
+      //       locationData = {
+      //           latitude: position.coords.latitude,
+      //           longitude: position.coords.longitude
+      //       };
+      //    } catch (e) {
+      //       console.warn("Không lấy được GPS:", e);
+      //    }
+      // }
 
       if (attendanceStatus === 'NOT_CHECKED_IN') {
         // ==> GỌI CHECK-IN
@@ -107,7 +117,6 @@ export default function EmployeeDashboard() {
   // --- HELPER FORMAT ---
   const formattedDate = currentTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
   const formattedTime = currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
   // --- RENDER NÚT BẤM THEO TRẠNG THÁI ---
   const renderAttendanceButton = () => {
     if (loading && attendanceStatus === 'LOADING') {
@@ -118,16 +127,6 @@ export default function EmployeeDashboard() {
             </button>
         );
     }
-
-    if (attendanceStatus === 'COMPLETED') {
-        return (
-            <button disabled className="flex cursor-not-allowed items-center justify-center gap-3 rounded-xl bg-gray-400 px-8 py-4 text-white shadow-sm opacity-80">
-               <span className="material-symbols-outlined text-2xl">task_alt</span>
-               <span className="text-lg font-bold">DONE FOR TODAY</span>
-            </button>
-        );
-    }
-
     const isCheckIn = attendanceStatus === 'NOT_CHECKED_IN';
     
     return (
@@ -162,10 +161,12 @@ export default function EmployeeDashboard() {
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3 text-blue-600">
               <span className="material-symbols-outlined fill">wb_sunny</span>
-              <span className="text-sm font-medium tracking-wide uppercase">{formattedDate}</span>
+              <span className="text-sm font-medium tracking-wide uppercase">{isMounted ? formattedDate : 'Loading Date ...'}</span>
             </div>
             {/* Đồng hồ chạy thật */}
-            <h2 className="text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl min-w-[200px]">{formattedTime}</h2>
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl min-w-[200px]">
+              {isMounted ? formattedTime : '--:--:--'}
+            </h2>
             <p className="text-lg text-slate-500 dark:text-gray-400">
                 Good morning, {user.name}! 
                 {attendanceStatus === 'NOT_CHECKED_IN' && " Ready to start?"}
@@ -220,7 +221,7 @@ export default function EmployeeDashboard() {
             <span className="text-3xl font-bold text-slate-900 dark:text-white">0 <span className="text-lg font-normal text-slate-500">mins</span></span>
             <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">Perfect</span>
           </div>
-          <p className="mt-4 text-sm text-slate-500">Great job! You're consistently on time.</p>
+          <p className="mt-4 text-sm text-slate-500">Great job! You are consistently on time.</p>
         </div>
 
         {/* Card 3: Leave Balance */}

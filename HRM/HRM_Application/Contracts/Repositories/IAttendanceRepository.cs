@@ -16,13 +16,15 @@ namespace HRM_Application.Contracts.Repositories
         Task AddAsync(AttendanceLog log);
         Task UpdateAsync(AttendanceLog log);
 
-        // 1. Kiểm tra xem 1 nhân viên đã có log trong ngày chưa (để đánh Absent)
         Task<bool> HasAttendanceAsync(int employeeId, DateTime date);
 
-        // 2. Lấy các log chưa checkout của 1 nhân viên trong khoảng thời gian
         Task<List<AttendanceLog>> GetMissingCheckOutsAsync(int employeeId, DateTime fromDate, DateTime toDate);
 
-        // 3. Add nhiều log cùng lúc (để add Absent cho nhanh)
         Task AddRangeAsync(List<AttendanceLog> logs);
+
+        Task<AttendanceLog?> GetActiveLogAsync(int employeeId);
+
+        Task<AttendanceLog?> GetLogByShiftAndDateAsync(int employeeId, int shiftId, DateTime workDate);
+        Task<List<AttendanceLog>> GetAllLogsByMonthAsync(int month, int year);
     }
 }

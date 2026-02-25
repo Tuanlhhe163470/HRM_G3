@@ -22,8 +22,11 @@ export default function SidebarHRM() {
   const pathname = usePathname();
   const [user, setUser] = useState(null);
 
+  const [isMounted, setIsMounted] = useState(false);
+
   // Lấy thông tin user từ localStorage để phân quyền
   useEffect(() => {
+    // Chỉ chạy ở môi trường Client
     const userStr = localStorage.getItem("user");
     if (userStr) {
       try {
@@ -32,7 +35,11 @@ export default function SidebarHRM() {
         console.error("Lỗi parse user data", e);
       }
     }
+    // Bật cờ đã mount xong
+    setIsMounted(true);
   }, []);
+
+  if (!isMounted) return <div className="h-full bg-white border-r border-gray-100 shadow-sm" />;
 
   const role = user?.roleName || "Employee";
 
@@ -99,7 +106,6 @@ export default function SidebarHRM() {
       icon: <FileAddOutlined />,
     });
 
-    // Menu quản lý dành cho Employee
     items.push({
       key: "sub-my-attendance",
       label: <span className="font-bold text-[13px] uppercase tracking-tight">Quản lý cá nhân</span>,
@@ -111,6 +117,19 @@ export default function SidebarHRM() {
     });
 
     if (role === "Admin" || role === "HR") {
+      items.push({
+        key: "sub-company-attendance",
+        label: <span className="font-bold text-[13px] uppercase tracking-tight">Quản lý toàn công ty</span>,
+        icon: <TeamOutlined />,
+        children: [
+          { 
+            key: "/attendance/company-timesheet",
+            label: <Link href="/attendance/company-timesheet">Bảng công tổng hợp</Link>, 
+            icon: <TableOutlined /> 
+          },
+        ],
+      });
+
       items.push({
         key: "/attendance/config",
         label: <Link href="/attendance/config"><span className="font-bold text-[13px] uppercase tracking-tight">Cấu hình chấm công</span></Link>,

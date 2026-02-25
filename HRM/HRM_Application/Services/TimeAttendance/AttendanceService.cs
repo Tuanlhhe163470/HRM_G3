@@ -2,6 +2,7 @@
 using HRM_Application.Contracts.Repositories;
 using HRM_Application.Contracts.Services;
 using HRM_Application.DTOs.TimeAttendance;
+using HRM_Domain.Entities;
 using HRM_Domain.Entities.TimeAttendance;
 using HRM_Domain.Enums;
 using System;
@@ -18,14 +19,21 @@ namespace HRM_Application.Services.TimeAttendance
         private readonly IAttendanceRepository _attendanceRepo;
         private readonly IShiftRepository _shiftRepo;
         private readonly IPublicHolidayRepository _publicHolidayRepo;
+        private readonly IMonthlyTimesheetRepository _monthlyTimesheetRepo;
         private readonly IMapper _mapper;
 
-        public AttendanceService(IAttendanceRepository attendanceRepo, IShiftRepository shiftRepo, IPublicHolidayRepository publicHolidayRepo, IMapper mapper)
+        public AttendanceService(
+            IAttendanceRepository attendanceRepo,
+            IShiftRepository shiftRepo,
+            IPublicHolidayRepository publicHolidayRepo,
+            IMapper mapper,
+            IMonthlyTimesheetRepository monthlyTimesheetRepo)
         {
             _attendanceRepo = attendanceRepo;
             _shiftRepo = shiftRepo;
             _publicHolidayRepo = publicHolidayRepo;
             _mapper = mapper;
+            _monthlyTimesheetRepo = monthlyTimesheetRepo;
         }
         public async Task<AttendanceLogResponse> CheckInAsync(int employeeId, CheckInRequest request)
         {
@@ -39,16 +47,21 @@ namespace HRM_Application.Services.TimeAttendance
                 throw new InvalidOperationException($"Hôm nay là ngày nghỉ lễ ({holiday.HolidayName}). Bạn không thể chấm công!");
             }
 
-            // CHẶN CHECK-IN CUỐI TUẦN ---
-            if (today.DayOfWeek == DayOfWeek.Sunday || today.DayOfWeek == DayOfWeek.Saturday)
+            var activeLog = await _attendanceRepo.GetActiveLogAsync(employeeId);
+            if (activeLog != null)
             {
-                throw new InvalidOperationException("Hôm nay là ngày nghỉ cuối tuần. Hệ thống không nhận chấm công!");
-            }
+                if (IsZombieLog(activeLog))
+                {
+                    activeLog.Status = AttendanceStatus.MissingCheckOut;
+                    activeLog.Note = (activeLog.Note + " | [System: Đóng ca tự động do quên Check-out]").Trim();
+                    await _attendanceRepo.UpdateAsync(activeLog);
 
-            var existingLog = await _attendanceRepo.GetByDateAsync(employeeId, today);
-            if (existingLog != null)
-            {
-                throw new InvalidOperationException("Đã chấm công.");
+                    activeLog = null;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Bạn đã check-in vào lúc {activeLog.CheckInTime:HH:mm} ngày {activeLog.WorkDate:dd/MM/yyyy}. Vui lòng check-out trước khi check-in lần tiếp theo!");
+                }
             }
             var activeShifts = await _shiftRepo.GetActiveShiftAsync();
             if (activeShifts == null)
@@ -95,7 +108,13 @@ namespace HRM_Application.Services.TimeAttendance
                 }
             }
 
-                var newLog = new AttendanceLog
+            var existingShiftLog = await _attendanceRepo.GetLogByShiftAndDateAsync(employeeId, selectedShift.Id, determinedWorkDate);
+            if (existingShiftLog != null)
+            {
+                throw new InvalidOperationException($"Bạn đã chấm công cho {selectedShift.ShiftName} (Ngày công: {determinedWorkDate:dd/MM}) rồi!");
+            }
+
+            var newLog = new AttendanceLog
             {
                 EmployeeId = employeeId,
                 ShiftId = selectedShift.Id,
@@ -127,10 +146,19 @@ namespace HRM_Application.Services.TimeAttendance
             var today = DateTime.Today;
 
             // 1. Lấy bản ghi Check-in cũ
-            var log = await _attendanceRepo.GetByDateAsync(employeeId, today);
+            var log = await _attendanceRepo.GetActiveLogAsync(employeeId);
             if (log == null)
             {
                 throw new Exception("Bạn chưa check-in, không thể check-out!");
+            }
+
+            if (IsZombieLog(log))
+            {
+                log.Status = AttendanceStatus.MissingCheckOut;
+                log.Note = (log.Note + " | [System: Đóng ca tự động do quá hạn Check-out]").Trim();
+                await _attendanceRepo.UpdateAsync(log);
+
+                throw new InvalidOperationException($"Ca làm việc ngày {log.WorkDate:dd/MM} đã quá hạn để Check-out. Hệ thống đã tự động chốt là 'Quên Check-out'!");
             }
 
             // 2. Cập nhật dữ liệu
@@ -151,63 +179,159 @@ namespace HRM_Application.Services.TimeAttendance
             return _mapper.Map<AttendanceLogResponse>(log);
         }
 
-        public async Task<List<AttendanceLogResponse>> GetMyAttendanceLogsAsync(int employeeId, int month, int year)
+        private bool IsZombieLog(AttendanceLog log)
         {
-            // --- BƯỚC 1: TÍNH TOÁN KHOẢNG THỜI GIAN CHUẨN ---
-            var startDate = new DateTime(year, month, 1);
+            if (log.CheckInTime == null) return false;
 
-            // Tìm ngày cuối cùng của tháng đang xem (VD: 28/02 hoặc 31/10)
+            // Đặt hạn mức: Một ca làm việc tối đa không bao giờ vượt quá 16 tiếng.
+            // Nếu đã quá 16 tiếng kể từ lúc Check-in mà chưa Check-out -> Coi như quên.
+            return (DateTime.Now - log.CheckInTime.Value).TotalHours > 16;
+        }
+
+        public async Task<MyTimesheetSummaryResponse> GetMyAttendanceLogsAsync(int employeeId, int month, int year)
+        {
+            var startDate = new DateTime(year, month, 1);
             var daysInMonth = DateTime.DaysInMonth(year, month);
             var monthEndDate = new DateTime(year, month, daysInMonth);
 
-            // Mốc kết thúc quét = Min(Cuối tháng đó, Ngày hôm qua)
-            // Nghĩa là: 
-            // - Nếu xem quá khứ (T10/2025) -> Quét đến 31/10/2025.
-            // - Nếu xem hiện tại (T02/2026) -> Quét đến hôm qua.
             var yesterday = DateTime.Today.AddDays(-1);
             var syncEndDate = monthEndDate < yesterday ? monthEndDate : yesterday;
 
-            // Chỉ quét nếu ngày bắt đầu <= ngày kết thúc quét
             if (startDate <= syncEndDate)
             {
                 await SyncMissingDataAsync(employeeId, startDate, syncEndDate);
             }
 
-            // --- BƯỚC 2: LẤY DỮ LIỆU ---
             var logs = await _attendanceRepo.GetByMonthAsync(employeeId, month, year);
-            return _mapper.Map<List<AttendanceLogResponse>>(logs);
+
+
+            var actualHours = logs.Where(x => x.Status == HRM_Domain.Enums.AttendanceStatus.OnTime ||
+                                              x.Status == HRM_Domain.Enums.AttendanceStatus.Late ||
+                                              x.Status == HRM_Domain.Enums.AttendanceStatus.EarlyLeave)
+                                  .Sum(x => x.WorkingHours ?? 0);
+
+            var holidayHours = logs.Where(x => x.Status == HRM_Domain.Enums.AttendanceStatus.Holiday)
+                                   .Sum(x => x.WorkingHours ?? 0);
+
+            var lateLogs = logs.Where(x => x.Status == HRM_Domain.Enums.AttendanceStatus.Late).ToList();
+            var earlyLogs = logs.Where(x => x.Status == HRM_Domain.Enums.AttendanceStatus.EarlyLeave).ToList();
+
+            return new MyTimesheetSummaryResponse
+            {
+                ActualWorkingHours = Math.Round(actualHours, 2),
+                PaidLeaveHours = Math.Round(holidayHours, 2),
+
+                LateCount = lateLogs.Count,
+                TotalLateMinutes = lateLogs.Sum(x => x.LateMinutes),
+
+                EarlyLeaveCount = earlyLogs.Count,
+                TotalEarlyLeaveMinutes = earlyLogs.Sum(x => x.EarlyLeaveMinutes),
+
+                MissingCheckOutCount = logs.Count(x => x.Status == HRM_Domain.Enums.AttendanceStatus.MissingCheckOut),
+                AbsentCount = logs.Count(x => x.Status == HRM_Domain.Enums.AttendanceStatus.Absent),
+
+                Logs = _mapper.Map<List<AttendanceLogResponse>>(logs)
+            };
         }
 
         // --- Helper: Logic tính công ---
         private void CalculateAttendanceMetrics(AttendanceLog log, ShiftConfig shift)
         {
+            // Guard clause: Nếu chưa có đủ In/Out thì không thể tính công
             if (log.CheckInTime == null || log.CheckOutTime == null) return;
 
-            var checkIn = log.CheckInTime.Value;
-            var checkOut = log.CheckOutTime.Value;
-            var duration = checkOut - checkIn;
-            double totalHours = duration.TotalHours;
+            // =========================================================================
+            // 1. CHUẨN HÓA KHUNG GIỜ CA LÀM VIỆC (SHIFT BOUNDARIES)
+            // =========================================================================
+            var shiftStart = log.WorkDate.Date.Add(shift.StartTime);
+            var shiftEnd = log.WorkDate.Date.Add(shift.EndTime);
 
-            // Trừ giờ nghỉ trưa
-            if (shift.BreakStartTime.HasValue && shift.BreakEndTime.HasValue)
+            // Xử lý Ca Đêm: Nếu giờ kết thúc nhỏ hơn giờ bắt đầu -> vắt qua ngày hôm sau
+            if (shift.EndTime <= shift.StartTime)
             {
-                var breakStart = log.WorkDate.Add(shift.BreakStartTime.Value);
-                var breakEnd = log.WorkDate.Add(shift.BreakEndTime.Value);
+                shiftEnd = shiftEnd.AddDays(1);
+            }
 
-                // Nếu làm xuyên qua giờ nghỉ mới trừ
-                if (checkIn < breakStart && checkOut > breakEnd)
+            // =========================================================================
+            // 2. XÁC ĐỊNH THỜI GIAN LÀM VIỆC HỢP LỆ (EFFECTIVE WORKING TIME)
+            // =========================================================================
+            var actualIn = log.CheckInTime.Value;
+            var actualOut = log.CheckOutTime.Value;
+
+            // Ép mốc thời gian vào khung ca để chặn việc đi quá sớm hoặc nán lại quá muộn
+            // Đi sớm hơn ca -> tính từ lúc bắt đầu ca. Về muộn hơn ca -> tính đến lúc kết thúc ca.
+            var effectiveIn = actualIn > shiftStart ? actualIn : shiftStart;
+            var effectiveOut = actualOut < shiftEnd ? actualOut : shiftEnd;
+
+            double totalValidHours = 0;
+
+            // Chỉ tính công nếu khoảng thời gian hợp lệ lớn hơn 0 (Tránh lỗi check-in sau khi ca đã kết thúc)
+            if (effectiveOut > effectiveIn)
+            {
+                totalValidHours = (effectiveOut - effectiveIn).TotalHours;
+
+                // =====================================================================
+                // 3. TRỪ THỜI GIAN NGHỈ GIỮA CA (BREAK TIME OVERLAP CALCULATION)
+                // =====================================================================
+                if (shift.BreakStartTime.HasValue && shift.BreakEndTime.HasValue)
                 {
-                    totalHours -= (breakEnd - breakStart).TotalHours;
+                    var breakStart = log.WorkDate.Date.Add(shift.BreakStartTime.Value);
+                    var breakEnd = log.WorkDate.Date.Add(shift.BreakEndTime.Value);
+
+                    // Xử lý ca đêm cho mốc giờ nghỉ
+                    if (shift.BreakStartTime.Value < shift.StartTime) breakStart = breakStart.AddDays(1);
+                    if (shift.BreakEndTime.Value < shift.BreakStartTime.Value) breakEnd = breakEnd.AddDays(1);
+
+                    // TÌM VÙNG GIAO NHAU (OVERLAP) giữa [Giờ làm việc] và [Giờ nghỉ]
+                    var overlapStart = effectiveIn > breakStart ? effectiveIn : breakStart;
+                    var overlapEnd = effectiveOut < breakEnd ? effectiveOut : breakEnd;
+
+                    // Nếu có giao nhau, trừ đi đúng phần số giờ bị trùng
+                    if (overlapStart < overlapEnd)
+                    {
+                        totalValidHours -= (overlapEnd - overlapStart).TotalHours;
+                    }
                 }
             }
 
-            log.WorkingHours = Math.Round(totalHours > 0 ? totalHours : 0, 2);
+            // =========================================================================
+            // 4. CHỐT SỐ GIỜ CÔNG & XÉT TRẠNG THÁI (FINALIZE)
+            // =========================================================================
 
-            // Logic về sớm
-            var shiftEndTime = log.WorkDate.Add(shift.EndTime);
-            var allowedEarlyTime = shiftEndTime.AddMinutes(-shift.AllowedEarlyLeaveMinutes);
+            // 4.1 TÍNH PHÚT ĐI MUỘN (Dựa vào actualIn so với shiftStart)
+            if (actualIn > shiftStart)
+            {
+                int lateMins = (int)(actualIn - shiftStart).TotalMinutes;
+                if (lateMins > shift.AllowedLateMinutes)
+                {
+                    log.Status = AttendanceStatus.Late;
+                    log.LateMinutes = lateMins;
+                }
+            }
 
-            if (checkOut < allowedEarlyTime && log.Status != AttendanceStatus.Late)
+            // 4.2 TÍNH PHÚT VỀ SỚM (Dựa vào actualOut so với shiftEnd)
+            if (actualOut < shiftEnd)
+            {
+                int earlyMins = (int)(shiftEnd - actualOut).TotalMinutes;
+                if (earlyMins > shift.AllowedEarlyLeaveMinutes)
+                {
+                    // Nếu đã dính trạng thái Đi muộn thì giữ nguyên Status là Late, nhưng vẫn ghi nhận số phút về sớm
+                    if (log.Status != AttendanceStatus.Late)
+                    {
+                        log.Status = AttendanceStatus.EarlyLeave;
+                    }
+                    log.EarlyLeaveMinutes = earlyMins;
+                }
+            }
+
+            // Đảm bảo không bao giờ bị số âm, làm tròn 2 chữ số thập phân
+            log.WorkingHours = Math.Round(Math.Max(totalValidHours, 0), 2);
+
+            // Logic xét Về Sớm (Early Leave)
+            var allowedEarlyTime = shiftEnd.AddMinutes(-shift.AllowedEarlyLeaveMinutes);
+
+            // Lưu ý: Dùng `actualOut` để xét về sớm, vì ta cần biết thực tế họ bước ra khỏi công ty lúc nào
+            if (actualOut < allowedEarlyTime && log.Status != AttendanceStatus.Late)
             {
                 log.Status = AttendanceStatus.EarlyLeave;
             }
@@ -241,7 +365,8 @@ namespace HRM_Application.Services.TimeAttendance
             if (shift == null) return;
 
             var workDaysList = new List<DayOfWeek>();
-            if (!string.IsNullOrEmpty(shift.WorkDays)) {
+            if (!string.IsNullOrEmpty(shift.WorkDays))
+            {
                 workDaysList = shift.WorkDays.Split(',')
                     .Select(d => (DayOfWeek)(int.Parse(d)))
                     .ToList();
@@ -304,6 +429,129 @@ namespace HRM_Application.Services.TimeAttendance
             {
                 await _attendanceRepo.AddRangeAsync(logsToAdd);
             }
+        }
+
+        // Tính "Ngày công chuẩn" ĐỘNG dựa trên cấu hình Ca làm việc ---
+        private decimal GetStandardWorkDays(int year, int month, string workDaysConfig)
+        {
+            if (string.IsNullOrEmpty(workDaysConfig)) return 0;
+
+            var allowedDays = workDaysConfig.Split(',')
+                                            .Select(d => (DayOfWeek)int.Parse(d))
+                                            .ToList();
+
+            int daysInMonth = DateTime.DaysInMonth(year, month);
+            int workDays = 0;
+
+            for (int i = 1; i <= daysInMonth; i++)
+            {
+                DateTime date = new DateTime(year, month, i);
+
+                // Nếu ngày đó nằm trong danh sách WorkDays của ca làm việc -> Tính là 1 ngày công
+                if (allowedDays.Contains(date.DayOfWeek))
+                {
+                    workDays++;
+                }
+            }
+            return workDays;
+        }
+
+        // --- 2. HÀM CHÍNH: TỔNG HỢP CÔNG TOÀN CÔNG TY ---
+        public async Task CalculateCompanyTimesheetAsync(int month, int year)
+        {
+            // Lấy ca làm việc mặc định đang Active để làm mốc tính ngày công chuẩn
+            var activeShifts = await _shiftRepo.GetActiveShiftAsync();
+            var defaultShift = activeShifts?.FirstOrDefault();
+
+            if (defaultShift == null)
+            {
+                throw new InvalidOperationException("Hệ thống chưa có Ca làm việc nào được kích hoạt để làm mốc tính công!");
+            }
+
+            decimal standardDays = GetStandardWorkDays(year, month, defaultShift.WorkDays);
+
+            var allLogs = await _attendanceRepo.GetAllLogsByMonthAsync(month, year);
+
+            var groupedByEmployee = allLogs.GroupBy(x => x.EmployeeId);
+
+            var timesheetsToAdd = new List<MonthlyTimesheet>();
+            var timesheetsToUpdate = new List<MonthlyTimesheet>();
+
+            foreach (var group in groupedByEmployee)
+            {
+                int empId = group.Key;
+                var logs = group.ToList();
+
+                // Đếm ngày làm thực tế (Đúng giờ, Đi muộn, Về sớm)
+                decimal actualWorkDays = logs.Count(x =>
+                    x.Status == AttendanceStatus.OnTime ||
+                    x.Status == AttendanceStatus.Late ||
+                    x.Status == AttendanceStatus.EarlyLeave);
+
+                // Đếm ngày nghỉ (Có phép/Lễ và Không phép/Quên chấm)
+                decimal paidLeaveDays = logs.Count(x => x.Status == AttendanceStatus.Holiday);
+                decimal loggedUnpaidLeave = logs.Count(x =>
+                    x.Status == AttendanceStatus.Absent ||
+                    x.Status == AttendanceStatus.MissingCheckOut);
+
+                decimal totalAccountedDays = actualWorkDays + paidLeaveDays + loggedUnpaidLeave;
+                decimal missingDays = standardDays - totalAccountedDays;
+
+                decimal unpaidLeaveDays = loggedUnpaidLeave + (missingDays > 0 ? missingDays : 0);
+
+                double totalHours = Math.Round(logs.Where(x =>
+                                            x.Status == AttendanceStatus.OnTime ||
+                                            x.Status == AttendanceStatus.Late ||
+                                            x.Status == AttendanceStatus.EarlyLeave)
+                                        .Sum(x => x.WorkingHours ?? 0), 2);
+
+                int totalLateMins = logs.Sum(x => x.LateMinutes);
+                int totalEarlyMins = logs.Sum(x => x.EarlyLeaveMinutes);
+
+                // TÌM XEM BẢNG CÔNG THÁNG CỦA NHÂN VIÊN NÀY ĐÃ TỒN TẠI CHƯA
+                var existingRecord = await _monthlyTimesheetRepo.GetByEmployeeAndMonthAsync(empId, month, year);
+
+                if (existingRecord != null)
+                {
+                    // Nếu đã Khóa sổ (Locked) thì TUYỆT ĐỐI KHÔNG GHI ĐÈ, bỏ qua luôn!
+                    if (existingRecord.Status == TimesheetStatus.Locked) continue;
+
+                    existingRecord.StandardWorkDays = standardDays;
+                    existingRecord.ActualWorkDays = actualWorkDays;
+                    existingRecord.PaidLeaveDays = paidLeaveDays;
+                    existingRecord.UnpaidLeaveDays = unpaidLeaveDays;
+                    existingRecord.TotalWorkingHours = totalHours;
+                    existingRecord.TotalLateMinutes = totalLateMins;
+                    existingRecord.TotalEarlyLeaveMinutes = totalEarlyMins;
+
+                    existingRecord.LastCalculatedDate = DateTime.Now;
+                    existingRecord.Status = TimesheetStatus.Draft; // Set về Draft (Bản nháp)
+
+                    timesheetsToUpdate.Add(existingRecord);
+                }
+                else
+                {
+                    timesheetsToAdd.Add(new MonthlyTimesheet
+                    {
+                        EmployeeID = empId,
+                        Month = month,
+                        Year = year,
+                        StandardWorkDays = standardDays,
+                        ActualWorkDays = actualWorkDays,
+                        PaidLeaveDays = paidLeaveDays,
+                        UnpaidLeaveDays = unpaidLeaveDays,
+                        TotalWorkingHours = totalHours,
+                        TotalLateMinutes = totalLateMins,
+                        TotalEarlyLeaveMinutes = totalEarlyMins,
+                        Status = TimesheetStatus.Draft,
+                        LastCalculatedDate = DateTime.Now
+                    });
+                }
+            }
+
+            // BULK INSERT / UPDATE
+            if (timesheetsToAdd.Any()) await _monthlyTimesheetRepo.AddRangeAsync(timesheetsToAdd);
+            if (timesheetsToUpdate.Any()) await _monthlyTimesheetRepo.UpdateRangeAsync(timesheetsToUpdate);
         }
     }
 }
