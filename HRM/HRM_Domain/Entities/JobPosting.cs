@@ -21,7 +21,8 @@ namespace HRM_Domain.Entities
         public int? PositionID { get; set; }
         [ForeignKey("PositionID")]
         public virtual Position? Position { get; set; }
-
+        public int Vacancies { get; set; } = 1;
+        public int HiredCount { get; set; } = 0;
         public string Description { get; set; } = string.Empty;
 
         [StringLength(50)]

@@ -2,8 +2,6 @@
 using HRM_Domain.Entities;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace HRM_Application.Contracts.Services
@@ -13,88 +11,134 @@ namespace HRM_Application.Contracts.Services
         private readonly IJobPostingRepository _jobRepo;
         public JobPostingService(IJobPostingRepository jobRepo) => _jobRepo = jobRepo;
 
-        // 1. Đăng tin (Chỉ khi đã Approved)
-        public async Task<bool> PublishJobPostingAsync(int jobId, string finalDescription)
+        #region 1. QUY TRÌNH YÊU CẦU & PHÊ DUYỆT (REQUISITION)
+
+        // Tạo yêu cầu tuyển dụng mới (Mặc định Status = Pending)
+        public async Task<JobPosting> CreateJobRequestAsync(JobPosting jobRequest)
+        {
+            jobRequest.CreatedAt = DateTime.Now;
+            // Ép trạng thái về Pending để chờ Manager phê duyệt
+            jobRequest.Status = "Pending";
+            jobRequest.CreatedAt = DateTime.Now;
+            await _jobRepo.AddAsync(jobRequest);
+            return jobRequest;
+        }
+
+        // Manager phê duyệt hoặc từ chối yêu cầu
+        public async Task<bool> ApproveJobRequestAsync(int jobId, bool isApproved)
         {
             var job = await _jobRepo.GetByIdAsync(jobId);
-            if (job == null || job.Status != "Approved") return false;
 
-            job.Description = finalDescription;
-            job.Status = "Open"; // Chính thức lên sàn
+            // Chỉ phê duyệt khi tin đang ở trạng thái chờ duyệt (Pending)
+            if (job == null || job.Status != "Pending") return false;
+
+            // Nếu Duyệt: Chuyển sang Approved (đã sẵn sàng để HR Public)
+            // Nếu Từ chối: Chuyển sang Rejected
+            job.Status = isApproved ? "Approved" : "Rejected";
             job.UpdatedAt = DateTime.Now;
+
             await _jobRepo.UpdateAsync(job);
             return true;
         }
 
-        //Lấy danh sách tin đăng đang mở
+        #endregion
+
+        #region 2. QUẢN LÝ TIN ĐĂNG CÔNG KHAI (POSTING)
+
+        // HR đăng tin chính thức lên sàn (Public) sau khi đã được Approved
+        public async Task<bool> PublishJobPostingAsync(int jobId, string finalDescription)
+        {
+            var job = await _jobRepo.GetByIdAsync(jobId);
+
+            // Logic: Chỉ cho phép đăng tin nếu Manager đã phê duyệt (Approved)
+            if (job == null || job.Status != "Approved") return false;
+
+            job.Description = finalDescription;
+            job.Status = "Open"; // Chính thức hiển thị cho ứng viên
+            job.UpdatedAt = DateTime.Now;
+
+            await _jobRepo.UpdateAsync(job);
+            return true;
+        }
+
+        // Lấy danh sách tin đang mở (Dùng cho ứng viên hoặc trang chủ)
         public async Task<IEnumerable<JobPosting>> GetPublishedJobsAsync()
         {
-            // Lọc các tin có trạng thái là "Open" để hiển thị cho ứng viên
             return await _jobRepo.GetByStatusAsync("Open");
         }
 
-        // 2. Đóng tin (Dừng nhận hồ sơ)
+        // Cập nhật nội dung tin (Sửa JD, Tiêu đề...)
+        public async Task<bool> UpdateJobPostingAsync(int jobId, JobPosting updatedData)
+        {
+            var job = await _jobRepo.GetByIdAsync(jobId);
+
+            if (job == null || job.Status == "Closed") return false;
+
+            job.Title = updatedData.Title;
+            job.Description = updatedData.Description;
+            job.DepartmentID = updatedData.DepartmentID;
+            job.PositionID = updatedData.PositionID;
+            job.ExpiryDate = updatedData.ExpiryDate;
+            job.UpdatedAt = DateTime.Now;
+
+            await _jobRepo.UpdateAsync(job);
+            return true;
+        }
+
+        // Đóng tin tuyển dụng (Dừng nhận hồ sơ)
         public async Task<bool> CloseJobPostingAsync(int jobId)
         {
             var job = await _jobRepo.GetByIdAsync(jobId);
             if (job == null || job.Status != "Open") return false;
+
             job.ClosingDate = DateTime.Now;
             job.Status = "Closed";
             await _jobRepo.UpdateAsync(job);
             return true;
         }
 
-        // 3. Mở lại tin (Reopen)
+        // Mở lại tin (Gia hạn cho tin đã đóng)
         public async Task<bool> ReopenJobPostingAsync(int jobId, DateTime newExpiryDate)
         {
             var job = await _jobRepo.GetByIdAsync(jobId);
 
-            // 1. Kiểm tra tồn tại và trạng thái (Chỉ cho phép mở lại khi đã Closed)
-            if (job == null || job.Status != "Closed") return false;
-
-            // 2. CHECK LOGIC: Thời gian hết hạn mới phải lớn hơn thời gian hiện tại
-            if (newExpiryDate <= DateTime.Now)
-            {
-                // Bạn có thể quăng một Exception hoặc trả về false tùy cấu trúc dự án
+            if (job == null || job.Status != "Closed" || newExpiryDate <= DateTime.Now)
                 return false;
-            }
 
-            // 3. Thực hiện cập nhật
             job.Status = "Open";
-            job.ExpiryDate = newExpiryDate; // Gán ngày hết hạn mới do người dùng nhập
+            job.ExpiryDate = newExpiryDate;
             job.UpdatedAt = DateTime.Now;
-            job.ClosingDate = null; // Reset lại ngày đóng vì tin đã mở lại
+            job.ClosingDate = null; // Reset ngày đóng
 
             await _jobRepo.UpdateAsync(job);
             return true;
         }
-
-        //Cập nhật
-        public async Task<bool> UpdateJobPostingAsync(int jobId, JobPosting updatedData)
+        // Hàm này sẽ được gọi mỗi khi có một ứng viên trúng tuyển (Hired)
+        public async Task<bool> UpdateHiredCountAsync(int jobId)
         {
             var job = await _jobRepo.GetByIdAsync(jobId);
-
-            // Kiểm tra tồn tại
             if (job == null) return false;
 
-            // LOGIC QUAN TRỌNG: Nếu đã Closed thì không cho sửa
-            if (job.Status == "Closed")
-            {
-                return false;
-            }
-
-            // Cập nhật các thông tin cho phép sửa
-            job.Title = updatedData.Title;
-            job.Description = updatedData.Description;
-            job.DepartmentID = updatedData.DepartmentID;
-            job.PositionID = updatedData.PositionID;
-            job.ExpiryDate = updatedData.ExpiryDate;
-
-            // Ghi nhận thời điểm cập nhật 
+            // 1. Tăng số người đã tuyển lên 1
+            job.HiredCount++;
             job.UpdatedAt = DateTime.Now;
+
+            // 2. Kiểm tra nếu đã đủ người (HiredCount >= Vacancies)
+            if (job.HiredCount >= job.Vacancies)
+            {
+                job.Status = "Closed";
+                job.ClosingDate = DateTime.Now;
+            }
 
             await _jobRepo.UpdateAsync(job);
             return true;
         }
+
+        // Cập nhật lại hàm lấy tin cho ứng viên
+        public async Task<IEnumerable<JobPosting>> GetAvailableJobsAsync()
+        {
+            return await _jobRepo.GetAvailableJobsAsync();
+        }
+        #endregion
     }
 }

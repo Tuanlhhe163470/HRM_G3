@@ -21,6 +21,7 @@ import "../styles.css";
 import UseWindowSize from "src/lib/useWindowSize";
 import LoginModal from "@/components/Modal/Login/page";
 import ContactModal from "@/components/Modal/Contact/page";
+import Cookies from 'js-cookie';
 
 export default function Header() {
   const isMobile = UseWindowSize.isMobile();
@@ -58,11 +59,17 @@ export default function Header() {
   }, [isLoginOpen, mounted]);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setUser(null);
-    router.push("/");
-  };
+  // Xóa localStorage
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+
+  // Xóa Cookie
+  Cookies.remove('token');
+  Cookies.remove('role');
+
+  router.push("/");
+  router.refresh(); 
+};
 
   const renderNavByRole = () => {
     if (isMobile) return null;

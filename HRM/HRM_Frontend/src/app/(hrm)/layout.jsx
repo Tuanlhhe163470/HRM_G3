@@ -6,34 +6,49 @@ import SidebarHRM from "@/components/Layout/Sidebar/index.jsx";
 const { Content, Sider } = Layout;
 
 export default function HRMLayout({ children }) {
+  const headerHeight = 85; 
+  const siderWidth = 260;
+
   return (
-    <Layout style={{ minHeight: "100vh" }}>
-      <Header />
-      <Layout hasSider>
+    <Layout style={{ height: "100vh", overflow: "hidden" }}> 
+      <div style={{ height: headerHeight, zIndex: 1001 }}>
+        <Header />
+      </div>
+
+      <Layout hasSider style={{ height: `calc(100vh - ${headerHeight}px)` }}>
+        {/* 2. Sider cố định hoàn toàn */}
         <Sider
-          width={260}
+          width={siderWidth}
           theme="light"
           style={{
-            overflow: "auto",
-            height: "100vh",
             position: "fixed",
             left: 0,
-            top: 85,
+            top: headerHeight,
             bottom: 0,
             borderRight: "1px solid #f0f0f0",
+            backgroundColor: "#fff",
+            zIndex: 1000,
           }}
         >
           <SidebarHRM />
         </Sider>
 
-        <Layout style={{ marginLeft: 260 }}>
+        {/* 3. Phần Content có thanh cuộn riêng */}
+        <Layout 
+          style={{ 
+            marginLeft: siderWidth, 
+            height: "100%", 
+            overflowY: "auto", // Đây là nơi duy nhất được cuộn khi lướt chuột
+            backgroundColor: "#f5f5f5" 
+          }}
+        >
           <Content
             style={{
               margin: "24px 16px",
               padding: 24,
-              minHeight: 280,
               background: "#fff",
               borderRadius: "8px",
+              minHeight: "fit-content", // Đảm bảo content không bị cắt
             }}
           >
             {children}

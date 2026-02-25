@@ -41,21 +41,12 @@ export default function SidebarHRM() {
     
     return [
       {
-        key: "sub-request",
-        label: <span className="font-bold text-[13px] uppercase tracking-tight">Yêu cầu tuyển dụng</span>,
-        icon: <FileAddOutlined />,
-        children: [
-          { key: "/recruitment/request/new", label: <Link href="/recruitment/request/new">Tạo yêu cầu mới</Link>, icon: <PlusCircleOutlined /> },
-          { key: "/recruitment/request/list", label: <Link href="/recruitment/request/list">Danh sách yêu cầu</Link>, icon: <UnorderedListOutlined /> },
-        ],
-      },
-      {
         key: "sub-job",
-        label: <span className="font-bold text-[13px] uppercase tracking-tight">Đăng tin tuyển dụng</span>,
+        label: <span className="font-bold text-[13px] uppercase tracking-tight">Quản lý tin tuyển dụng</span>,
         icon: <FileSearchOutlined />,
         children: [
-          { key: "/recruitment/jobs/new", label: <Link href="/recruitment/jobs/new">Tạo tin tuyển dụng</Link>, icon: <PlusCircleOutlined /> },
-          { key: "/recruitment/jobs/list", label: <Link href="/recruitment/jobs/list">Xem các tin đã đăng</Link>, icon: <UnorderedListOutlined /> },
+          { key: "/recruitment/job-postings/new", label: <Link href="/recruitment/job-postings/new">Tạo yêu cầu tuyển dụng</Link>, icon: <PlusCircleOutlined /> },
+          { key: "/recruitment/job-postings/list", label: <Link href="/recruitment/job-postings/list">Xem các tin đã đăng</Link>, icon: <UnorderedListOutlined /> },
         ],
       },
       {
@@ -164,7 +155,7 @@ export default function SidebarHRM() {
   };
 
   return (
-    <div className="h-full bg-white border-r border-gray-100 shadow-sm overflow-y-auto">
+    <div className="sticky top-0 h-screen h-full bg-white border-r border-gray-100 shadow-sm overflow-y-auto">
       <Menu
         mode="inline"
         selectedKeys={[pathname]}

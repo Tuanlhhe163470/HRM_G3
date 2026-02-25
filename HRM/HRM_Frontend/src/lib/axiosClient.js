@@ -1,24 +1,38 @@
 import axios from 'axios';
 
 const axiosClient = axios.create({
-  // Lấy đường dẫn từ biến môi trường
   baseURL: process.env.NEXT_PUBLIC_API_URL, 
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Xử lý phản hồi (Response Interceptor)
+// --- PHẦN KẾT HỢP MỚI: TỰ ĐỘNG ĐÍNH KÈM TOKEN ---
+axiosClient.interceptors.request.use(
+  (config) => {
+    // Lấy token từ localStorage 
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null; 
+    
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// --- PHẦN XỬ LÝ PHẢN HỒI (RESPONSE) ---
 axiosClient.interceptors.response.use(
   (response) => {
-    // Trả về thẳng data để đỡ phải gõ response.data.data ở nơi khác
     return response.data;
   },
   (error) => {
-    // Xử lý lỗi cơ bản
-    const message = error.response?.data?.message || error.message;
-    // Log ra console để dev dễ debug
-    console.error(`Axios Error: ${message}`);
+    // Nếu gặp lỗi 401 (Hết hạn hoặc sai Token)
+    if (error.response && error.response.status === 401) {
+      console.error("Phiên đăng nhập hết hạn hoặc không có quyền.");
+    }
     return Promise.reject(error);
   }
 );

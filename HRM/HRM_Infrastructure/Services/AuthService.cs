@@ -37,7 +37,7 @@ namespace HRM_Infrastructure.Services
                     .ThenInclude(e => e.Position)
                 .FirstOrDefaultAsync(u => u.Username == username && u.IsActive);
 
-            // Kiểm tra mật khẩu (Hiện tại Chiến đang để text thô nên so sánh trực tiếp)
+            // Kiểm tra mật khẩu
             if (user == null || user.PasswordHash != password) return null;
 
             // 2. Logic tạo JWT Token

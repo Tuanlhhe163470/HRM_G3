@@ -6,6 +6,7 @@ import { useState } from "react";
 import { loginApi } from "@/services/AuthService";
 import { useRouter } from "next/navigation";
 import notice from "@/components/Notice";
+import Cookies from 'js-cookie';
 
 const { Link } = Typography;
 
@@ -17,24 +18,30 @@ const LoginModal = ({ open, onCancel }) => {
   const handleLogin = async (values) => {
     setLoading(true);
     try {
-      const response = await loginApi(values);
+    const response = await loginApi(values);
+    if (response && response.token) {
+      const authData = response.token;
 
-      // response.token ở đây chứa object bao gồm token và employee (theo logic Backend mình đã sửa)
-      if (response && response.token) {
-        const authData = response.token; 
+      // 1. lưu localStorage
+      localStorage.setItem("token", authData.token);
+      localStorage.setItem("user", JSON.stringify(authData.employee));
 
-        localStorage.setItem("token", authData.token);
-        localStorage.setItem("user", JSON.stringify(authData.employee));
+      // 2. LƯU VÀO COOKIE ĐỂ MIDDLEWARE ĐỌC ĐƯỢC
+      // Lưu token và roleName, set hạn 1 ngày
+      Cookies.set('token', authData.token, { expires: 1 });
+      Cookies.set('role', authData.employee.roleName, { expires: 1 });
 
-        notice({
-          msg: "Đăng nhập thành công!",
-          isSuccess: true,
-        });
-        onCancel?.();
-        router.push("/attendance/checkin");
-       
-        router.refresh();
-      }
+      notice({ msg: "Đăng nhập thành công!", isSuccess: true });
+      onCancel?.();
+      
+      // Điều hướng theo role như cũ...
+      const role = authData.employee.roleName;
+      if (role === "Admin") router.push("/dashboard");
+      else if (role === "HR") router.push("/recruitment");
+      else router.push("/attendance/checkin");
+
+      router.refresh();
+    }
     } catch (error) {
       notice({
         msg: "Lỗi đăng nhập",

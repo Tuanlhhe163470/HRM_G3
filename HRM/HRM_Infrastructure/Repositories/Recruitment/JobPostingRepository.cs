@@ -53,5 +53,37 @@ namespace HRM_Infrastructure.Repositories.Recruitment
 
             await _context.SaveChangesAsync();
         }
+        // 1. Thực thi DeleteAsync
+        public async Task DeleteAsync(int id)
+        {
+            var job = await _context.JobPostings.FindAsync(id);
+            if (job != null)
+            {
+                _context.JobPostings.Remove(job);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        // 2. Thực thi GetAllAsync
+        public async Task<IEnumerable<JobPosting>> GetAllAsync()
+        {
+            return await _context.JobPostings
+                .OrderByDescending(j => j.CreatedAt)
+                .ToListAsync();
+        }
+
+        // 3. Thực thi GetByDepartmentAsync (Dựa trên bảng SQL bạn đã cung cấp)
+        public async Task<IEnumerable<JobPosting>> GetByDepartmentAsync(int departmentId)
+        {
+            return await _context.JobPostings
+                .Where(j => j.DepartmentID == departmentId)
+                .ToListAsync();
+        }
+        public async Task<IEnumerable<JobPosting>> GetAvailableJobsAsync()
+        {
+            return await _context.JobPostings
+                .Where(j => j.Status == "Open" && j.HiredCount < j.Vacancies)
+                .ToListAsync();
+        }
     }
 }
