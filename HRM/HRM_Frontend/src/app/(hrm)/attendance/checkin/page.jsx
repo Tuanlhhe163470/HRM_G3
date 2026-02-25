@@ -51,13 +51,14 @@ export default function EmployeeDashboard() {
       
       const logs = res.data || []; 
       
-      // Lọc các bản ghi của ngày hiện tại
-      const todayLogs = logs.filter(log => {
-        const logDate = new Date(log.workDate);
-        return logDate.getDate() === today.getDate() &&
-               logDate.getMonth() === today.getMonth() &&
-               logDate.getFullYear() === today.getFullYear();
-      });
+      const safeLogs = Array.isArray(logs) ? logs : (logs?.logs || []);
+
+        const todayLogs = safeLogs.filter(log => {
+          const logDate = new Date(log.workDate);
+          return logDate.getDate() === today.getDate() &&
+                 logDate.getMonth() === today.getMonth() &&
+                 logDate.getFullYear() === today.getFullYear(); // Cẩn thận check thêm cả năm nhé
+        });
 
       // Xác định nếu có ca làm việc nào chưa kết thúc (Check-out)
       const activeLog = todayLogs.find(log => log.checkInTime && !log.checkOutTime);

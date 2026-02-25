@@ -47,12 +47,6 @@ namespace HRM_Application.Services.TimeAttendance
                 throw new InvalidOperationException($"Hôm nay là ngày nghỉ lễ ({holiday.HolidayName}). Bạn không thể chấm công!");
             }
 
-            // CHẶN CHECK-IN CUỐI TUẦN ---
-            if (today.DayOfWeek == DayOfWeek.Sunday || today.DayOfWeek == DayOfWeek.Saturday)
-            {
-                throw new InvalidOperationException("Hôm nay là ngày nghỉ cuối tuần. Hệ thống không nhận chấm công!");
-            }
-
             var activeLog = await _attendanceRepo.GetActiveLogAsync(employeeId);
             if (activeLog != null)
             {
@@ -194,31 +188,50 @@ namespace HRM_Application.Services.TimeAttendance
             return (DateTime.Now - log.CheckInTime.Value).TotalHours > 16;
         }
 
-        public async Task<List<AttendanceLogResponse>> GetMyAttendanceLogsAsync(int employeeId, int month, int year)
+        public async Task<MyTimesheetSummaryResponse> GetMyAttendanceLogsAsync(int employeeId, int month, int year)
         {
-            // --- BƯỚC 1: TÍNH TOÁN KHOẢNG THỜI GIAN CHUẨN ---
             var startDate = new DateTime(year, month, 1);
-
-            // Tìm ngày cuối cùng của tháng đang xem (VD: 28/02 hoặc 31/10)
             var daysInMonth = DateTime.DaysInMonth(year, month);
             var monthEndDate = new DateTime(year, month, daysInMonth);
 
-            // Mốc kết thúc quét = Min(Cuối tháng đó, Ngày hôm qua)
-            // Nghĩa là: 
-            // - Nếu xem quá khứ (T10/2025) -> Quét đến 31/10/2025.
-            // - Nếu xem hiện tại (T02/2026) -> Quét đến hôm qua.
             var yesterday = DateTime.Today.AddDays(-1);
             var syncEndDate = monthEndDate < yesterday ? monthEndDate : yesterday;
 
-            // Chỉ quét nếu ngày bắt đầu <= ngày kết thúc quét
             if (startDate <= syncEndDate)
             {
                 await SyncMissingDataAsync(employeeId, startDate, syncEndDate);
             }
 
-            // --- BƯỚC 2: LẤY DỮ LIỆU ---
             var logs = await _attendanceRepo.GetByMonthAsync(employeeId, month, year);
-            return _mapper.Map<List<AttendanceLogResponse>>(logs);
+
+
+            var actualHours = logs.Where(x => x.Status == HRM_Domain.Enums.AttendanceStatus.OnTime ||
+                                              x.Status == HRM_Domain.Enums.AttendanceStatus.Late ||
+                                              x.Status == HRM_Domain.Enums.AttendanceStatus.EarlyLeave)
+                                  .Sum(x => x.WorkingHours ?? 0);
+
+            var holidayHours = logs.Where(x => x.Status == HRM_Domain.Enums.AttendanceStatus.Holiday)
+                                   .Sum(x => x.WorkingHours ?? 0);
+
+            var lateLogs = logs.Where(x => x.Status == HRM_Domain.Enums.AttendanceStatus.Late).ToList();
+            var earlyLogs = logs.Where(x => x.Status == HRM_Domain.Enums.AttendanceStatus.EarlyLeave).ToList();
+
+            return new MyTimesheetSummaryResponse
+            {
+                ActualWorkingHours = Math.Round(actualHours, 2),
+                PaidLeaveHours = Math.Round(holidayHours, 2),
+
+                LateCount = lateLogs.Count,
+                TotalLateMinutes = lateLogs.Sum(x => x.LateMinutes),
+
+                EarlyLeaveCount = earlyLogs.Count,
+                TotalEarlyLeaveMinutes = earlyLogs.Sum(x => x.EarlyLeaveMinutes),
+
+                MissingCheckOutCount = logs.Count(x => x.Status == HRM_Domain.Enums.AttendanceStatus.MissingCheckOut),
+                AbsentCount = logs.Count(x => x.Status == HRM_Domain.Enums.AttendanceStatus.Absent),
+
+                Logs = _mapper.Map<List<AttendanceLogResponse>>(logs)
+            };
         }
 
         // --- Helper: Logic tính công ---
