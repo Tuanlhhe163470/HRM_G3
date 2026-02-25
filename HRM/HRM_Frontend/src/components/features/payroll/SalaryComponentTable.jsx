@@ -1,153 +1,167 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
-const SalaryComponentFormModal = ({ isOpen, onClose, onSave, initialData }) => {
-  // State lưu dữ liệu form
-  const [formData, setFormData] = useState({
-    componentName: '',
-    type: 'Income',         // Mặc định là Thu nhập (Earnings)
-    amount: 0,
-    isFixed: true,          // Calculation Basis (Fixed Amount)
-    isActive: true
-  });
+// Icon Components (SVG)
+const EyeIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>);
+const EditIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>);
+const TrashIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>);
 
-  // Nếu có initialData (tức là đang Sửa), thì đổ dữ liệu vào form
-  useEffect(() => {
-    if (initialData) {
-      setFormData({
-        componentName: initialData.componentName,
-        type: initialData.type,
-        amount: initialData.amount,
-        isFixed: initialData.isFixed,
-        isActive: initialData.isActive
-      });
-    } else {
-      // Reset form khi tạo mới
-      setFormData({
-        componentName: '',
-        type: 'Income',
-        amount: 0,
-        isFixed: true,
-        isActive: true
-      });
-    }
-  }, [initialData, isOpen]);
-
-  if (!isOpen) return null;
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave(formData);
-  };
+const SalaryComponentTable = ({ 
+  data = [], 
+  onView, 
+  onEdit, 
+  onDelete, 
+  currentPage = 1,
+  totalPages = 1,
+  totalItems = 0,
+  itemsPerPage = 5,
+  onPageChange
+}) => {
+  
+  // Chốt an toàn: Đảm bảo data luôn là mảng
+  const safeData = Array.isArray(data) ? data : [];
+  
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
   return (
-    // Lớp phủ nền đen mờ (Overlay)
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity">
-      
-      {/* Hộp Modal Trắng */}
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 transform transition-all scale-100">
-        
-        {/* Header */}
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h2 className="text-xl font-bold text-gray-800">
-              {initialData ? 'Edit Salary Component' : 'Add New Salary Component'}
-            </h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Fill out the details below to add a new salary component.
-            </p>
+    <div className="flex flex-col">
+      <div className="overflow-x-auto">
+        <div className="inline-block min-w-full align-middle">
+          <div className="overflow-hidden border border-gray-200 rounded-lg shadow-sm">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-xs font-bold text-left text-gray-500 uppercase tracking-wider">Tên khoản lương</th>
+                  <th scope="col" className="px-6 py-3 text-xs font-bold text-left text-gray-500 uppercase tracking-wider">Loại</th>
+                  <th scope="col" className="px-6 py-3 text-xs font-bold text-left text-gray-500 uppercase tracking-wider">Số tiền</th>
+                  <th scope="col" className="px-6 py-3 text-xs font-bold text-left text-gray-500 uppercase tracking-wider">Tính chất</th>
+                  <th scope="col" className="px-6 py-3 text-xs font-bold text-left text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                  <th scope="col" className="px-6 py-3 text-xs font-bold text-center text-gray-500 uppercase tracking-wider">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {safeData.length > 0 ? (
+                  safeData.map((item) => (
+                    <tr key={item.componentID} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.componentName}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          item.type === 'Income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {item.type === 'Income' ? 'Thu nhập' : 'Khấu trừ'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
+                        {item.amount?.toLocaleString('vi-VN')} ₫
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {item.isFixed ? 'Cố định' : 'Biến đổi'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {item.isActive ? (
+                          <span className="flex items-center text-green-600">
+                            <span className="h-2 w-2 bg-green-600 rounded-full mr-2"></span> Active
+                          </span>
+                        ) : (
+                          <span className="flex items-center text-gray-400">
+                            <span className="h-2 w-2 bg-gray-400 rounded-full mr-2"></span> Inactive
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                        <div className="flex items-center justify-center space-x-3">
+                          <button 
+                            onClick={() => onView(item)}
+                            className="text-gray-500 hover:text-blue-600 transition-colors"
+                            title="Xem chi tiết"
+                          >
+                            <EyeIcon />
+                          </button>
+                          <button 
+                            onClick={() => onEdit(item)}
+                            className="text-blue-600 hover:text-blue-800 transition-colors"
+                            title="Sửa"
+                          >
+                            <EditIcon />
+                          </button>
+                          <button 
+                            onClick={() => onDelete(item.componentID)}
+                            className="text-red-500 hover:text-red-700 transition-colors"
+                            title="Xóa"
+                          >
+                            <TrashIcon />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="px-6 py-10 text-center text-gray-500 italic">
+                      Chưa có dữ liệu nào. Hãy thêm khoản lương mới.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
         </div>
-
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          
-          {/* Component Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Component Name</label>
-            <input
-              type="text"
-              required
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g. Base Salary"
-              value={formData.componentName}
-              onChange={(e) => setFormData({ ...formData, componentName: e.target.value })}
-            />
-          </div>
-
-          {/* Type (Earnings/Deductions) */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-            <select
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={formData.type}
-              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-            >
-              <option value="Income">Earnings (Thu nhập)</option>
-              <option value="Deduction">Deductions (Khấu trừ)</option>
-            </select>
-          </div>
-
-          {/* Amount (Thêm vào vì Backend cần) */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Default Amount</label>
-            <input
-              type="number"
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
-            />
-          </div>
-
-          {/* Calculation Basis (IsFixed) */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Calculation Basis</label>
-            <select
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={formData.isFixed ? 'true' : 'false'}
-              onChange={(e) => setFormData({ ...formData, isFixed: e.target.value === 'true' })}
-            >
-              <option value="true">Fixed Amount (Cố định)</option>
-              <option value="false">Variable / Formula (Biến đổi)</option>
-            </select>
-          </div>
-
-          {/* Toggle Switch: Is Active? */}
-          <div className="flex items-center justify-between mt-2">
-            <span className="text-sm font-medium text-gray-700">Is Active?</span>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
-                className="sr-only peer"
-                checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
-
-          {/* Footer Buttons */}
-          <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 shadow-sm"
-            >
-              Save Component
-            </button>
-          </div>
-
-        </form>
       </div>
+
+      {/* Pagination Footer */}
+      {totalItems > 0 && (
+        <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 mt-2 rounded-b-lg">
+          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                Hiển thị <span className="font-medium">{startItem}</span> đến <span className="font-medium">{endItem}</span> trong tổng số <span className="font-medium">{totalItems}</span> bản ghi
+              </p>
+            </div>
+            <div>
+              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <button
+                  onClick={() => onPageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="sr-only">Previous</span>
+                  &larr;
+                </button>
+                
+                {[...Array(totalPages)].map((_, idx) => {
+                  const pageNum = idx + 1;
+                  const isCurrent = currentPage === pageNum;
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => onPageChange(pageNum)}
+                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                        isCurrent 
+                          ? 'z-10 bg-blue-50 border-blue-500 text-blue-600' 
+                          : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  )
+                })}
+
+                <button
+                  onClick={() => onPageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="sr-only">Next</span>
+                  &rarr;
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default SalaryComponentFormModal;
+export default SalaryComponentTable;

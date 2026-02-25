@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace HRM_Domain.Entities
 {
-    public class EmployeeSalaryDetail
+    public class MonthlyPayrollDetail
     {
         [Key]
         public int DetailID { get; set; }

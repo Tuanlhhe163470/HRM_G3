@@ -1,13 +1,15 @@
-import { Inter, Roboto_Mono } from "next/font/google";
+import { Inter, Roboto } from "next/font/google"; 
+import { ConfigProvider } from 'antd'; 
 import "./globals.css";
 
 const inter = Inter({
-  variable: "--font-geist-sans", // Giữ nguyên tên biến để không phải sửa CSS
+  variable: "--font-geist-sans",
   subsets: ["latin"],
 });
 
-const robotoMono = Roboto_Mono({
-  variable: "--font-geist-mono", // Giữ nguyên tên biến
+const robotoMono = Roboto({
+  weight: ['400', '700'],
+  variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
@@ -29,9 +31,10 @@ export default function RootLayout({ children }) {
         className={`${inter.variable} ${robotoMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        {children}
+        <ConfigProvider theme={{ token: { primaryColor: '#1677ff' } }}>
+          {children}
+        </ConfigProvider>
       </body>
     </html>
   );
 }
-

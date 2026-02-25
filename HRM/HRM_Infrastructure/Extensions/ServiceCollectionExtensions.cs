@@ -16,6 +16,10 @@ using HRM_Application.Services;
 using HRM_Infrastructure.Repositories.TimeAttendance;
 using HRM_Application.Contracts.Services;
 using HRM_Application.Services.TimeAttendance;
+using HRM_Application.Services.PayRoll;
+using HRM_Infrastructure.Repositories.Payroll;
+using HRM_Infrastructure.Repositories.PayRoll;
+using HRM_Infrastructure.PayRoll.Repositories;
 
 namespace HRM_Infrastructure.Extensions
 {
@@ -44,6 +48,11 @@ namespace HRM_Infrastructure.Extensions
             services.AddScoped<JobPostingService>();
             services.AddScoped<IAttendanceRepository, AttendanceRepository>();
             // services.AddScoped<IShiftRepository, ShiftRepository>(); 
+            services.AddScoped<IEmployeeSalaryConfigRepository, EmployeeSalaryConfigRepository>();
+            services.AddScoped<IEmployeeSalaryConfigService, EmployeeSalaryConfigService>();
+            services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+            services.AddScoped<IPayrollRepository, PayrollRepository>();
+            services.AddScoped<IPayrollService, PayrollService>();
             services.AddScoped<IMonthlyTimesheetService, MonthlyTimesheetService>();
             services.AddScoped<IMonthlyTimesheetRepository, MonthlyTimesheetRepository>();
 

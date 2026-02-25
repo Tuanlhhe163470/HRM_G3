@@ -4,6 +4,7 @@ using HRM_Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HRM_Infrastructure.Migrations
 {
     [DbContext(typeof(HRMDbContext))]
-    partial class HRMDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260224095221_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -596,9 +599,6 @@ namespace HRM_Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TimesheetID"));
 
-                    b.Property<decimal>("ActualWorkDays")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<int>("EmployeeID")
                         .HasColumnType("int");
 
@@ -611,31 +611,18 @@ namespace HRM_Infrastructure.Migrations
                     b.Property<int>("Month")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("PaidLeaveDays")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<DateTime?>("PublishedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<decimal>("StandardWorkDays")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TotalEarlyLeaveMinutes")
-                        .HasColumnType("int");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<int>("TotalLateMinutes")
                         .HasColumnType("int");
 
-                    b.Property<double>("TotalOvertimeHours")
-                        .HasColumnType("float");
-
-                    b.Property<double>("TotalWorkingHours")
-                        .HasColumnType("float");
-
-                    b.Property<decimal>("UnpaidLeaveDays")
+                    b.Property<decimal>("TotalWorkDays")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("Year")
