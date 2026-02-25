@@ -48,7 +48,7 @@ export default function SidebarHRM() {
   const getRecruitmentItems = () => {
     if (role === "Employee") return []; 
     
-    return [
+    if (role === "HR") return [
       {
         key: "sub-job",
         label: <span className="font-bold text-[13px] uppercase tracking-tight">Quản lý tin tuyển dụng</span>,
@@ -57,6 +57,23 @@ export default function SidebarHRM() {
           { key: "/recruitment/job-postings/new", label: <Link href="/recruitment/job-postings/new">Tạo yêu cầu tuyển dụng</Link>, icon: <PlusCircleOutlined /> },
           { key: "/recruitment/job-postings/list", label: <Link href="/recruitment/job-postings/list">Xem các tin đã đăng</Link>, icon: <UnorderedListOutlined /> },
         ],
+      },
+      {
+        key: "sub-candidate",
+        label: <span className="font-bold text-[13px] uppercase tracking-tight">Theo dõi ứng viên</span>,
+        icon: <UserOutlined />,
+        children: [
+          { key: "/recruitment/candidates", label: <Link href="/recruitment/candidates">Danh sách ứng viên</Link>, icon: <UnorderedListOutlined /> },
+          { key: "/recruitment/interviews", label: <Link href="/recruitment/interviews">Lịch phỏng vấn</Link>, icon: <CalendarOutlined /> },
+        ],
+      },
+    ];
+
+    if (role === "Manager") return [
+      {
+        key: "sub-job-approval",
+        label: <Link href="/recruitment/job-postings/approval"><span className="font-bold text-[13px] uppercase tracking-tight">Phê duyệt tin tuyển dụng</span></Link>,
+        icon: <FileSearchOutlined />,
       },
       {
         key: "sub-candidate",

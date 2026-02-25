@@ -12,10 +12,18 @@ const jobPostingService = {
   },
 
   // 3. Manager phê duyệt/từ chối
-  approve: (id, isApproved) => {
-    return axiosClient.patch(`/JobPostings/${id}/approve?isApproved=${isApproved}`);
+  // Lấy tin đang chờ duyệt (Dành cho Manager)
+  getPending: () => {
+    // Gọi API trả về danh sách có status = "Pending"
+   return axiosClient.get("/JobPostings/pending-by-dept");
   },
 
+  // Manager phê duyệt/từ chối (Khớp với ApproveJobRequestAsync trong C#)
+  approve: (id, isApproved) => {
+    // Backend: public async Task<bool> ApproveJobRequestAsync(int jobId, bool isApproved)
+    // C# thường nhận tham số qua Query string hoặc Patch body tùy Controller
+    return axiosClient.patch(`/JobPostings/${id}/approve?isApproved=${isApproved}`);
+  },
   // 4. HR Công khai tin đăng sau khi đã Approved
   publish: (id, description) => {
     return axiosClient.patch(`/JobPostings/${id}/publish`, description);

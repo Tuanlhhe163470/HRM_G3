@@ -85,5 +85,16 @@ namespace HRM_Infrastructure.Repositories.Recruitment
                 .Where(j => j.Status == "Open" && j.HiredCount < j.Vacancies)
                 .ToListAsync();
         }
+        public async Task<IEnumerable<JobPosting>> GetByStatusAndDeptAsync(string status, int deptId)
+        {
+            return await _context.JobPostings
+                .Where(j => j.Status == status && j.DepartmentID == deptId)
+                .Include(j => j.Department)
+                .Include(j => j.Position)
+                .Include(j => j.CreatedByUserAccount) 
+                    .ThenInclude(u => u.Employee)
+                .OrderByDescending(j => j.CreatedAt)
+                .ToListAsync();
+        }
     }
 }

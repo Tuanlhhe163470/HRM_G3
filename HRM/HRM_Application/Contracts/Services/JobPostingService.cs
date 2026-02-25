@@ -27,20 +27,34 @@ namespace HRM_Application.Contracts.Services
         // Manager phê duyệt hoặc từ chối yêu cầu
         public async Task<bool> ApproveJobRequestAsync(int jobId, bool isApproved)
         {
+            // 1. Dùng Repository để tìm tin thay vì _context
             var job = await _jobRepo.GetByIdAsync(jobId);
 
-            // Chỉ phê duyệt khi tin đang ở trạng thái chờ duyệt (Pending)
-            if (job == null || job.Status != "Pending") return false;
+            // KIỂM TRA 1: Tin có tồn tại không?
+            if (job == null) return false;
 
-            // Nếu Duyệt: Chuyển sang Approved (đã sẵn sàng để HR Public)
-            // Nếu Từ chối: Chuyển sang Rejected
+            // KIỂM TRA 2: Trạng thái hiện tại phải là Pending để được duyệt
+            if (job.Status != "Pending") return false;
+
+            // CẬP NHẬT TRẠNG THÁI
             job.Status = isApproved ? "Approved" : "Rejected";
             job.UpdatedAt = DateTime.Now;
 
-            await _jobRepo.UpdateAsync(job);
-            return true;
+            try
+            {
+                // 2. Gọi Update của Repository thay vì SaveChanges trực tiếp
+                await _jobRepo.UpdateAsync(job);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
-
+        public async Task<IEnumerable<JobPosting>> GetPendingByDeptAsync(int deptId)
+        {
+            return await _jobRepo.GetByStatusAndDeptAsync("Pending", deptId);
+        }
         #endregion
 
         #region 2. QUẢN LÝ TIN ĐĂNG CÔNG KHAI (POSTING)

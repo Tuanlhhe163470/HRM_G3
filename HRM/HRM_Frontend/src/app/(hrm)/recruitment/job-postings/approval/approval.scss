@@ -1,0 +1,57 @@
+.approval-container {
+  .ant-card {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+  }
+
+  .header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f0f0f0;
+
+    .title-text {
+      margin-bottom: 0 !important;
+      color: #1a3353;
+      letter-spacing: -0.5px;
+    }
+  }
+
+  .ant-table-thead > tr > th {
+    background-color: #f8fbff !important;
+    color: #595959 !important;
+    font-weight: 600 !important;
+    text-transform: uppercase;
+    font-size: 12px;
+  }
+
+  .job-title {
+    color: #00aeef;
+    transition: all 0.3s;
+    &:hover {
+      color: #0081b1;
+      text-decoration: underline;
+    }
+  }
+
+  .jd-modal-body {
+    padding: 10px 0;
+  }
+
+  .jd-preview-container {
+    font-size: 13px;
+    line-height: 1.5;
+
+    img {
+      max-width: 100%;
+      height: auto !important;
+    }
+  }
+  .btn-action {
+    border-radius: 6px;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+}

@@ -49,6 +49,22 @@ namespace HRM_API.Controllers
 
         // 2. Manager phê duyệt yêu cầu
         [Authorize(Roles = "Manager")]
+        [HttpGet("pending-by-dept")]
+        public async Task<IActionResult> GetPendingByDept()
+        {
+            // Lấy DepartmentID từ Claim của người dùng đang đăng nhập
+            var deptIdClaim = User.FindFirst("DepartmentId")?.Value;
+
+            if (string.IsNullOrEmpty(deptIdClaim) || !int.TryParse(deptIdClaim, out int deptId))
+            {
+                return BadRequest(new { message = "Không tìm thấy thông tin phòng ban của quản lý." });
+            }
+
+            var jobs = await _jobService.GetPendingByDeptAsync(deptId);
+            return Ok(jobs);
+        }
+
+        [Authorize(Roles = "Manager")]
         [HttpPatch("{id}/approve")]
         public async Task<IActionResult> Approve(int id, [FromQuery] bool isApproved)
         {

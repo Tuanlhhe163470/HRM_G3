@@ -24,7 +24,7 @@ import axiosClient from "@/lib/axiosClient";
 import dayjs from "dayjs";
 import styles from "./CreateJobRequisition.module.scss";
 import jobPostingService from "@/services/Recruitment/jobPostingService";
-import notice from "@/components/Notice";
+import useNotice from "@/components/Notice";
 import dynamic from "next/dynamic";
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 import "react-quill-new/dist/quill.snow.css";
@@ -38,7 +38,7 @@ export default function CreateJobRequisition() {
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-
+  const notice = useNotice();
   // Cấu hình thanh công cụ cho Editor
   const modules = {
     toolbar: [
@@ -86,7 +86,7 @@ export default function CreateJobRequisition() {
         isSuccess: true,
       });
       form.resetFields();
-      form.setFieldsValue({ description: '' });
+      form.setFieldsValue({ description: "" });
     } catch (error) {
       notice({
         msg: "Lỗi hệ thống",

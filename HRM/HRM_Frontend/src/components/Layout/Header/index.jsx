@@ -154,7 +154,42 @@ export default function Header() {
             </Link>
           </nav>
         );
-      default:
+       case "Manager":
+        return (
+          <nav className="hidden md:flex items-center gap-4 lg:gap-6">
+            <Link
+              href="/recruitment/job-postings/approval"
+              className={`menu-item font-medium text-[13px] uppercase tracking-tighter ${pathname.startsWith("/recruitment") ? "text-[#00aeef] font-bold" : ""}`}
+            >
+              <FileSearchOutlined /> Tuyển dụng
+            </Link>
+            <Link
+              href="/core-hr"
+              className={`menu-item font-medium text-[13px] uppercase tracking-tighter ${pathname.startsWith("/core-hr") ? "text-[#00aeef] font-bold" : ""}`}
+            >
+              <TeamOutlined /> Nhân sự của tôi
+            </Link>
+            <Link
+              href="/attendance/checkin"
+              className={`menu-item font-medium text-[13px] uppercase tracking-tighter ${pathname.startsWith("/attendance") ? "text-[#00aeef] font-bold" : ""}`}
+            >
+              <DashboardOutlined /> Chấm công
+            </Link>
+            <Link
+              href="/payroll"
+              className={`menu-item font-medium text-[13px] uppercase tracking-tighter ${pathname.startsWith("/payroll") ? "text-[#00aeef] font-bold" : ""}`}
+            >
+              <DollarOutlined /> Lương & Phúc lợi
+            </Link>
+            <Link
+              href="/evaluation"
+              className={`menu-item font-medium text-[13px] uppercase tracking-tighter ${pathname.startsWith("/training") ? "text-[#00aeef] font-bold" : ""}`}
+            >
+              <SettingOutlined /> Đào tạo
+            </Link>
+          </nav>
+        );
+        default:
         return (
           <nav className="hidden md:flex items-center gap-8">
             <Link
