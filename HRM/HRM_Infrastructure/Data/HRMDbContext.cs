@@ -41,9 +41,11 @@ namespace HRM_Infrastructure.Data
         // ================= 5. PAYROLL MODULE =================
         public DbSet<MonthlyPayroll> MonthlyPayrolls { get; set; }
         public DbSet<SalaryComponent> SalaryComponents { get; set; }
-        public DbSet<EmployeeSalaryDetail> EmployeeSalaryDetails { get; set; }
+        public DbSet<MonthlyPayrollDetail> MonthlyPayrollDetails { get; set; }
+        public DbSet<EmployeeSalaryConfig> EmployeeSalaryConfigs { get; set; }
+        public DbSet<Payroll> Payrolls { get; set; } // Thực thể tính lương mới (UC3)
 
-        // ================= 6. TRAINING MODULE =================
+        // ================= 6. TRAINING & EVALUATION MODULE =================
         public DbSet<ReviewCycle> ReviewCycles { get; set; }
         public DbSet<PerformanceGoal> PerformanceGoals { get; set; }
         public DbSet<Review> Reviews { get; set; }
@@ -52,12 +54,10 @@ namespace HRM_Infrastructure.Data
         public DbSet<CourseMaterial> CourseMaterials { get; set; }
         public DbSet<CourseQuestion> CourseQuestions { get; set; }
         public DbSet<UserTraining> UserTrainings { get; set; }
-        public DbSet<Notification> Notification { get; set; } 
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            // --- Cấu hình nâng cao (Fluent API) ---
 
             // 1. Cấu hình quan hệ 1-1 giữa Employee và UserAccount
             modelBuilder.Entity<UserAccount>()
@@ -75,42 +75,62 @@ namespace HRM_Infrastructure.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ==========================================================
-            // QUAN TRỌNG: FIX LỖI 1785 (CYCLES OR MULTIPLE CASCADE PATHS)
+            // CẤU HÌNH PAYROLL MODULE - TRÁNH LỖI MULTIPLE CASCADE PATHS
             // ==========================================================
 
-            // Tắt Cascade Delete cho MonthlyPayroll khi xóa Timesheet
-            modelBuilder.Entity<MonthlyPayroll>()
-                .HasOne(p => p.Timesheet)
+            // Tắt Cascade Delete cho Payroll (UC3) khi xóa Employee
+            modelBuilder.Entity<Payroll>()
+                .HasOne(p => p.Employee)
                 .WithMany()
-                .HasForeignKey(p => p.TimesheetID)
-                .OnDelete(DeleteBehavior.Restrict); // Bắt buộc dùng Restrict
+                .HasForeignKey(p => p.EmployeeID)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            // Tắt Cascade Delete cho MonthlyPayroll khi xóa Employee
+            // Cấu hình các bảng Payroll cũ (nếu vẫn sử dụng)
             modelBuilder.Entity<MonthlyPayroll>()
                 .HasOne(p => p.Employee)
                 .WithMany()
                 .HasForeignKey(p => p.EmployeeID)
-                .OnDelete(DeleteBehavior.Restrict); // Bắt buộc dùng Restrict
+                .OnDelete(DeleteBehavior.Restrict);
 
-            // Tắt Cascade Delete cho Salary Details (Tùy chọn, nhưng an toàn hơn)
-            modelBuilder.Entity<EmployeeSalaryDetail>()
-                .HasOne(d => d.MonthlyPayroll)
+            modelBuilder.Entity<MonthlyPayroll>()
+                .HasOne(p => p.Timesheet)
                 .WithMany()
-                .HasForeignKey(d => d.PayrollID)
-                .OnDelete(DeleteBehavior.Cascade); // Chi tiết thì xóa theo Payroll được
+                .HasForeignKey(p => p.TimesheetID)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // ==========================================================
+            // CẤU HÌNH EVALUATION & TRAINING
+            // ==========================================================
 
-            modelBuilder.Entity<ReviewDetail>(entity =>
-            {
-                // Cấu hình mối quan hệ với Review: Tắt Cascade Delete
-                entity.HasOne(d => d.Review)
-                      .WithMany() // Nếu bên Review có List<ReviewDetail> thì điền vào: .WithMany(r => r.ReviewDetails)
-                      .HasForeignKey(d => d.ReviewID)
-                      .OnDelete(DeleteBehavior.Restrict); // <-- QUAN TRỌNG: Đổi thành Restrict
-            });
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.Employee)
+                .WithMany()
+                .HasForeignKey(r => r.EmployeeID)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            // 3. Tự động set kiểu decimal(18,2) cho tất cả các trường tiền tệ
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.Manager)
+                .WithMany()
+                .HasForeignKey(r => r.ManagerID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ReviewDetail>()
+                .HasOne(d => d.Review)
+                .WithMany()
+                .HasForeignKey(d => d.ReviewID)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserTraining>()
+                .HasOne(ut => ut.AssignedByReview)
+                .WithMany()
+                .HasForeignKey(ut => ut.AssignedByReviewID)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // ==========================================================
+            // ĐỊNH DẠNG DỮ LIỆU TỰ ĐỘNG
+            // ==========================================================
+
+            // Set decimal(18,2) cho tất cả các trường tiền tệ/điểm số
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
                 var properties = entityType.ClrType.GetProperties()
@@ -123,53 +143,6 @@ namespace HRM_Infrastructure.Data
                         .HasColumnType("decimal(18,2)");
                 }
             }
-
-            // module 5: 
-            // 1. Config for Review (Tránh lỗi Multiple Cascade Paths)
-            modelBuilder.Entity<Review>()
-                .HasOne(r => r.Employee)
-                .WithMany()
-                .HasForeignKey(r => r.EmployeeID)
-                .OnDelete(DeleteBehavior.Restrict); // Xóa User không xóa Review
-
-            modelBuilder.Entity<Review>()
-                .HasOne(r => r.Manager)
-                .WithMany()
-                .HasForeignKey(r => r.ManagerID)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // 2. Config for ReviewDetail
-            modelBuilder.Entity<ReviewDetail>()
-                .HasOne(rd => rd.Review)
-                .WithMany()
-                .HasForeignKey(rd => rd.ReviewID)
-                .OnDelete(DeleteBehavior.Cascade); // Xóa Review thì xóa luôn chi tiết
-
-            // 3. Config for PerformanceGoal
-            modelBuilder.Entity<PerformanceGoal>()
-                .Property(g => g.Weight)
-                .IsRequired(); // Bắt buộc nhập trọng số
-
-            // 4. Config for UserTraining (Integration Logic)
-            modelBuilder.Entity<UserTraining>()
-                .HasOne(ut => ut.AssignedByReview)
-                .WithMany()
-                .HasForeignKey(ut => ut.AssignedByReviewID)
-                .OnDelete(DeleteBehavior.SetNull);
-            // Nếu xóa phiếu đánh giá, lịch sử đào tạo vẫn còn (nhưng mất link)
-
-            // 5. Config Money/Decimal Precision
-            modelBuilder.Entity<Review>()
-                .Property(r => r.FinalScore)
-                .HasPrecision(5, 2);
-
-            modelBuilder.Entity<UserTraining>()
-                .Property(ut => ut.ProgressPercent)
-                .HasPrecision(5, 2);
-
-            modelBuilder.Entity<UserTraining>()
-                .Property(ut => ut.QuizScore)
-                .HasPrecision(5, 2);
         }
     }
 }

@@ -62,18 +62,16 @@ namespace HRM_Infrastructure.Migrations
                 name: "PublicHolidays",
                 columns: table => new
                 {
-                    HolidayID = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    HolidayName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    StartDate = table.Column<DateTime>(type: "datetime2", maxLength: 100, nullable: false),
+                    HolidayName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EndDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Year = table.Column<int>(type: "int", nullable: false),
                     IsRecurring = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PublicHolidays", x => x.HolidayID);
+                    table.PrimaryKey("PK_PublicHolidays", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -130,11 +128,15 @@ namespace HRM_Infrastructure.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ShiftName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    MorningStart = table.Column<TimeSpan>(type: "time", nullable: false),
-                    AfternoonEnd = table.Column<TimeSpan>(type: "time", nullable: false),
+                    StartTime = table.Column<TimeSpan>(type: "time", nullable: false),
+                    EndTime = table.Column<TimeSpan>(type: "time", nullable: false),
+                    BreakStartTime = table.Column<TimeSpan>(type: "time", nullable: true),
+                    BreakEndTime = table.Column<TimeSpan>(type: "time", nullable: true),
                     AllowedLateMinutes = table.Column<int>(type: "int", nullable: false),
+                    AllowedEarlyLeaveMinutes = table.Column<int>(type: "int", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    WorkDays = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -208,11 +210,14 @@ namespace HRM_Infrastructure.Migrations
                     EmployeeId = table.Column<int>(type: "int", nullable: false),
                     ShiftId = table.Column<int>(type: "int", nullable: false),
                     WorkDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CheckInTime = table.Column<TimeSpan>(type: "time", nullable: true),
-                    CheckOutTime = table.Column<TimeSpan>(type: "time", nullable: true),
-                    WorkingHours = table.Column<double>(type: "float", nullable: false),
+                    CheckInTime = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CheckOutTime = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CheckInIp = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    CheckOutIp = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    WorkingHours = table.Column<double>(type: "float", nullable: true),
                     Status = table.Column<int>(type: "int", nullable: false),
-                    Note = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    IsSystemGenerated = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -274,6 +279,35 @@ namespace HRM_Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "EmployeeSalaryConfigs",
+                columns: table => new
+                {
+                    ConfigID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EmployeeID = table.Column<int>(type: "int", nullable: false),
+                    ComponentID = table.Column<int>(type: "int", nullable: false),
+                    Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    EffectiveDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EmployeeSalaryConfigs", x => x.ConfigID);
+                    table.ForeignKey(
+                        name: "FK_EmployeeSalaryConfigs_Employees_EmployeeID",
+                        column: x => x.EmployeeID,
+                        principalTable: "Employees",
+                        principalColumn: "EmployeeID",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_EmployeeSalaryConfigs_SalaryComponents_ComponentID",
+                        column: x => x.ComponentID,
+                        principalTable: "SalaryComponents",
+                        principalColumn: "ComponentID",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "JobHistories",
                 columns: table => new
                 {
@@ -310,7 +344,10 @@ namespace HRM_Infrastructure.Migrations
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     CreatedBy = table.Column<int>(type: "int", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ExpiryDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ClosingDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -385,13 +422,45 @@ namespace HRM_Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Payrolls",
+                columns: table => new
+                {
+                    PayrollID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EmployeeID = table.Column<int>(type: "int", nullable: false),
+                    Month = table.Column<int>(type: "int", nullable: false),
+                    Year = table.Column<int>(type: "int", nullable: false),
+                    ConfiguredIncome = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    ConfiguredDeduction = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    StandardWorkingDays = table.Column<int>(type: "int", nullable: false),
+                    ActualWorkingDays = table.Column<int>(type: "int", nullable: false),
+                    OTHours = table.Column<double>(type: "float", nullable: false),
+                    OTSalary = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    TotalIncome = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    TotalDeduction = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    NetSalary = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    ComputedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Payrolls", x => x.PayrollID);
+                    table.ForeignKey(
+                        name: "FK_Payrolls_Employees_EmployeeID",
+                        column: x => x.EmployeeID,
+                        principalTable: "Employees",
+                        principalColumn: "EmployeeID",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "PerformanceGoals",
                 columns: table => new
                 {
                     GoalID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    EmployeeID = table.Column<int>(type: "int", nullable: false),
-                    CycleID = table.Column<int>(type: "int", nullable: false),
+                    EmployeeID = table.Column<int>(type: "int", nullable: true),
+                    CycleID = table.Column<int>(type: "int", nullable: true),
                     Title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     Weight = table.Column<int>(type: "int", nullable: false),
@@ -406,14 +475,12 @@ namespace HRM_Infrastructure.Migrations
                         name: "FK_PerformanceGoals_Employees_EmployeeID",
                         column: x => x.EmployeeID,
                         principalTable: "Employees",
-                        principalColumn: "EmployeeID",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "EmployeeID");
                     table.ForeignKey(
                         name: "FK_PerformanceGoals_ReviewCycles_CycleID",
                         column: x => x.CycleID,
                         principalTable: "ReviewCycles",
-                        principalColumn: "CycleID",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "CycleID");
                 });
 
             migrationBuilder.CreateTable(
@@ -479,12 +546,13 @@ namespace HRM_Infrastructure.Migrations
                         column: x => x.EmployeeID,
                         principalTable: "Employees",
                         principalColumn: "EmployeeID",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Reviews_Employees_ManagerID",
                         column: x => x.ManagerID,
                         principalTable: "Employees",
-                        principalColumn: "EmployeeID");
+                        principalColumn: "EmployeeID",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Reviews_ReviewCycles_CycleID",
                         column: x => x.CycleID,
@@ -617,7 +685,7 @@ namespace HRM_Infrastructure.Migrations
                         column: x => x.ReviewID,
                         principalTable: "Reviews",
                         principalColumn: "ReviewID",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -649,7 +717,8 @@ namespace HRM_Infrastructure.Migrations
                         name: "FK_UserTrainings_Reviews_AssignedByReviewID",
                         column: x => x.AssignedByReviewID,
                         principalTable: "Reviews",
-                        principalColumn: "ReviewID");
+                        principalColumn: "ReviewID",
+                        onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_UserTrainings_TrainingCourses_CourseID",
                         column: x => x.CourseID,
@@ -787,7 +856,7 @@ namespace HRM_Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "EmployeeSalaryDetails",
+                name: "MonthlyPayrollDetails",
                 columns: table => new
                 {
                     DetailID = table.Column<int>(type: "int", nullable: false)
@@ -798,15 +867,15 @@ namespace HRM_Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_EmployeeSalaryDetails", x => x.DetailID);
+                    table.PrimaryKey("PK_MonthlyPayrollDetails", x => x.DetailID);
                     table.ForeignKey(
-                        name: "FK_EmployeeSalaryDetails_MonthlyPayrolls_PayrollID",
+                        name: "FK_MonthlyPayrollDetails_MonthlyPayrolls_PayrollID",
                         column: x => x.PayrollID,
                         principalTable: "MonthlyPayrolls",
                         principalColumn: "PayrollID",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_EmployeeSalaryDetails_SalaryComponents_ComponentID",
+                        name: "FK_MonthlyPayrollDetails_SalaryComponents_ComponentID",
                         column: x => x.ComponentID,
                         principalTable: "SalaryComponents",
                         principalColumn: "ComponentID",
@@ -864,14 +933,14 @@ namespace HRM_Infrastructure.Migrations
                 column: "PositionID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EmployeeSalaryDetails_ComponentID",
-                table: "EmployeeSalaryDetails",
+                name: "IX_EmployeeSalaryConfigs_ComponentID",
+                table: "EmployeeSalaryConfigs",
                 column: "ComponentID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EmployeeSalaryDetails_PayrollID",
-                table: "EmployeeSalaryDetails",
-                column: "PayrollID");
+                name: "IX_EmployeeSalaryConfigs_EmployeeID",
+                table: "EmployeeSalaryConfigs",
+                column: "EmployeeID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Interviews_ApplicationID",
@@ -909,6 +978,16 @@ namespace HRM_Infrastructure.Migrations
                 column: "EmployeeID");
 
             migrationBuilder.CreateIndex(
+                name: "IX_MonthlyPayrollDetails_ComponentID",
+                table: "MonthlyPayrollDetails",
+                column: "ComponentID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MonthlyPayrollDetails_PayrollID",
+                table: "MonthlyPayrollDetails",
+                column: "PayrollID");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_MonthlyPayrolls_EmployeeID",
                 table: "MonthlyPayrolls",
                 column: "EmployeeID");
@@ -932,6 +1011,11 @@ namespace HRM_Infrastructure.Migrations
                 name: "IX_Offers_ApplicationID",
                 table: "Offers",
                 column: "ApplicationID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Payrolls_EmployeeID",
+                table: "Payrolls",
+                column: "EmployeeID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PerformanceGoals_CycleID",
@@ -1029,7 +1113,7 @@ namespace HRM_Infrastructure.Migrations
                 name: "CourseQuestions");
 
             migrationBuilder.DropTable(
-                name: "EmployeeSalaryDetails");
+                name: "EmployeeSalaryConfigs");
 
             migrationBuilder.DropTable(
                 name: "Interviews");
@@ -1041,10 +1125,16 @@ namespace HRM_Infrastructure.Migrations
                 name: "LaborContracts");
 
             migrationBuilder.DropTable(
+                name: "MonthlyPayrollDetails");
+
+            migrationBuilder.DropTable(
                 name: "Notifications");
 
             migrationBuilder.DropTable(
                 name: "Offers");
+
+            migrationBuilder.DropTable(
+                name: "Payrolls");
 
             migrationBuilder.DropTable(
                 name: "PublicHolidays");

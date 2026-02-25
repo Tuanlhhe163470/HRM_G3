@@ -15,6 +15,7 @@ import {
   DollarOutlined,
   SettingOutlined,
   ClockCircleOutlined,
+  CalculatorFilled,
 } from "@ant-design/icons";
 
 export default function SidebarHRM() {
@@ -126,14 +127,32 @@ export default function SidebarHRM() {
     
     return [
       {
-        key: "/payroll/salary-components",
-        label: <Link href="/payroll/salary-components"><span className="font-bold text-[13px] uppercase tracking-tight">Cấu hình lương</span></Link>,
+        // Key này phải khớp với URL thực tế để menu sáng màu xanh khi bạn đang ở trang đó
+        key: "/payroll", 
+        label: (
+          <Link href="/payroll">
+            <span className="font-bold text-[13px] uppercase tracking-tight">Cấu hình lương</span>
+          </Link>
+        ),
         icon: <DollarOutlined />,
       },
       {
         key: "/payroll/payroll-processing",
-        label: <Link href="/payroll/payroll-processing"><span className="font-bold text-[13px] uppercase tracking-tight">Xử lý lương</span></Link>,
+        label: (
+          <Link href="/payroll/payroll-processing">
+            <span className="font-bold text-[13px] uppercase tracking-tight">Xử lý lương</span>
+          </Link>
+        ),
         icon: <FileSearchOutlined />,
+      },
+      {
+        key: "/payroll/calculation",
+        label: (
+          <Link href="/payroll/calculation">
+            <span className="font-bold text-[13px] uppercase tracking-tight">Tính lương</span>
+          </Link>
+        ),
+        icon: <CalculatorFilled />,
       },
     ];
   };
