@@ -6,19 +6,28 @@ import SalaryComponentFormModal from '@/components/Modal/SalaryTable/page';
 import SalaryComponentTable from '@/components/features/payroll/SalaryComponentTable';
 
 export default function SalaryConfigPage() {
-  const [components, setComponents] = useState([]);
+  // --- STATE QUẢN LÝ DỮ LIỆU ---
+  const [allComponents, setAllComponents] = useState([]); // Chứa toàn bộ dữ liệu từ API
+  const [displayData, setDisplayData] = useState([]);     // Chứa dữ liệu hiển thị trên trang hiện tại
   const [loading, setLoading] = useState(true);
   
-  // State cho Modal
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState(null); // Lưu item đang sửa (nếu có)
+  // --- STATE PHÂN TRANG ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5; // Số dòng trên 1 trang (có thể chỉnh thành 10 tùy ý)
 
-  // Hàm load dữ liệu
+  // --- STATE MODAL ---
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState('create'); // Các chế độ: 'create', 'edit', 'view'
+  const [selectedItem, setSelectedItem] = useState(null);
+
+  // 1. Hàm load dữ liệu
   const fetchData = async () => {
     try {
       setLoading(true);
       const data = await salaryComponentService.getAll();
-      setComponents(data);
+      // Sắp xếp ID giảm dần (mới nhất lên đầu)
+      const sortedData = data.sort((a, b) => b.componentID - a.componentID);
+      setAllComponents(sortedData);
     } catch (error) {
       console.error("Failed to fetch data", error);
     } finally {
@@ -30,44 +39,65 @@ export default function SalaryConfigPage() {
     fetchData();
   }, []);
 
-  // Xử lý mở Modal THÊM MỚI
+  // 2. Logic Phân trang (Cắt mảng dữ liệu dựa theo trang hiện tại)
+  useEffect(() => {
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = allComponents.slice(indexOfFirstItem, indexOfLastItem);
+    setDisplayData(currentItems);
+  }, [allComponents, currentPage]);
+
+  // --- CÁC HÀM MỞ MODAL ---
   const handleOpenCreate = () => {
-    setEditingItem(null); // Reset item đang sửa về null
+    setModalMode('create');
+    setSelectedItem(null); 
     setIsModalOpen(true);
   };
 
-  // Xử lý mở Modal SỬA
   const handleOpenEdit = (item) => {
-    setEditingItem(item); // Gán item cần sửa
+    setModalMode('edit');
+    setSelectedItem(item); 
     setIsModalOpen(true);
   };
 
-  // Xử lý LƯU (Create hoặc Update)
+  const handleOpenView = (item) => {
+    setModalMode('view');
+    setSelectedItem(item); 
+    setIsModalOpen(true);
+  };
+
+  // --- XỬ LÝ LƯU (Create hoặc Update) ---
   const handleSave = async (formData) => {
     try {
-      if (editingItem) {
+      if (modalMode === 'edit' && selectedItem) {
         // Gọi API Update
-        await salaryComponentService.update(editingItem.componentID, formData);
+        await salaryComponentService.update(selectedItem.componentID, formData);
         alert("Cập nhật thành công!");
-      } else {
+      } else if (modalMode === 'create') {
         // Gọi API Create
         await salaryComponentService.create(formData);
         alert("Thêm mới thành công!");
       }
       setIsModalOpen(false); // Đóng modal
-      fetchData(); // Load lại bảng
+      fetchData(); // Load lại toàn bộ dữ liệu
+      setCurrentPage(1); // Quay về trang 1
     } catch (error) {
       console.error("Save failed", error);
       alert("Có lỗi xảy ra khi lưu!");
     }
   };
 
-  // Xử lý XÓA
+  // --- XỬ LÝ XÓA ---
   const handleDelete = async (id) => {
-    if (confirm("Bạn có chắc chắn muốn xóa khoản lương này?")) {
+    if (window.confirm("Bạn có chắc chắn muốn xóa khoản lương này?")) {
       try {
         await salaryComponentService.delete(id);
         fetchData();
+        
+        // Nếu xóa dòng cuối cùng của trang hiện tại, lùi về trang trước
+        if (displayData.length === 1 && currentPage > 1) {
+          setCurrentPage(currentPage - 1);
+        }
       } catch (error) {
         alert("Xóa thất bại!");
       }
@@ -91,24 +121,32 @@ export default function SalaryConfigPage() {
       </div>
 
       {/* Table Content */}
-      {loading ? (
-        <div className="text-center py-10">Đang tải dữ liệu...</div>
-      ) : (
-        <div className="bg-white rounded-lg shadow border border-gray-100">
+      <div className="bg-white rounded-lg shadow border border-gray-100 p-2">
+        {loading ? (
+          <div className="text-center py-10">Đang tải dữ liệu...</div>
+        ) : (
           <SalaryComponentTable 
-            data={components} 
+            data={displayData} 
+            onView={handleOpenView}
             onEdit={handleOpenEdit} 
             onDelete={handleDelete} 
+            // Props cho phân trang
+            currentPage={currentPage}
+            totalItems={allComponents.length}
+            itemsPerPage={itemsPerPage}
+            totalPages={Math.ceil(allComponents.length / itemsPerPage)}
+            onPageChange={(page) => setCurrentPage(page)}
           />
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Modal Form */}
       <SalaryComponentFormModal 
         isOpen={isModalOpen}
+        mode={modalMode}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSave}
-        initialData={editingItem}
+        initialData={selectedItem}
       />
     </div>
   );

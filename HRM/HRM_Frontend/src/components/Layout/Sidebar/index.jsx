@@ -15,14 +15,19 @@ import {
   DollarOutlined,
   SettingOutlined,
   ClockCircleOutlined,
+  TableOutlined,
+  CalculatorFilled,
 } from "@ant-design/icons";
 
 export default function SidebarHRM() {
   const pathname = usePathname();
   const [user, setUser] = useState(null);
 
+  const [isMounted, setIsMounted] = useState(false);
+
   // Lấy thông tin user từ localStorage để phân quyền
   useEffect(() => {
+    // Chỉ chạy ở môi trường Client
     const userStr = localStorage.getItem("user");
     if (userStr) {
       try {
@@ -31,7 +36,11 @@ export default function SidebarHRM() {
         console.error("Lỗi parse user data", e);
       }
     }
+    // Bật cờ đã mount xong
+    setIsMounted(true);
   }, []);
+
+  if (!isMounted) return <div className="h-full bg-white border-r border-gray-100 shadow-sm" />;
 
   const role = user?.roleName || "Employee";
 
@@ -89,7 +98,6 @@ export default function SidebarHRM() {
       icon: <FileAddOutlined />,
     });
 
-    // Menu quản lý dành cho Employee
     items.push({
       key: "sub-my-attendance",
       label: <span className="font-bold text-[13px] uppercase tracking-tight">Quản lý cá nhân</span>,
@@ -101,6 +109,19 @@ export default function SidebarHRM() {
     });
 
     if (role === "Admin" || role === "HR") {
+      items.push({
+        key: "sub-company-attendance",
+        label: <span className="font-bold text-[13px] uppercase tracking-tight">Quản lý toàn công ty</span>,
+        icon: <TeamOutlined />,
+        children: [
+          { 
+            key: "/attendance/company-timesheet",
+            label: <Link href="/attendance/company-timesheet">Bảng công tổng hợp</Link>, 
+            icon: <TableOutlined /> 
+          },
+        ],
+      });
+
       items.push({
         key: "/attendance/config",
         label: <Link href="/attendance/config"><span className="font-bold text-[13px] uppercase tracking-tight">Cấu hình chấm công</span></Link>,
@@ -117,14 +138,32 @@ export default function SidebarHRM() {
     
     return [
       {
-        key: "/payroll/salary-components",
-        label: <Link href="/payroll/salary-components"><span className="font-bold text-[13px] uppercase tracking-tight">Cấu hình lương</span></Link>,
+        // Key này phải khớp với URL thực tế để menu sáng màu xanh khi bạn đang ở trang đó
+        key: "/payroll", 
+        label: (
+          <Link href="/payroll">
+            <span className="font-bold text-[13px] uppercase tracking-tight">Cấu hình lương</span>
+          </Link>
+        ),
         icon: <DollarOutlined />,
       },
       {
         key: "/payroll/payroll-processing",
-        label: <Link href="/payroll/payroll-processing"><span className="font-bold text-[13px] uppercase tracking-tight">Xử lý lương</span></Link>,
+        label: (
+          <Link href="/payroll/payroll-processing">
+            <span className="font-bold text-[13px] uppercase tracking-tight">Xử lý lương</span>
+          </Link>
+        ),
         icon: <FileSearchOutlined />,
+      },
+      {
+        key: "/payroll/calculation",
+        label: (
+          <Link href="/payroll/calculation">
+            <span className="font-bold text-[13px] uppercase tracking-tight">Tính lương</span>
+          </Link>
+        ),
+        icon: <CalculatorFilled />,
       },
     ];
   };

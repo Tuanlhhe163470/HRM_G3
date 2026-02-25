@@ -9,7 +9,7 @@ import {
   Row,
   Col,
   Typography,
-  message,
+  App,
   InputNumber,
   Space,
   Divider,
@@ -25,9 +25,9 @@ import dayjs from "dayjs";
 import styles from "./CreateJobRequisition.module.scss";
 import jobPostingService from "@/services/Recruitment/jobPostingService";
 import notice from "@/components/Notice";
-import dynamic from 'next/dynamic';
-const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
-import 'react-quill-new/dist/quill.snow.css';
+import dynamic from "next/dynamic";
+const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
+import "react-quill-new/dist/quill.snow.css";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -42,10 +42,10 @@ export default function CreateJobRequisition() {
   // Cấu hình thanh công cụ cho Editor
   const modules = {
     toolbar: [
-      [{ 'header': [1, 2, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-      ['clean']
+      [{ header: [1, 2, false] }],
+      ["bold", "italic", "underline", "strike"],
+      [{ list: "ordered" }, { list: "bullet" }],
+      ["clean"],
     ],
   };
 
@@ -60,7 +60,7 @@ export default function CreateJobRequisition() {
         setPositions(posData);
       } catch (err) {
         notice({
-          msg: "Không thể kết nối với máy chủ để",
+          msg: "Lỗi hệ thống",
           desc: err.message,
           isSuccess: false,
         });
@@ -77,14 +77,19 @@ export default function CreateJobRequisition() {
         // Gửi số lượng mặc định là 0 cho HiredCount
         hiredCount: 0,
         expiryDate: values.expiryDate.toISOString(),
-        createdBy: parseInt(localStorage.getItem('userId')),
+        createdBy: parseInt(localStorage.getItem("userId")),
       };
       await jobPostingService.create(payload);
-      notice({ msg: "Tạo yêu cầu tuyển dụng thành công!", isSuccess: true });
+      notice({
+        msg: "Tạo thành công",
+        desc: "Tin tuyển dụng đã được gửi phê duyệt",
+        isSuccess: true,
+      });
       form.resetFields();
+      form.setFieldsValue({ description: '' });
     } catch (error) {
       notice({
-        msg: "Lỗi tạo yêu cầu tuyển dụng!",
+        msg: "Lỗi hệ thống",
         desc: error.message,
         isSuccess: false,
       });
@@ -103,7 +108,7 @@ export default function CreateJobRequisition() {
 
       <Divider style={{ margin: "12px 0" }} />
 
-     <Form
+      <Form
         form={form}
         layout="vertical"
         onFinish={onFinish}
@@ -121,20 +126,22 @@ export default function CreateJobRequisition() {
               <Input
                 placeholder="VÍ DỤ: TUYỂN KỸ SƯ CẦU NỐI"
                 size="large"
-                style={{ textTransform: 'uppercase' }}
+                style={{ textTransform: "uppercase" }}
               />
             </Form.Item>
 
             <Form.Item
               name="description"
               label={<b>Nội dung mô tả (JD)</b>}
-              rules={[{ required: true, message: "Vui lòng nhập nội dung mô tả!" }]}
+              rules={[
+                { required: true, message: "Vui lòng nhập nội dung mô tả!" },
+              ]}
             >
-              <ReactQuill 
-                theme="snow" 
+              <ReactQuill
+                theme="snow"
                 modules={modules}
                 placeholder="Nhập mô tả công việc, yêu cầu, quyền lợi..."
-                style={{ height: '500px', marginBottom: '50px' }} 
+                style={{ height: "500px", marginBottom: "50px" }}
               />
             </Form.Item>
           </Col>

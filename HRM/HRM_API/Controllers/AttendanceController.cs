@@ -1,7 +1,7 @@
 ﻿using HRM_Application.Contracts.Services;
 using HRM_Application.DTOs.TimeAttendance;
 using HRM_Application.Services.TimeAttendance;
-//using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -9,7 +9,7 @@ namespace HRM_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
+    [Authorize]
     public class AttendanceController : ControllerBase
     {
         private readonly IAttendanceService _attendanceService;
@@ -83,12 +83,14 @@ namespace HRM_API.Controllers
 
         private int GetCurrentUserId()
         {
-            if (Request.Headers.TryGetValue("x-test-user-id", out var headerId))
+            var employeeIdClaim = User.FindFirst("EmployeeID")?.Value;
+
+            if (int.TryParse(employeeIdClaim, out int userId))
             {
-                if (int.TryParse(headerId, out int id)) return id;
+                return userId; 
             }
 
-            return 1;
+            throw new UnauthorizedAccessException("Không tìm thấy ID người dùng trong Token. Vui lòng đăng nhập lại!");
         }
 
         // Hàm lấy IP Address
