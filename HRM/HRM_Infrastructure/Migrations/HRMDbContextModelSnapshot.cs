@@ -1159,11 +1159,17 @@ namespace HRM_Infrastructure.Migrations
                     b.Property<DateTime?>("CheckOutTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("EarlyLeaveMinutes")
+                        .HasColumnType("int");
+
                     b.Property<int>("EmployeeId")
                         .HasColumnType("int");
 
                     b.Property<bool>("IsSystemGenerated")
                         .HasColumnType("bit");
+
+                    b.Property<int>("LateMinutes")
+                        .HasColumnType("int");
 
                     b.Property<string>("Note")
                         .HasColumnType("nvarchar(max)");

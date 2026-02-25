@@ -215,6 +215,8 @@ namespace HRM_Infrastructure.Migrations
                     CheckInIp = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     CheckOutIp = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     WorkingHours = table.Column<double>(type: "float", nullable: true),
+                    LateMinutes = table.Column<int>(type: "int", nullable: false),
+                    EarlyLeaveMinutes = table.Column<int>(type: "int", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
                     Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IsSystemGenerated = table.Column<bool>(type: "bit", nullable: false)
@@ -403,12 +405,18 @@ namespace HRM_Infrastructure.Migrations
                     EmployeeID = table.Column<int>(type: "int", nullable: false),
                     Month = table.Column<int>(type: "int", nullable: false),
                     Year = table.Column<int>(type: "int", nullable: false),
-                    TotalWorkDays = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    StandardWorkDays = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    ActualWorkDays = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    PaidLeaveDays = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    UnpaidLeaveDays = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    TotalWorkingHours = table.Column<double>(type: "float", nullable: false),
+                    TotalOvertimeHours = table.Column<double>(type: "float", nullable: false),
                     TotalLateMinutes = table.Column<int>(type: "int", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    TotalEarlyLeaveMinutes = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
                     LastCalculatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    PublishedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    LockedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    LockedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    PublishedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
