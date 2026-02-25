@@ -44,6 +44,8 @@ namespace HRM_Infrastructure.Extensions
             services.AddScoped<JobPostingService>();
             services.AddScoped<IAttendanceRepository, AttendanceRepository>();
             // services.AddScoped<IShiftRepository, ShiftRepository>(); 
+            services.AddScoped<IMonthlyTimesheetService, MonthlyTimesheetService>();
+            services.AddScoped<IMonthlyTimesheetRepository, MonthlyTimesheetRepository>();
 
             // 4. SERVICES (Business Logic Layer)
             // Đăng ký Service GoalService vào đây

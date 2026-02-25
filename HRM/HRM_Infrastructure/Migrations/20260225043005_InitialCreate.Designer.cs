@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HRM_Infrastructure.Migrations
 {
     [DbContext(typeof(HRMDbContext))]
-    [Migration("20260203185541_UpdateDatabaseSchema")]
-    partial class UpdateDatabaseSchema
+    [Migration("20260225043005_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -414,6 +414,9 @@ namespace HRM_Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("JobID"));
 
+                    b.Property<DateTime?>("ClosingDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -427,6 +430,9 @@ namespace HRM_Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("ExpiryDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<int?>("PositionID")
                         .HasColumnType("int");
 
@@ -439,6 +445,9 @@ namespace HRM_Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("JobID");
 
@@ -558,6 +567,9 @@ namespace HRM_Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TimesheetID"));
 
+                    b.Property<decimal>("ActualWorkDays")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int>("EmployeeID")
                         .HasColumnType("int");
 
@@ -570,18 +582,31 @@ namespace HRM_Infrastructure.Migrations
                     b.Property<int>("Month")
                         .HasColumnType("int");
 
+                    b.Property<decimal>("PaidLeaveDays")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<DateTime?>("PublishedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                    b.Property<decimal>("StandardWorkDays")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalEarlyLeaveMinutes")
+                        .HasColumnType("int");
 
                     b.Property<int>("TotalLateMinutes")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("TotalWorkDays")
+                    b.Property<double>("TotalOvertimeHours")
+                        .HasColumnType("float");
+
+                    b.Property<double>("TotalWorkingHours")
+                        .HasColumnType("float");
+
+                    b.Property<decimal>("UnpaidLeaveDays")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("Year")
@@ -680,14 +705,14 @@ namespace HRM_Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("CycleID")
+                    b.Property<int?>("CycleID")
                         .HasColumnType("int");
 
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<int>("EmployeeID")
+                    b.Property<int?>("EmployeeID")
                         .HasColumnType("int");
 
                     b.Property<string>("ManagerComment")
@@ -739,27 +764,27 @@ namespace HRM_Infrastructure.Migrations
 
             modelBuilder.Entity("HRM_Domain.Entities.PublicHoliday", b =>
                 {
-                    b.Property<int>("HolidayID")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("HolidayID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("Date")
+                    b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("HolidayName")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<bool>("IsRecurring")
                         .HasColumnType("bit");
 
-                    b.Property<int>("Year")
-                        .HasColumnType("int");
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
 
-                    b.HasKey("HolidayID");
+                    b.HasKey("Id");
 
                     b.ToTable("PublicHolidays");
                 });
@@ -979,6 +1004,9 @@ namespace HRM_Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsFixed")
                         .HasColumnType("bit");
 
@@ -1031,13 +1059,30 @@ namespace HRM_Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<TimeSpan?>("CheckInTime")
-                        .HasColumnType("time");
+                    b.Property<string>("CheckInIp")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<TimeSpan?>("CheckOutTime")
-                        .HasColumnType("time");
+                    b.Property<DateTime?>("CheckInTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CheckOutIp")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("CheckOutTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EarlyLeaveMinutes")
+                        .HasColumnType("int");
 
                     b.Property<int>("EmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsSystemGenerated")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("LateMinutes")
                         .HasColumnType("int");
 
                     b.Property<string>("Note")
@@ -1052,7 +1097,7 @@ namespace HRM_Infrastructure.Migrations
                     b.Property<DateTime>("WorkDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<double>("WorkingHours")
+                    b.Property<double?>("WorkingHours")
                         .HasColumnType("float");
 
                     b.HasKey("Id");
@@ -1070,24 +1115,38 @@ namespace HRM_Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<TimeSpan>("AfternoonEnd")
-                        .HasColumnType("time");
+                    b.Property<int>("AllowedEarlyLeaveMinutes")
+                        .HasColumnType("int");
 
                     b.Property<int>("AllowedLateMinutes")
                         .HasColumnType("int");
 
+                    b.Property<TimeSpan?>("BreakEndTime")
+                        .HasColumnType("time");
+
+                    b.Property<TimeSpan?>("BreakStartTime")
+                        .HasColumnType("time");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<TimeSpan>("EndTime")
+                        .HasColumnType("time");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<TimeSpan>("MorningStart")
-                        .HasColumnType("time");
-
                     b.Property<string>("ShiftName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("time");
+
+                    b.Property<string>("WorkDays")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.HasKey("Id");
 
@@ -1436,15 +1495,11 @@ namespace HRM_Infrastructure.Migrations
                 {
                     b.HasOne("HRM_Domain.Entities.ReviewCycle", "ReviewCycle")
                         .WithMany()
-                        .HasForeignKey("CycleID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CycleID");
 
                     b.HasOne("HRM_Domain.Entities.Employee", "Employee")
                         .WithMany()
-                        .HasForeignKey("EmployeeID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("EmployeeID");
 
                     b.Navigation("Employee");
 
@@ -1549,7 +1604,7 @@ namespace HRM_Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("HRM_Domain.Entities.Role", "Role")
-                        .WithMany()
+                        .WithMany("UserAccounts")
                         .HasForeignKey("RoleID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1583,6 +1638,11 @@ namespace HRM_Infrastructure.Migrations
                     b.Navigation("Employee");
 
                     b.Navigation("TrainingCourse");
+                });
+
+            modelBuilder.Entity("HRM_Domain.Entities.Role", b =>
+                {
+                    b.Navigation("UserAccounts");
                 });
 #pragma warning restore 612, 618
         }

@@ -31,6 +31,22 @@ namespace HRM_Infrastructure.Repositories.TimeAttendance
             await _context.SaveChangesAsync();
         }
 
+        public Task<AttendanceLog?> GetActiveLogAsync(int employeeId)
+        {
+            return _context.AttendanceLogs
+                .Include(x => x.ShiftConfig)
+                .FirstOrDefaultAsync(x => x.EmployeeId == employeeId
+                && x.CheckInTime != null
+                && x.CheckOutTime == null);
+        }
+
+        public async Task<List<AttendanceLog>> GetAllLogsByMonthAsync(int month, int year)
+        {
+            return await _context.AttendanceLogs
+                .Where(x => x.WorkDate.Month == month && x.WorkDate.Year == year)
+                .ToListAsync();
+        }
+
         public async Task<AttendanceLog?> GetByDateAsync(int employeeId, DateTime date)
         {
             return await _context.AttendanceLogs
@@ -45,6 +61,14 @@ namespace HRM_Infrastructure.Repositories.TimeAttendance
                 .Where(x => x.EmployeeId == employeeId && x.WorkDate.Month == month && x.WorkDate.Year == year)
                 .OrderByDescending(x => x.WorkDate)
                 .ToListAsync();
+        }
+
+        public Task<AttendanceLog?> GetLogByShiftAndDateAsync(int employeeId, int shiftId, DateTime workDate)
+        {
+            return _context.AttendanceLogs
+                .FirstOrDefaultAsync(x => x.EmployeeId == employeeId
+                && x.ShiftId == shiftId
+                && x.WorkDate.Date == workDate.Date);
         }
 
         public async Task<List<AttendanceLog>> GetMissingCheckOutsAsync(int employeeId, DateTime fromDate, DateTime toDate)
