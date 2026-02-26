@@ -1,7 +1,9 @@
 ﻿using HRM_Application.Contracts.Services;
+using HRM_Application.DTOs.Recruitment;
 using HRM_Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace HRM_API.Controllers
@@ -88,13 +90,20 @@ namespace HRM_API.Controllers
         }
 
         [Authorize(Roles = "HR")]
-        [HttpPatch("{id}/publish")]
-        public async Task<IActionResult> Publish(int id, [FromBody] string description)
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllJobs()
         {
-            var result = await _jobService.PublishJobPostingAsync(id, description);
-            return result
-                ? Ok(new { message = "Tin tuyển dụng đã được hiển thị công khai." })
-                : BadRequest(new { message = "Không thể đăng tin. Hãy chắc chắn tin này đã được phê duyệt." });
+            var jobs = await _jobService.GetAllForHRAsync();
+
+            return Ok(jobs);
+        }
+
+        [Authorize(Roles = "HR")]
+        [HttpPatch("{id}/publish")]
+        public async Task<IActionResult> Publish(int id, [FromBody] PublishJobRequest request)
+        {
+            var result = await _jobService.PublishJobPostingAsync(id, request.Description);
+            return result ? Ok(new { message = "Thành công" }) : BadRequest();
         }
 
         [Authorize(Roles = "HR")]
@@ -117,18 +126,25 @@ namespace HRM_API.Controllers
 
         [Authorize(Roles = "HR")]
         [HttpPatch("{id}/reopen")]
-        public async Task<IActionResult> Reopen(int id, [FromBody] ReopenRequest request)
+        public async Task<IActionResult> Reopen(int id, [FromBody] ReopenJobRequest request)
         {
-            if (request.NewExpiryDate <= DateTime.Now)
-                return BadRequest(new { message = "Ngày hết hạn mới phải nằm trong tương lai." });
+            // Kiểm tra tính hợp lệ của Request DTO
+            if (request == null || request.NewExpiryDate <= DateTime.Now)
+            {
+                return BadRequest(new { message = "Ngày hết hạn mới không hợp lệ." });
+            }
 
+            // Gọi Service xử lý logic
             var result = await _jobService.ReopenJobPostingAsync(id, request.NewExpiryDate);
-            return result
-                ? Ok(new { message = "Đã mở lại tin tuyển dụng." })
-                : BadRequest(new { message = "Không thể mở lại. Chỉ áp dụng cho tin trạng thái 'Closed'." });
+
+            if (!result)
+            {
+                return BadRequest(new { message = "Không thể mở lại tin. Vui lòng kiểm tra trạng thái 'Closed' của tin." });
+            }
+
+            return Ok(new { message = "Đã mở lại tin tuyển dụng thành công." });
         }
 
-        public class ReopenRequest { public DateTime NewExpiryDate { get; set; } }
         [Authorize(Roles = "HR")]
         [HttpPatch("{id}/update-hired")]
         public async Task<IActionResult> UpdateHired(int id)

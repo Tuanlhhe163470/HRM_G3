@@ -96,5 +96,15 @@ namespace HRM_Infrastructure.Repositories.Recruitment
                 .OrderByDescending(j => j.CreatedAt)
                 .ToListAsync();
         }
+        public async Task<IEnumerable<JobPosting>> GetAllWithDetailsAsync()
+        {
+            return await _context.JobPostings
+                .Include(j => j.Department)
+                .Include(j => j.Position)
+                .Include(j => j.CreatedByUserAccount) // Navigation property đã tạo
+                    .ThenInclude(u => u.Employee)
+                .OrderByDescending(j => j.CreatedAt)
+                .ToListAsync();
+        }
     }
 }

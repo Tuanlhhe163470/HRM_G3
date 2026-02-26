@@ -55,7 +55,7 @@ export default function SidebarHRM() {
         icon: <FileSearchOutlined />,
         children: [
           { key: "/recruitment/job-postings/new", label: <Link href="/recruitment/job-postings/new">Tạo yêu cầu tuyển dụng</Link>, icon: <PlusCircleOutlined /> },
-          { key: "/recruitment/job-postings/list", label: <Link href="/recruitment/job-postings/list">Xem các tin đã đăng</Link>, icon: <UnorderedListOutlined /> },
+          { key: "/recruitment/job-postings/list", label: <Link href="/recruitment/job-postings/list">Danh sách yêu cầu</Link>, icon: <UnorderedListOutlined /> },
         ],
       },
       {

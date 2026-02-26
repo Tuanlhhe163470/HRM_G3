@@ -2,41 +2,38 @@ import axiosClient from "@/lib/axiosClient";
 
 const jobPostingService = {
   // 1. Lấy danh sách cho ứng viên (Tin đã đăng)
-  getPublished: () => {
-    return axiosClient.get("/JobPostings/published");
-  },
+  getPublished: () => axiosClient.get("/JobPostings/published"),
 
-  // 2. Tạo yêu cầu tuyển dụng mới (Mặc định Status = Pending)
-  create: (data) => {
-    return axiosClient.post("/JobPostings", data);
-  },
+  // 2. Tạo yêu cầu tuyển dụng mới
+  create: (data) => axiosClient.post("/JobPostings", data),
 
   // 3. Manager phê duyệt/từ chối
-  // Lấy tin đang chờ duyệt (Dành cho Manager)
-  getPending: () => {
-    // Gọi API trả về danh sách có status = "Pending"
-   return axiosClient.get("/JobPostings/pending-by-dept");
+  getPending: () => axiosClient.get("/JobPostings/pending-by-dept"),
+
+  // 4. DÀNH CHO HR: Lấy tất cả tin để quản lý
+  getAll: () => axiosClient.get("/JobPostings/all"),
+
+  // 5. Thao tác phê duyệt & Công khai
+  approve: (id, isApproved) =>
+    axiosClient.patch(`/JobPostings/${id}/approve?isApproved=${isApproved}`),
+
+  publish: (id, htmlContent) => {
+    return axiosClient.patch(`/JobPostings/${id}/publish`, {
+      description: htmlContent, 
+    });
   },
 
-  // Manager phê duyệt/từ chối (Khớp với ApproveJobRequestAsync trong C#)
-  approve: (id, isApproved) => {
-    // Backend: public async Task<bool> ApproveJobRequestAsync(int jobId, bool isApproved)
-    // C# thường nhận tham số qua Query string hoặc Patch body tùy Controller
-    return axiosClient.patch(`/JobPostings/${id}/approve?isApproved=${isApproved}`);
-  },
-  // 4. HR Công khai tin đăng sau khi đã Approved
-  publish: (id, description) => {
-    return axiosClient.patch(`/JobPostings/${id}/publish`, description);
+  // 5. Mở lại và gia hạn tin (Sửa để khớp với ReopenJobRequest DTO)
+  reopen: (id, date) => {
+    return axiosClient.patch(`/JobPostings/${id}/reopen`, {
+      newExpiryDate: date, 
+    });
   },
 
-  // 5. Cập nhật và Đóng tin
-  update: (id, data) => {
-    return axiosClient.put(`/JobPostings/${id}`, data);
-  },
-  
-  close: (id) => {
-    return axiosClient.patch(`/JobPostings/${id}/close`);
-  }
+  // 6. Cập nhật và Đóng tin
+  update: (id, data) => axiosClient.put(`/JobPostings/${id}`, data),
+
+  close: (id) => axiosClient.patch(`/JobPostings/${id}/close`),
 };
 
 export default jobPostingService;

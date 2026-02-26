@@ -51,6 +51,10 @@ namespace HRM_Application.Contracts.Services
                 return false;
             }
         }
+        public async Task<IEnumerable<JobPosting>> GetAllForHRAsync()
+        {
+            return await _jobRepo.GetAllWithDetailsAsync();
+        }
         public async Task<IEnumerable<JobPosting>> GetPendingByDeptAsync(int deptId)
         {
             return await _jobRepo.GetByStatusAndDeptAsync("Pending", deptId);
@@ -116,13 +120,20 @@ namespace HRM_Application.Contracts.Services
         {
             var job = await _jobRepo.GetByIdAsync(jobId);
 
-            if (job == null || job.Status != "Closed" || newExpiryDate <= DateTime.Now)
-                return false;
+            // Kiểm tra tồn tại
+            if (job == null) return false;
+
+            // Kiểm tra trạng thái: Phải là Closed mới được Reopen
+            if (job.Status != "Closed") return false;
+
+            // Kiểm tra ngày: Phải lớn hơn hiện tại
+            // Mẹo: Dùng .Date để chỉ so sánh ngày nếu không cần chính xác từng giây
+            if (newExpiryDate.Date < DateTime.Now.Date) return false;
 
             job.Status = "Open";
             job.ExpiryDate = newExpiryDate;
             job.UpdatedAt = DateTime.Now;
-            job.ClosingDate = null; // Reset ngày đóng
+            job.ClosingDate = null;
 
             await _jobRepo.UpdateAsync(job);
             return true;

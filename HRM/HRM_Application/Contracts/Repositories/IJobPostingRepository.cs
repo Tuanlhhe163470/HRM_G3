@@ -16,6 +16,7 @@ namespace HRM_Application.Contracts.Repositories
 
         Task<IEnumerable<JobPosting>> GetAllAsync(); // Mới: Xem tất cả tin/yêu cầu
         Task<IEnumerable<JobPosting>> GetByStatusAsync(string status);
+        Task<IEnumerable<JobPosting>> GetAllWithDetailsAsync();
         // Mới: Hỗ trợ Manager xem yêu cầu theo phòng ban (dữ liệu DeptID bạn đã có)
         Task<IEnumerable<JobPosting>> GetByDepartmentAsync(int departmentId);
         Task<IEnumerable<JobPosting>> GetByStatusAndDeptAsync(string status, int deptId);
