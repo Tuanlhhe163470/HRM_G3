@@ -20,6 +20,7 @@ using HRM_Application.Services.PayRoll;
 using HRM_Infrastructure.Repositories.Payroll;
 using HRM_Infrastructure.Repositories.PayRoll;
 using HRM_Infrastructure.PayRoll.Repositories;
+using HRM_Infrastructure.Repositories;
 
 namespace HRM_Infrastructure.Extensions
 {
@@ -61,6 +62,8 @@ namespace HRM_Infrastructure.Extensions
             services.AddScoped<IGoalService, GoalService>();
             services.AddHostedService<JobExpirationWorker>();
             services.AddScoped<IAttendanceService, AttendanceService>();
+            services.AddScoped<IAttendanceExplanationRepository, AttendanceExplanationRepository>();
+            services.AddScoped<IAttendanceExplanationService, AttendanceExplanationService>();
 
             return services;
         }

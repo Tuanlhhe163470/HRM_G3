@@ -54,6 +54,13 @@ namespace HRM_Infrastructure.Repositories.TimeAttendance
                 .FirstOrDefaultAsync(x => x.EmployeeId == employeeId && x.WorkDate.Date == date.Date);
         }
 
+        public async Task<AttendanceLog?> GetByIdAsync(int attendanceLogId)
+        {
+            return await _context.AttendanceLogs
+                .Include(x => x.ShiftConfig)
+                .FirstOrDefaultAsync(x => x.Id == attendanceLogId);
+        }
+
         public async Task<List<AttendanceLog>> GetByMonthAsync(int employeeId, int month, int year)
         {
             return await _context.AttendanceLogs

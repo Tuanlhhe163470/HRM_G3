@@ -14,6 +14,8 @@ namespace HRM_Domain.Entities.TimeAttendance
         [Key]
         public int Id { get; set; }
         public int EmployeeId { get; set; }
+        [ForeignKey("EmployeeId")]
+        public virtual Employee Employee { get; set; }
         public int ShiftId { get; set; }
         [ForeignKey("ShiftId")]
         public ShiftConfig? ShiftConfig { get; set; }

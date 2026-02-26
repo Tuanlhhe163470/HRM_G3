@@ -17,6 +17,7 @@ import {
   ClockCircleOutlined,
   TableOutlined,
   CalculatorFilled,
+  AuditOutlined
 } from "@ant-design/icons";
 
 export default function SidebarHRM() {
@@ -97,16 +98,18 @@ export default function SidebarHRM() {
     ];
   };
 
-  // --- MODULE CHẤM CÔNG  ---
+  // --- MODULE CHẤM CÔNG ---
   const getAttendanceItems = () => {
     const items = [];
 
+    // 1. Chấm công (Dành cho mọi nhân viên)
     items.push({
       key: "/attendance/checkin",
       label: <Link href="/attendance/checkin"><span className="font-bold text-[13px] uppercase tracking-tight">Chấm công</span></Link>,
       icon: <FileAddOutlined />,
     });
 
+    // 2. Quản lý cá nhân (Dành cho mọi nhân viên)
     items.push({
       key: "sub-my-attendance",
       label: <span className="font-bold text-[13px] uppercase tracking-tight">Quản lý cá nhân</span>,
@@ -117,6 +120,24 @@ export default function SidebarHRM() {
       ],
     });
 
+    // 3. --- THÊM MỚI: TRUNG TÂM PHÊ DUYỆT (Dành cho Manager & HR) ---
+    if (role === "Manager" || role === "HR" || role === "Admin") {
+      items.push({
+        key: "sub-approval-center",
+        label: <span className="font-bold text-[13px] uppercase tracking-tight">Trung tâm phê duyệt</span>,
+        icon: <AuditOutlined/>,
+        children: [
+          { 
+            key: "/attendance/approvals/explanations", 
+            label: <Link href="/attendance/approvals/explanations">Duyệt giải trình</Link>, 
+            icon: <FileSearchOutlined /> 
+          },
+          // Sau này có thể thêm Duyệt nghỉ phép, Duyệt OT ở đây
+        ],
+      });
+    }
+
+    // 4. Quản lý toàn công ty (Dành cho HR/Admin)
     if (role === "Admin" || role === "HR") {
       items.push({
         key: "sub-company-attendance",
