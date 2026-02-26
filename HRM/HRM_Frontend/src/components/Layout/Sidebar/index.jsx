@@ -17,6 +17,9 @@ import {
   ClockCircleOutlined,
   TableOutlined,
   CalculatorFilled,
+  OrderedListOutlined,
+  SnippetsOutlined,
+  FormOutlined,
 } from "@ant-design/icons";
 
 export default function SidebarHRM() {
@@ -50,7 +53,7 @@ export default function SidebarHRM() {
     
     if (role === "HR") return [
       {
-        key: "sub-job",
+        key: "sub-jobposting",
         label: <span className="font-bold text-[13px] uppercase tracking-tight">Quản lý tin tuyển dụng</span>,
         icon: <FileSearchOutlined />,
         children: [
@@ -59,28 +62,28 @@ export default function SidebarHRM() {
         ],
       },
       {
-        key: "sub-candidate",
+        key: "sub-candidate-tracking",
         label: <span className="font-bold text-[13px] uppercase tracking-tight">Theo dõi ứng viên</span>,
         icon: <UserOutlined />,
         children: [
-          { key: "/recruitment/candidates", label: <Link href="/recruitment/candidates/list">Danh sách ứng viên</Link>, icon: <UnorderedListOutlined /> },
-          { key: "/recruitment/interviews", label: <Link href="/recruitment/interviews">Lịch phỏng vấn</Link>, icon: <CalendarOutlined /> },
+          { key: "/recruitment/candidates/list", label: <Link href="/recruitment/candidates/list">Danh sách ứng viên</Link>, icon: <UnorderedListOutlined /> },
+          { key: "/recruitment/candidates/shorted-list", label: <Link href="/recruitment/candidates/shorted-list">Danh sách rút gọn</Link>, icon: <SnippetsOutlined /> },
         ],
       },
     ];
 
     if (role === "Manager") return [
       {
-        key: "sub-job-approval",
+        key: "/recruitment/job-postings/approval",
         label: <Link href="/recruitment/job-postings/approval"><span className="font-bold text-[13px] uppercase tracking-tight">Phê duyệt tin tuyển dụng</span></Link>,
         icon: <FileSearchOutlined />,
       },
       {
-        key: "sub-candidate",
+        key: "sub-candidate-tracking",
         label: <span className="font-bold text-[13px] uppercase tracking-tight">Theo dõi ứng viên</span>,
         icon: <UserOutlined />,
         children: [
-          { key: "/recruitment/candidates", label: <Link href="/recruitment/candidates">Danh sách ứng viên</Link>, icon: <UnorderedListOutlined /> },
+          { key: "/recruitment/candidates/manager-review", label: <Link href="/recruitment/candidates/manager-review">Phê duyệt ứng viên</Link>, icon: <FormOutlined /> },
           { key: "/recruitment/interviews", label: <Link href="/recruitment/interviews">Lịch phỏng vấn</Link>, icon: <CalendarOutlined /> },
         ],
       },

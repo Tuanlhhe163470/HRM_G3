@@ -34,11 +34,7 @@ const LoginModal = ({ open, onCancel }) => {
         notice({ msg: "Đăng nhập thành công!", isSuccess: true });
         onCancel?.();
 
-        // Điều hướng theo role như cũ...
-        const role = authData.employee.roleName;
-        if (role === "Admin") router.push("/dashboard");
-        else if (role === "HR") router.push("/recruitment");
-        else router.push("/attendance/checkin");
+        router.push("/attendance/checkin");
 
         router.refresh();
       }

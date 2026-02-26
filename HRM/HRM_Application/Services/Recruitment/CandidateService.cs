@@ -134,21 +134,33 @@ namespace HRM_Application.Services.Recruitment
             var candidate = await _candidateRepository.GetByIdAsync(id);
             if (candidate == null) return false;
 
+            // Lấy tên công việc an toàn để dùng cho Email
+            string jobTitle = candidate.JobPosting?.Title ?? "Vị trí đã ứng tuyển";
+
+            // 1. TRƯỜNG HỢP CHẤP NHẬN/PHÊ DUYỆT
             if (action == "accept")
             {
                 return await _candidateRepository.UpdateStatusAsync(id, "Screening");
             }
-            else if (action == "reject")
+
+            if (action == "send_to_manager")
+            {
+                return await _candidateRepository.UpdateStatusAsync(id, "Manager_Review");
+            }
+
+            if (action == "manager_approve")
+            {
+                // Khi Manager phê duyệt -> Chuyển sang vòng Phỏng vấn
+                return await _candidateRepository.UpdateStatusAsync(id, "Interview");
+            }
+
+            // 2. TRƯỜNG HỢP TỪ CHỐI (Cả HR và Manager từ chối đều gửi Mail)
+            if (action == "reject" || action == "manager_reject")
             {
                 var result = await _candidateRepository.UpdateStatusAsync(id, "Rejected");
                 if (result)
                 {
-                    // Sử dụng biến jobTitle để tránh gọi trực tiếp vào candidate.JobTitle không tồn tại
-                    string jobTitle = candidate.JobPosting?.Title ?? "Vị trí đã ứng tuyển";
-
-                    // Sửa lỗi tại đây: thay candidate.JobTitle bằng jobTitle
                     string subject = $"[HRM System] Thông báo kết quả ứng tuyển - Vị trí {jobTitle}";
-
                     string body = $@"
 <div style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #f0f0f0; border-radius: 8px; overflow: hidden;'>
     <div style='background-color: #154398; padding: 20px; text-align: center;'>
@@ -168,7 +180,7 @@ namespace HRM_Application.Services.Recruitment
             </p>
         </div>
         
-        <p>Hy vọng sẽ có cơ hội hợp tác với bạn trong những dự án sắp tới. Chúc bạn luôn giữ vững đam mê và gặt hái được nhiều thành công trên con đường sự nghiệp.</p>
+        <p>Hy vọng sẽ có cơ hội hợp tác với bạn trong những dự án sắp tới. Chúc bạn luôn gặt hái được nhiều thành công trên con đường sự nghiệp.</p>
         
         <p style='margin-top: 30px;'>Trân trọng,</p>
         <p><strong>Ban Tuyển dụng HRM System</strong></p>
@@ -184,6 +196,7 @@ namespace HRM_Application.Services.Recruitment
                 }
                 return result;
             }
+
             return false;
         }
     }
