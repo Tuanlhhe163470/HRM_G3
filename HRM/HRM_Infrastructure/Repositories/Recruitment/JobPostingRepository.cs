@@ -82,7 +82,10 @@ namespace HRM_Infrastructure.Repositories.Recruitment
         public async Task<IEnumerable<JobPosting>> GetAvailableJobsAsync()
         {
             return await _context.JobPostings
-                .Where(j => j.Status == "Open" && j.HiredCount < j.Vacancies)
+                .Where(j => j.Status == "Open") // Chỉ lấy tin đang mở
+                .Include(j => j.Department)    // Lấy tên phòng ban
+                .Include(j => j.Position)      // Lấy tên vị trí
+                .OrderByDescending(j => j.CreatedAt)
                 .ToListAsync();
         }
         public async Task<IEnumerable<JobPosting>> GetByStatusAndDeptAsync(string status, int deptId)

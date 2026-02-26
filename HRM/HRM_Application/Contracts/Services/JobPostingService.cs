@@ -82,9 +82,10 @@ namespace HRM_Application.Contracts.Services
         // Lấy danh sách tin đang mở (Dùng cho ứng viên hoặc trang chủ)
         public async Task<IEnumerable<JobPosting>> GetPublishedJobsAsync()
         {
-            return await _jobRepo.GetByStatusAsync("Open");
+            // Thay vì dùng _context.JobPostings...
+            // Hãy dùng hàm Repository đã được định nghĩa logic lấy tin "Open"
+            return await _jobRepo.GetAvailableJobsAsync();
         }
-
         // Cập nhật nội dung tin (Sửa JD, Tiêu đề...)
         public async Task<bool> UpdateJobPostingAsync(int jobId, JobPosting updatedData)
         {
@@ -164,6 +165,7 @@ namespace HRM_Application.Contracts.Services
         {
             return await _jobRepo.GetAvailableJobsAsync();
         }
+
         #endregion
     }
 }
