@@ -43,7 +43,7 @@ export default function JobCard({ job }) {
 
       <Button
         block
-        onClick={() => router.push(`/jobs/${job.jobID}`)}
+        onClick={() => router.push(`/chi-tiet-viec/${job.jobID}`)}
         className="h-10 rounded border-gray-200 text-gray-600 font-medium hover:border-[#00aeef] hover:text-[#00aeef] flex items-center justify-center group/btn"
       >
         Xem chi tiết
