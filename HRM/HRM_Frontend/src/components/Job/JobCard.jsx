@@ -3,7 +3,7 @@ import {
   ArrowRightOutlined,
   BankOutlined,
   CalendarOutlined,
-  EnvironmentOutlined,
+  DollarCircleOutlined,
   TagOutlined,
 } from "@ant-design/icons";
 import { Button, Tag } from "antd";
@@ -12,6 +12,22 @@ import dayjs from "dayjs";
 
 export default function JobCard({ job }) {
   const router = useRouter();
+
+  const getSalaryDisplay = () => {
+    const min = job?.salaryMin;
+    const max = job?.salaryMax;
+
+    if (min && max) {
+      return `${min.toLocaleString()} - ${max.toLocaleString()} VNĐ`;
+    }
+    if (min) {
+      return `Từ ${min.toLocaleString()} VNĐ`;
+    }
+    if (max) {
+      return `Đến ${max.toLocaleString()} VNĐ`;
+    }
+    return "Thỏa thuận";
+  };
 
   return (
     <div className="bg-white border border-gray-100 rounded-lg p-6 hover:shadow-lg transition-all duration-300 group">
@@ -33,6 +49,11 @@ export default function JobCard({ job }) {
           >
             {job.position?.positionName}
           </Tag>
+        </div>
+
+        <div className="flex items-center gap-2 text-sm font-bold text-[#00aeef]">
+          <DollarCircleOutlined />
+          <span>{getSalaryDisplay()}</span>
         </div>
 
         <div className="flex items-center text-gray-400 text-xs pt-2 border-t border-gray-50">

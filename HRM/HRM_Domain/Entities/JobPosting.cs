@@ -24,7 +24,8 @@ namespace HRM_Domain.Entities
         public int Vacancies { get; set; } = 1;
         public int HiredCount { get; set; } = 0;
         public string Description { get; set; } = string.Empty;
-
+        public decimal? SalaryMin { get; set; }
+        public decimal? SalaryMax { get; set; }
         [StringLength(50)]
         public string Status { get; set; } = "Draft"; // Mặc định là Draft cho Requisition nội bộ
 

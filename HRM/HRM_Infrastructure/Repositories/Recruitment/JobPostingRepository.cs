@@ -2,11 +2,6 @@
 using HRM_Domain.Entities;
 using HRM_Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HRM_Infrastructure.Repositories.Recruitment
 {
@@ -19,26 +14,67 @@ namespace HRM_Infrastructure.Repositories.Recruitment
             _context = context;
         }
 
+        // CẬP NHẬT: Thêm Include để lấy kèm thông tin phòng ban/vị trí
+        public async Task<JobPosting?> GetByIdAsync(int id)
+        {
+            return await _context.JobPostings
+                .Include(j => j.Department)
+                .Include(j => j.Position)
+                .FirstOrDefaultAsync(j => j.JobID == id);
+        }
+
+        // CẬP NHẬT: Thêm Include cho hàm lấy theo trạng thái
         public async Task<IEnumerable<JobPosting>> GetByStatusAsync(string status)
         {
             return await _context.JobPostings
                 .Where(j => j.Status == status)
+                .Include(j => j.Department)
+                .Include(j => j.Position)
                 .ToListAsync();
         }
+
+        // CẬP NHẬT: Thêm Include cho hàm lấy tất cả
+        public async Task<IEnumerable<JobPosting>> GetAllAsync()
+        {
+            return await _context.JobPostings
+                .Include(j => j.Department)
+                .Include(j => j.Position)
+                .OrderByDescending(j => j.CreatedAt)
+                .ToListAsync();
+        }
+        // CẬP NHẬT: Thêm Include cho hàm lấy theo phòng ban
+        public async Task<IEnumerable<JobPosting>> GetByDepartmentAsync(int departmentId)
+        {
+            return await _context.JobPostings
+                .Where(j => j.DepartmentID == departmentId)
+                .Include(j => j.Department)
+                .Include(j => j.Position)
+                .ToListAsync();
+        }
+
+        // Các hàm bên dưới bạn đã có Include rồi nên giữ nguyên hoặc tối ưu thêm
+        public async Task<IEnumerable<JobPosting>> GetAvailableJobsAsync()
+        {
+            return await _context.JobPostings
+                .Where(j => j.Status == "Open")
+                .Include(j => j.Department)
+                .Include(j => j.Position)
+                .OrderByDescending(j => j.CreatedAt)
+                .ToListAsync();
+        }
+
         public async Task AddAsync(JobPosting job)
         {
-            await _context.JobPostings.AddAsync(job); 
+            await _context.JobPostings.AddAsync(job);
             await _context.SaveChangesAsync();
         }
+
         public async Task UpdateAsync(JobPosting job)
         {
-            _context.Entry(job).State = EntityState.Modified; 
+            _context.JobPostings.Update(job);
             await _context.SaveChangesAsync();
         }
-        public async Task<JobPosting?> GetByIdAsync(int id)
-        {
-            return await _context.JobPostings.FindAsync(id);
-        }
+
         public async Task CloseExpiredJobsAsync()
         {
             var expiredJobs = _context.JobPostings
@@ -53,7 +89,7 @@ namespace HRM_Infrastructure.Repositories.Recruitment
 
             await _context.SaveChangesAsync();
         }
-        // 1. Thực thi DeleteAsync
+
         public async Task DeleteAsync(int id)
         {
             var job = await _context.JobPostings.FindAsync(id);
@@ -64,47 +100,24 @@ namespace HRM_Infrastructure.Repositories.Recruitment
             }
         }
 
-        // 2. Thực thi GetAllAsync
-        public async Task<IEnumerable<JobPosting>> GetAllAsync()
-        {
-            return await _context.JobPostings
-                .OrderByDescending(j => j.CreatedAt)
-                .ToListAsync();
-        }
-
-        // 3. Thực thi GetByDepartmentAsync (Dựa trên bảng SQL bạn đã cung cấp)
-        public async Task<IEnumerable<JobPosting>> GetByDepartmentAsync(int departmentId)
-        {
-            return await _context.JobPostings
-                .Where(j => j.DepartmentID == departmentId)
-                .ToListAsync();
-        }
-        public async Task<IEnumerable<JobPosting>> GetAvailableJobsAsync()
-        {
-            return await _context.JobPostings
-                .Where(j => j.Status == "Open") // Chỉ lấy tin đang mở
-                .Include(j => j.Department)    // Lấy tên phòng ban
-                .Include(j => j.Position)      // Lấy tên vị trí
-                .OrderByDescending(j => j.CreatedAt)
-                .ToListAsync();
-        }
         public async Task<IEnumerable<JobPosting>> GetByStatusAndDeptAsync(string status, int deptId)
         {
             return await _context.JobPostings
                 .Where(j => j.Status == status && j.DepartmentID == deptId)
                 .Include(j => j.Department)
                 .Include(j => j.Position)
-                .Include(j => j.CreatedByUserAccount) 
+                .Include(j => j.CreatedByUserAccount)
                     .ThenInclude(u => u.Employee)
                 .OrderByDescending(j => j.CreatedAt)
                 .ToListAsync();
         }
+
         public async Task<IEnumerable<JobPosting>> GetAllWithDetailsAsync()
         {
             return await _context.JobPostings
                 .Include(j => j.Department)
                 .Include(j => j.Position)
-                .Include(j => j.CreatedByUserAccount) // Navigation property đã tạo
+                .Include(j => j.CreatedByUserAccount)
                     .ThenInclude(u => u.Employee)
                 .OrderByDescending(j => j.CreatedAt)
                 .ToListAsync();

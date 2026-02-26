@@ -16,10 +16,22 @@ namespace HRM_Application.Contracts.Services
         // Tạo yêu cầu tuyển dụng mới (Mặc định Status = Pending)
         public async Task<JobPosting> CreateJobRequestAsync(JobPosting jobRequest)
         {
+            // BẮT BUỘC: Kiểm tra mức lương tối thiểu hoặc tối đa phải có giá trị
+            if (jobRequest.SalaryMin == null && jobRequest.SalaryMax == null)
+            {
+                throw new Exception("Vui lòng nhập ít nhất một mức lương (Tối thiểu hoặc Tối đa).");
+            }
+
+            // Kiểm tra lương không được là số âm
+            if ((jobRequest.SalaryMin.HasValue && jobRequest.SalaryMin < 0) ||
+                (jobRequest.SalaryMax.HasValue && jobRequest.SalaryMax < 0))
+            {
+                throw new Exception("Mức lương không thể là số âm.");
+            }
+
             jobRequest.CreatedAt = DateTime.Now;
-            // Ép trạng thái về Pending để chờ Manager phê duyệt
             jobRequest.Status = "Pending";
-            jobRequest.CreatedAt = DateTime.Now;
+
             await _jobRepo.AddAsync(jobRequest);
             return jobRequest;
         }
@@ -89,21 +101,33 @@ namespace HRM_Application.Contracts.Services
         // Cập nhật nội dung tin (Sửa JD, Tiêu đề...)
         public async Task<bool> UpdateJobPostingAsync(int jobId, JobPosting updatedData)
         {
+            // 1. Lấy dữ liệu hiện tại từ Database 
             var job = await _jobRepo.GetByIdAsync(jobId);
+            if (job == null) return false;
 
-            if (job == null || job.Status == "Closed") return false;
-
+            // 2. CẬP NHẬT CÁC TRƯỜNG THÔNG TIN CƠ BẢN
             job.Title = updatedData.Title;
             job.Description = updatedData.Description;
+
+            // 3. CẬP NHẬT PHÒNG BAN VÀ VỊ TRÍ (Đã mở khóa vì Form Edit đã có Select)
             job.DepartmentID = updatedData.DepartmentID;
             job.PositionID = updatedData.PositionID;
+
+            // 4. CẬP NHẬT HẠN NỘP VÀ SỐ LƯỢNG
             job.ExpiryDate = updatedData.ExpiryDate;
+            job.Vacancies = updatedData.Vacancies;
+
+            // 5. CẬP NHẬT MỨC LƯƠNG (Salary)
+            job.SalaryMin = updatedData.SalaryMin;
+            job.SalaryMax = updatedData.SalaryMax;
+
+            // 6. GHI NHẬN THỜI GIAN CẬP NHẬT
             job.UpdatedAt = DateTime.Now;
 
+            // 7. LƯU XUỐNG DATABASE QUA REPOSITORY
             await _jobRepo.UpdateAsync(job);
             return true;
         }
-
         // Đóng tin tuyển dụng (Dừng nhận hồ sơ)
         public async Task<bool> CloseJobPostingAsync(int jobId)
         {

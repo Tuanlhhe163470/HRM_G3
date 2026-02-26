@@ -25,6 +25,7 @@ import dayjs from "dayjs";
 import styles from "./CreateJobRequisition.module.scss";
 import jobPostingService from "@/services/Recruitment/jobPostingService";
 import useNotice from "@/components/Notice";
+import { docSoVietNam } from "@/lib/stringsUtils";
 import dynamic from "next/dynamic";
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 import "react-quill-new/dist/quill.snow.css";
@@ -39,6 +40,8 @@ export default function CreateJobRequisition() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const notice = useNotice();
+  const salaryMinWatch = Form.useWatch("salaryMin", form);
+  const salaryMaxWatch = Form.useWatch("salaryMax", form);
   // Cấu hình thanh công cụ cho Editor
   const modules = {
     toolbar: [
@@ -74,10 +77,10 @@ export default function CreateJobRequisition() {
     try {
       const payload = {
         ...values,
-        // Gửi số lượng mặc định là 0 cho HiredCount
         hiredCount: 0,
         expiryDate: values.expiryDate.toISOString(),
         createdBy: parseInt(localStorage.getItem("userId")),
+        // Backend sẽ nhận thêm salaryMin và salaryMax từ values
       };
       await jobPostingService.create(payload);
       notice({
@@ -176,6 +179,81 @@ export default function CreateJobRequisition() {
                   ))}
                 </Select>
               </Form.Item>
+              <Divider plain>Mức lương (VNĐ)</Divider>
+
+              <Row gutter={[0, 8]}>
+                <Col span={24}>
+                  <Form.Item
+                    name="salaryMin"
+                    label={<b>LƯƠNG TỐI THIỂU</b>}
+                    style={{ marginBottom: "12px" }}
+                    extra={
+                      salaryMinWatch && (
+                        <div className="mt-1 text-[#faad14] text-[12px] font-medium italic border-l-2 border-[#faad14] pl-2">
+                          {docSoVietNam(salaryMinWatch)}
+                        </div>
+                      )
+                    }
+                  >
+                    <InputNumber
+                      size="large"
+                      className="w-full"
+                      style={{
+                        width: "100%",
+                        height: "40px",
+                        fontSize: "15px",
+                        borderRadius: "6px",
+                      }}
+                      onKeyPress={(event) => {
+                        if (!/[0-9]/.test(event.key)) {
+                          event.preventDefault();
+                        }
+                      }}
+                      formatter={(value) =>
+                        `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      }
+                      parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+                      placeholder="Nhập mức lương tối thiểu"
+                    />
+                  </Form.Item>
+                </Col>
+
+                <Col span={24}>
+                  <Form.Item
+                    name="salaryMax"
+                    label={<b>LƯƠNG TỐI ĐA</b>}
+                    style={{ marginBottom: "12px" }}
+                    extra={
+                      salaryMaxWatch && (
+                        <div className="mt-1 text-[#faad14] text-[12px] font-medium italic border-l-2 border-[#faad14] pl-2">
+                          {docSoVietNam(salaryMaxWatch)}
+                        </div>
+                      )
+                    }
+                  >
+                    <InputNumber
+                      size="large"
+                      className="w-full"
+                      style={{
+                        width: "100%",
+                        height: "40px",
+                        fontSize: "15px",
+                        borderRadius: "6px",
+                      }}
+                      onKeyPress={(event) => {
+                        if (!/[0-9]/.test(event.key)) {
+                          event.preventDefault();
+                        }
+                      }}
+                      formatter={(value) =>
+                        `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      }
+                      parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+                      placeholder="Nhập mức lương tối đa"
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
 
               <Row gutter={12}>
                 <Col span={12}>
