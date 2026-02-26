@@ -63,7 +63,7 @@ export default function SidebarHRM() {
         label: <span className="font-bold text-[13px] uppercase tracking-tight">Theo dõi ứng viên</span>,
         icon: <UserOutlined />,
         children: [
-          { key: "/recruitment/candidates", label: <Link href="/recruitment/candidates">Danh sách ứng viên</Link>, icon: <UnorderedListOutlined /> },
+          { key: "/recruitment/candidates", label: <Link href="/recruitment/candidates/list">Danh sách ứng viên</Link>, icon: <UnorderedListOutlined /> },
           { key: "/recruitment/interviews", label: <Link href="/recruitment/interviews">Lịch phỏng vấn</Link>, icon: <CalendarOutlined /> },
         ],
       },

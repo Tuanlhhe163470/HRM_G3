@@ -9,7 +9,7 @@ function CustomModal({
   onCancel = () => {},
   footer = null,
   children,
-  className = "", // nhận thêm className tùy chỉnh
+  className = "", 
   ...props
 }) {
   return (
@@ -20,6 +20,7 @@ function CustomModal({
       onCancel={onCancel}
       footer={footer}
       className={`custom-modal ${className}`}
+      centered
       {...props}
     >
       <div>{children}</div>

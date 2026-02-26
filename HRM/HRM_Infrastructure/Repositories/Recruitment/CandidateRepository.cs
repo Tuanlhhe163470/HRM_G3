@@ -33,5 +33,34 @@ namespace HRM_Infrastructure.Repositories.Recruitment
         {
             return await _context.Candidates.FirstOrDefaultAsync(c => c.Email == email);
         }
+        public async Task<IEnumerable<Candidate>> GetAllWithJobAsync()
+        {
+            return await _context.Candidates
+                .Include(c => c.JobPosting)
+                .ThenInclude(j => j.Department)// Để lấy DepartmentID lọc cho Manager
+                .OrderByDescending(c => c.CreatedAt)
+                .ToListAsync();
+        }
+        public async Task UpdateAsync(Candidate candidate)
+        {
+            _context.Candidates.Update(candidate);
+            await _context.SaveChangesAsync();
+        }
+        public async Task<Candidate> GetByIdAsync(int id)
+        {
+            return await _context.Candidates
+                .Include(c => c.JobPosting) 
+                .FirstOrDefaultAsync(c => c.CandidateID == id);
+        }
+
+        public async Task<bool> UpdateStatusAsync(int id, string status)
+        {
+            var candidate = await _context.Candidates.FindAsync(id);
+            if (candidate == null) return false;
+
+            candidate.Status = status;
+            candidate.UpdatedAt = DateTime.Now;
+            return await _context.SaveChangesAsync() > 0;
+        }
     }
 }

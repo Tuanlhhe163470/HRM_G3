@@ -27,7 +27,7 @@ export default function HRMLayout({ children }) {
             bottom: 0,
             borderRight: "1px solid #f0f0f0",
             backgroundColor: "#fff",
-            zIndex: 1000,
+            zIndex: 10,
           }}
         >
           <SidebarHRM />
@@ -38,7 +38,7 @@ export default function HRMLayout({ children }) {
           style={{ 
             marginLeft: siderWidth, 
             height: "100%", 
-            overflowY: "auto", // Đây là nơi duy nhất được cuộn khi lướt chuột
+            overflowY: "auto", 
             backgroundColor: "#f5f5f5" 
           }}
         >
@@ -48,7 +48,7 @@ export default function HRMLayout({ children }) {
               padding: 24,
               background: "#fff",
               borderRadius: "8px",
-              minHeight: "fit-content", // Đảm bảo content không bị cắt
+              minHeight: "fit-content", 
             }}
           >
             {children}

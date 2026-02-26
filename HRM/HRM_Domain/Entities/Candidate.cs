@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,21 +25,31 @@ namespace HRM_Domain.Entities
         public string? Phone { get; set; }
 
         [Required]
-        public string CVUrl { get; set; } = string.Empty; // text mapped to string
+        public string CVUrl { get; set; } = string.Empty;
 
         [StringLength(100)]
         public string? Source { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+
         [Required]
         [StringLength(50)]
-        public string Status { get; set; } = "Applied"; // Mặc định khi nộp đơn
-        /// <summary>
-        /// Luồng: Applied -> Screening -> Manager_Review -> Interview -> Passed -> Offered -> Hired
-        /// </summary>
-    
-        // Ghi chú đánh giá của HR hoặc Manager
+        public string Status { get; set; } = "Applied";
+
         public string? Note { get; set; }
 
-        public DateTime? UpdatedAt { get; set; } // Lưu vết thời gian đổi trạng thái
+        public DateTime? UpdatedAt { get; set; }
+
+        // --- BỔ SUNG ĐỂ LỌC THEO PHÒNG BAN ---
+        public int JobID { get; set; }
+
+        [ForeignKey("JobID")]
+        public virtual JobPosting JobPosting { get; set; } = null!;
     }
+    /// <summary>
+    /// Luồng: Applied -> Screening -> Manager_Review -> Interview -> Passed -> Offered -> Hired
+    /// </summary>
+
+
+
 }

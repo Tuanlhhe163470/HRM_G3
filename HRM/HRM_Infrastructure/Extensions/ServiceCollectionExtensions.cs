@@ -47,6 +47,7 @@ namespace HRM_Infrastructure.Extensions
             services.AddScoped<IJobPostingRepository, JobPostingRepository>();
             services.AddScoped<JobPostingService>();
             services.AddScoped<IAttendanceRepository, AttendanceRepository>();
+            services.AddScoped<ICandidateRepository, CandidateRepository>();
             // services.AddScoped<IShiftRepository, ShiftRepository>(); 
             services.AddScoped<IEmployeeSalaryConfigRepository, EmployeeSalaryConfigRepository>();
             services.AddScoped<IEmployeeSalaryConfigService, EmployeeSalaryConfigService>();
@@ -59,6 +60,8 @@ namespace HRM_Infrastructure.Extensions
             services.AddScoped<ICandidateService, CandidateService>();
             // 4. SERVICES (Business Logic Layer)
             // Đăng ký Service GoalService vào đây
+            services.AddScoped<ICandidateService, CandidateService>();
+            services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IGoalService, GoalService>();
             services.AddHostedService<JobExpirationWorker>();
             services.AddScoped<IAttendanceService, AttendanceService>();

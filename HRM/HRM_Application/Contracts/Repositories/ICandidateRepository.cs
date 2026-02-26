@@ -12,5 +12,10 @@ namespace HRM_Application.Contracts.Repositories
         Task<Candidate> AddAsync(Candidate candidate);
         Task<Application> AddApplicationAsync(Application application);
         Task<Candidate?> GetByEmailAsync(string email);
+        Task<IEnumerable<Candidate>> GetAllWithJobAsync();
+        Task UpdateAsync(Candidate candidate);
+        Task<Candidate> GetByIdAsync(int id);
+        Task<bool> UpdateStatusAsync(int id, string status);
+       
     }
 }

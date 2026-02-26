@@ -1,6 +1,9 @@
 ﻿using HRM_Application.Contracts.Services;
 using HRM_Application.DTOs.Recruitment;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace HRM_API.Controllers
 {
@@ -9,49 +12,63 @@ namespace HRM_API.Controllers
     public class CandidatesController : ControllerBase
     {
         private readonly ICandidateService _candidateService;
-        private readonly IWebHostEnvironment _env;
 
-        public CandidatesController(ICandidateService candidateService, IWebHostEnvironment env)
+        public CandidatesController(ICandidateService candidateService)
         {
             _candidateService = candidateService;
-            _env = env;
         }
 
-        [HttpPost("upload-cv")]
-        [RequestSizeLimit(10_000_000)]
-        [Consumes("multipart/form-data")] 
-        public async Task<IActionResult> UploadCV(IFormFile file)
-        {
-            if (file == null || file.Length == 0) return BadRequest(new { message = "File không hợp lệ" });
-
-            // Lấy đường dẫn wwwroot. Nếu WebRootPath null, dùng Path.Combine để tạo đường dẫn thủ công
-            string rootPath = _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var uploadsFolder = Path.Combine(rootPath, "uploads", "cvs");
-
-            // Kiểm tra và tạo thư mục nếu chưa có
-            if (!Directory.Exists(uploadsFolder))
-            {
-                Directory.CreateDirectory(uploadsFolder);
-            }
-
-            var uniqueFileName = $"{Guid.NewGuid()}_{file.FileName}";
-            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
-
-            // Trả về URL để Frontend lưu vào Database
-            return Ok(new { cvUrl = $"/uploads/cvs/{uniqueFileName}" });
-        }
-
+        /// <summary>
+        /// API Ứng tuyển: Nhận cả thông tin text và file CV vật lý thông qua FormData
+        /// </summary>
         [HttpPost("apply")]
-        public async Task<IActionResult> Apply(ApplyJobRequest request)
+        [Consumes("multipart/form-data")] // Chống lỗi 415 bằng cách chỉ định rõ kiểu dữ liệu nhận vào
+        public async Task<IActionResult> Apply([FromForm] ApplyJobRequest request) // Dùng [FromForm] để bóc tách file từ request
         {
+            // Kiểm tra tính hợp lệ của JobID để tránh lỗi Foreign Key
+            if (request.JobID <= 0)
+            {
+                return BadRequest(new { message = "Mã tin tuyển dụng (JobID) không hợp lệ." });
+            }
+
+            // Kiểm tra bắt buộc phải có file CV gửi kèm
+            if (request.CVFile == null || request.CVFile.Length == 0)
+            {
+                return BadRequest(new { message = "Vui lòng đính kèm tệp hồ sơ CV." });
+            }
+
+            // Gọi Service xử lý (Lưu file GUID và lưu Database đồng thời)
             var result = await _candidateService.ApplyJobAsync(request);
-            if (result) return Ok(new { message = "Ứng tuyển thành công!" });
-            return BadRequest("Có lỗi xảy ra trong quá trình nộp hồ sơ.");
+
+            return result
+                ? Ok(new { message = "Ứng tuyển thành công!" })
+                : BadRequest(new { message = "Đã có lỗi xảy ra trong quá trình xử lý hồ sơ." });
+        }
+
+        /// <summary>
+        /// Lấy danh sách ứng viên cho HR/Manager kèm theo phân quyền
+        /// </summary>
+        [HttpGet("admin-list")]
+        [Authorize] // Bắt buộc đăng nhập để lấy thông tin Role từ Token
+        public async Task<IActionResult> GetAdminList()
+        {
+            // Sửa lỗi "Possible null reference": Gán chuỗi rỗng nếu không tìm thấy Role
+            var role = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
+
+            var deptIdStr = User.FindFirst("DepartmentID")?.Value;
+            int? deptId = !string.IsNullOrEmpty(deptIdStr) ? int.Parse(deptIdStr) : null;
+
+            // Truyền role đã xử lý chống null xuống Service
+            var result = await _candidateService.GetCandidatesForAdminAsync(role, deptId);
+            return Ok(result);
+        }
+        // Endpoint: api/Candidates/1/process?action=accept (hoặc reject)
+        [HttpPatch("{id}/process")]
+        public async Task<IActionResult> ProcessCandidate(int id, [FromQuery] string action)
+        {
+            var success = await _candidateService.ProcessCandidateAsync(id, action);
+            if (success) return Ok(new { message = "Xử lý hồ sơ thành công" });
+            return BadRequest(new { message = "Có lỗi xảy ra trong quá trình xử lý" });
         }
     }
 }
