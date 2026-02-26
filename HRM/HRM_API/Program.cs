@@ -90,7 +90,8 @@ builder.Services.AddCors(options =>
         {
             b.AllowAnyOrigin()
              .AllowAnyMethod()
-             .AllowAnyHeader();
+             .AllowAnyHeader()
+            .WithExposedHeaders("Content-Disposition");
         });
 });
 
@@ -107,7 +108,7 @@ app.UseHttpsRedirection();
 
 // --- THỨ TỰ MIDDLEWARE QUAN TRỌNG (CẬP NHẬT TẠI ĐÂY) ---
 app.UseCors("AllowAll");
-
+app.UseStaticFiles();
 app.UseAuthentication(); // 1. Xác thực: "Bạn là ai?" (PHẢI CÓ)
 app.UseAuthorization();  // 2. Phân quyền: "Bạn có quyền làm gì?" (PHẢI CÓ)
 

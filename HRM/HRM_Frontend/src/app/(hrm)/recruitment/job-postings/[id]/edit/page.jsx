@@ -20,7 +20,7 @@ import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { docSoVietNam } from "@/lib/stringsUtils";
-import axiosClient from "@/lib/axiosClient"; // Đảm bảo có axiosClient để fetch list
+import axiosClient from "@/lib/axiosClient"; 
 import "react-quill-new/dist/quill.snow.css";
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 

@@ -17,6 +17,11 @@ axiosClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    if (config.data instanceof FormData) {
+      // Nếu là gửi file, hãy để trình duyệt tự quyết định Content-Type (kèm boundary)
+      delete config.headers['Content-Type'];
+    }
+
     return config;
   },
   (error) => {

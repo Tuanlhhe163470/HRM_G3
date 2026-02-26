@@ -41,7 +41,7 @@ export default function ViewJobPage() {
       setJob(found);
     } catch (error) {
       notification.error({
-        message: "Lỗi hệ thống",
+        title: "Lỗi hệ thống",
         description: "Không thể tải chi tiết tin",
       });
     } finally {
@@ -83,12 +83,12 @@ export default function ViewJobPage() {
     try {
       await jobPostingService.publish(job.jobID, job.description);
       notification.success({
-        message: "Thành công",
+        title: "Thành công",
         description: "Tin đã được đăng công khai",
       });
       fetchJobDetail();
     } catch (err) {
-      notification.error({ message: "Lỗi", description: "Không thể đăng tin" });
+      notification.error({ title: "Lỗi", description: "Không thể đăng tin" });
     }
   };
 
@@ -97,12 +97,12 @@ export default function ViewJobPage() {
     try {
       await jobPostingService.close(job.jobID);
       notification.success({
-        message: "Thành công",
+        title: "Thành công",
         description: "Đã đóng tin tuyển dụng",
       });
       fetchJobDetail();
     } catch (err) {
-      notification.error({ message: "Lỗi", description: "Thao tác thất bại" });
+      notification.error({ title: "Lỗi", description: "Thao tác thất bại" });
     }
   };
 
@@ -128,13 +128,13 @@ export default function ViewJobPage() {
         try {
           await jobPostingService.reopen(job.jobID, selectedDate.toISOString());
           notification.success({
-            message: "Thành công",
+            title: "Thành công",
             description: "Đã mở lại tin và gia hạn",
           });
           fetchJobDetail();
         } catch (err) {
           notification.error({
-            message: "Lỗi",
+            title: "Lỗi",
             description: "Không thể mở lại tin",
           });
         }

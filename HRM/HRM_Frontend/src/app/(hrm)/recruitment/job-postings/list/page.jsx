@@ -1,35 +1,31 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import useNotice from "@/components/Notice";
+import jobPostingService from "@/services/Recruitment/jobPostingService";
 import {
-  Table,
-  Tag,
-  Button,
-  Space,
-  Typography,
-  Card,
+  EditOutlined,
+  EyeOutlined,
+  ReloadOutlined,
+  RocketOutlined,
+  StopOutlined
+} from "@ant-design/icons";
+import {
   App,
-  Tooltip,
-  Modal,
+  Button,
+  Card,
+  DatePicker,
   Form,
   Input,
   InputNumber,
-  DatePicker,
-  Select,
+  Modal,
+  Space,
+  Table,
+  Tag,
+  Tooltip,
+  Typography
 } from "antd";
-import {
-  RocketOutlined,
-  EditOutlined,
-  EyeOutlined,
-  CheckCircleOutlined,
-  UserOutlined,
-  CalendarOutlined,
-  StopOutlined,
-  ReloadOutlined,
-} from "@ant-design/icons";
-import jobPostingService from "@/services/Recruitment/jobPostingService";
-import useNotice from "@/components/Notice";
-import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import "./job-list.scss";
 
 const { Title, Text } = Typography;
@@ -138,14 +134,14 @@ export default function JobManagementPage() {
 
           // SỬA TẠI ĐÂY: Dùng đúng thuộc tính theo chuẩn mới của Ant Design
           notification.success({
-            message: "Thành công", // Tiêu đề chính
+            title: "Thành công", // Tiêu đề chính
             description: "Đã mở lại tin tuyển dụng thành công",
           });
 
           loadJobs();
         } catch (err) {
           notification.error({
-            message: "Lỗi hệ thống",
+            title: "Lỗi hệ thống",
             description: err.message || "Không thể thực hiện thao tác này",
           });
         }

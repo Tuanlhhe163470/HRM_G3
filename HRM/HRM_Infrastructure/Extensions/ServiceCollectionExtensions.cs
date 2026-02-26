@@ -1,25 +1,26 @@
 using HRM_Application.Contracts.Repositories;
 using HRM_Application.Contracts.Services;
+using HRM_Application.Contracts.Services;
 using HRM_Application.Services;
+using HRM_Application.Services;
+using HRM_Application.Services.PayRoll;
+using HRM_Application.Services.Recruitment;
+using HRM_Application.Services.TimeAttendance;
 using HRM_Infrastructure.BackgroundServices;
 using HRM_Infrastructure.Data;
+using HRM_Infrastructure.PayRoll.Repositories;
 // using HRM_Application.Contracts.Services; // Uncomment nếu IGoalService nằm ở đây
 using HRM_Infrastructure.Repositories.GoalService; // Nơi chứa class GoalService
+using HRM_Infrastructure.Repositories.Payroll;
+using HRM_Infrastructure.Repositories.PayRoll;
 using HRM_Infrastructure.Repositories.PerformanceGoal;
 using HRM_Infrastructure.Repositories.Recruitment;
+using HRM_Infrastructure.Repositories.TimeAttendance;
 using HRM_Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using HRM_Application.Services;
-using HRM_Infrastructure.Repositories.TimeAttendance;
-using HRM_Application.Contracts.Services;
-using HRM_Application.Services.TimeAttendance;
-using HRM_Application.Services.PayRoll;
-using HRM_Infrastructure.Repositories.Payroll;
-using HRM_Infrastructure.Repositories.PayRoll;
-using HRM_Infrastructure.PayRoll.Repositories;
 
 namespace HRM_Infrastructure.Extensions
 {
@@ -54,7 +55,8 @@ namespace HRM_Infrastructure.Extensions
             services.AddScoped<IPayrollService, PayrollService>();
             services.AddScoped<IMonthlyTimesheetService, MonthlyTimesheetService>();
             services.AddScoped<IMonthlyTimesheetRepository, MonthlyTimesheetRepository>();
-
+            services.AddScoped<ICandidateRepository, CandidateRepository>();
+            services.AddScoped<ICandidateService, CandidateService>();
             // 4. SERVICES (Business Logic Layer)
             // Đăng ký Service GoalService vào đây
             services.AddScoped<IGoalService, GoalService>();
