@@ -1,0 +1,9 @@
+.job-management-container {
+  padding: 20px;
+  .ant-card { border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+  .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .status-tag { min-width: 80px; text-align: center; font-weight: 500; }
+  .action-buttons {
+    .ant-btn { border-radius: 6px; }
+  }
+}

@@ -1,12 +1,21 @@
 using HRM_Application.Contracts.Repositories;
 using HRM_Application.Contracts.Services;
+using HRM_Application.Contracts.Services;
 using HRM_Application.Services;
+using HRM_Application.Services;
+using HRM_Application.Services.PayRoll;
+using HRM_Application.Services.Recruitment;
+using HRM_Application.Services.TimeAttendance;
 using HRM_Infrastructure.BackgroundServices;
 using HRM_Infrastructure.Data;
+using HRM_Infrastructure.PayRoll.Repositories;
 // using HRM_Application.Contracts.Services; // Uncomment nếu IGoalService nằm ở đây
 using HRM_Infrastructure.Repositories.GoalService; // Nơi chứa class GoalService
+using HRM_Infrastructure.Repositories.Payroll;
+using HRM_Infrastructure.Repositories.PayRoll;
 using HRM_Infrastructure.Repositories.PerformanceGoal;
 using HRM_Infrastructure.Repositories.Recruitment;
+using HRM_Infrastructure.Repositories.TimeAttendance;
 using HRM_Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -46,10 +55,10 @@ namespace HRM_Infrastructure.Extensions
             // 3. REPOSITORIES (Data Access Layer)
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IPerformanceGoalRepository, PerformanceGoalRepository>();
-            services.AddScoped<JobRequisitionService>();
             services.AddScoped<IJobPostingRepository, JobPostingRepository>();
             services.AddScoped<JobPostingService>();
             services.AddScoped<IAttendanceRepository, AttendanceRepository>();
+            services.AddScoped<ICandidateRepository, CandidateRepository>();
             // services.AddScoped<IShiftRepository, ShiftRepository>(); 
             services.AddScoped<IEmployeeSalaryConfigRepository, EmployeeSalaryConfigRepository>();
             services.AddScoped<IEmployeeSalaryConfigService, EmployeeSalaryConfigService>();
@@ -58,9 +67,12 @@ namespace HRM_Infrastructure.Extensions
             services.AddScoped<IPayrollService, PayrollService>();
             services.AddScoped<IMonthlyTimesheetService, MonthlyTimesheetService>();
             services.AddScoped<IMonthlyTimesheetRepository, MonthlyTimesheetRepository>();
-
+            services.AddScoped<ICandidateRepository, CandidateRepository>();
+            services.AddScoped<ICandidateService, CandidateService>();
             // 4. SERVICES (Business Logic Layer)
             // Đăng ký Service GoalService vào đây
+            services.AddScoped<ICandidateService, CandidateService>();
+            services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IGoalService, GoalService>();
             services.AddHostedService<JobExpirationWorker>();
             services.AddScoped<IAttendanceService, AttendanceService>();

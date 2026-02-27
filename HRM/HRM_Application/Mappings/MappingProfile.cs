@@ -2,6 +2,7 @@
 using AutoMapper;
 using HRM_Application.DTOs.Goals;
 using HRM_Application.DTOs.MonthlyTimesheet;
+using HRM_Application.DTOs.Recruitment;
 using HRM_Application.DTOs.TimeAttendance;
 using HRM_Domain.Entities;
 using HRM_Domain.Entities.TimeAttendance;
@@ -41,6 +42,11 @@ namespace HRM_Application.Mappings
                 .ForMember(dest => dest.WorkDate, opt => opt.MapFrom(src => src.AttendanceLog != null ? src.AttendanceLog.WorkDate : (DateTime?)null));
 
             CreateMap<SubmitExplanationRequest, AttendanceExplanation>();
+            CreateMap<Candidate, CandidateDto>()
+     .ForMember(dest => dest.JobTitle, opt => opt.MapFrom(src => src.JobPosting.Title))
+     .ForMember(dest => dest.DepartmentName, opt => opt.MapFrom(src => src.JobPosting.Department.DepartmentName)) 
+     .ForMember(dest => dest.DepartmentID, opt => opt.MapFrom(src => src.JobPosting.Department.DepartmentID)); 
         }
+
     }
 }

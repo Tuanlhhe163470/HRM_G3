@@ -7,14 +7,17 @@ using HRM_Infrastructure.Repositories.PayRoll;
 using HRM_Application.Services.PayRoll;
 using HRM_Infrastructure.Repositories.Recruitment;
 using Microsoft.OpenApi.Models;
-using Microsoft.AspNetCore.Authentication.JwtBearer; // <--- THÊM MỚI
-using Microsoft.IdentityModel.Tokens; // <--- THÊM MỚI
-using System.Text; // <--- THÊM MỚI
+using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.FileProviders;
+using System.Text;
+using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// 1. Cấu hình JWT Authentication (THÊM MỚI)
-// Đoạn này giúp ứng dụng hiểu cách giải mã và kiểm tra tính hợp lệ của Token từ appsettings.json
+var provider = new FileExtensionContentTypeProvider();
+provider.Mappings[".pdf"] = "application/pdf"; // Ép kiểu định dạng PDF
+// 1. Cấu hình JWT Authentication
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -34,17 +37,16 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Add services to the container.
+// 2. Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "HRM G3 API", Version = "v1" });
 
-    // Cấu hình nút Authorize
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "Dán chuỗi Token của bạn vào đây",
+        Description = "Dán chuỗi Token của bạn vào đây (Ví dụ: Bearer abcxyz)",
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
@@ -57,21 +59,16 @@ builder.Services.AddSwaggerGen(c =>
         {
             new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
             },
             new string[] {}
         }
     });
 });
 
-// --- GỌI HÀM EXTENSION ĐỂ ĐĂNG KÝ SERVICE ---
+// 3. Đăng ký Infrastructure và các Service/Repository
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// Đăng ký các Service khác
 builder.Services.AddScoped<IShiftRepository, ShiftRepository>();
 builder.Services.AddScoped<IShiftService, ShiftService>();
 builder.Services.AddScoped<IPublicHolidayRepository, PublicHolidayRepository>();
@@ -79,10 +76,10 @@ builder.Services.AddScoped<IPublicHolidayService, PublicHolidaysService>();
 builder.Services.AddScoped<ISalaryComponentRepository, SalaryComponentRepository>();
 builder.Services.AddScoped<ISalaryComponentService, SalaryComponentService>();
 
-// 3. Add AutoMapper
+// 4. Add AutoMapper
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-// Cấu hình CORS
+// 5. Cấu hình CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -90,13 +87,15 @@ builder.Services.AddCors(options =>
         {
             b.AllowAnyOrigin()
              .AllowAnyMethod()
-             .AllowAnyHeader();
+             .AllowAnyHeader()
+             .WithExposedHeaders("Content-Disposition");
         });
 });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// --- CẤU HÌNH HTTP REQUEST PIPELINE ---
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -105,11 +104,26 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// --- THỨ TỰ MIDDLEWARE QUAN TRỌNG (CẬP NHẬT TẠI ĐÂY) ---
+// 1. Kích hoạt Static Files mặc định để đọc mọi thứ trong wwwroot
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "wwwroot")), // Chỉ định rõ đường dẫn vật lý
+    RequestPath = "",
+    ContentTypeProvider = provider,
+    OnPrepareResponse = ctx =>
+    {
+        // Cho phép trình duyệt xem file trực tiếp thay vì tải về
+        ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "*");
+        ctx.Context.Response.Headers.Append("Content-Disposition", "inline");
+    }
+});
+// 2. Thứ tự Middleware quan trọng
 app.UseCors("AllowAll");
 
-app.UseAuthentication(); // 1. Xác thực: "Bạn là ai?" (PHẢI CÓ)
-app.UseAuthorization();  // 2. Phân quyền: "Bạn có quyền làm gì?" (PHẢI CÓ)
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

@@ -5,7 +5,8 @@ import { Button, Form, Input, Typography, Modal } from "antd";
 import { useState } from "react";
 import { loginApi } from "@/services/AuthService";
 import { useRouter } from "next/navigation";
-import notice from "@/components/Notice";
+import useNotice from "@/components/Notice";
+import Cookies from "js-cookie";
 
 const { Link } = Typography;
 
@@ -13,26 +14,28 @@ const LoginModal = ({ open, onCancel }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-
+  const notice = useNotice();
   const handleLogin = async (values) => {
     setLoading(true);
     try {
       const response = await loginApi(values);
-
-      // response.token ở đây chứa object bao gồm token và employee (theo logic Backend mình đã sửa)
       if (response && response.token) {
-        const authData = response.token; 
+        const authData = response.token;
 
+        // 1. lưu localStorage
         localStorage.setItem("token", authData.token);
         localStorage.setItem("user", JSON.stringify(authData.employee));
 
-        notice({
-          msg: "Đăng nhập thành công!",
-          isSuccess: true,
-        });
+        // 2. LƯU VÀO COOKIE ĐỂ MIDDLEWARE ĐỌC ĐƯỢC
+        // Lưu token và roleName, set hạn 1 ngày
+        Cookies.set("token", authData.token, { expires: 1 });
+        Cookies.set("role", authData.employee.roleName, { expires: 1 });
+
+        notice({ msg: "Đăng nhập thành công!", isSuccess: true });
         onCancel?.();
+
         router.push("/attendance/checkin");
-       
+
         router.refresh();
       }
     } catch (error) {

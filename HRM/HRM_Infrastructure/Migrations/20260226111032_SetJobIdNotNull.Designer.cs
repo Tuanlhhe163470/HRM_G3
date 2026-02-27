@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HRM_Infrastructure.Migrations
 {
     [DbContext(typeof(HRMDbContext))]
-    [Migration("20260225071405_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260226111032_SetJobIdNotNull")]
+    partial class SetJobIdNotNull
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -123,6 +123,12 @@ namespace HRM_Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<int>("JobID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Phone")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
@@ -131,7 +137,17 @@ namespace HRM_Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("CandidateID");
+
+                    b.HasIndex("JobID");
 
                     b.ToTable("Candidates");
                 });
@@ -439,8 +455,17 @@ namespace HRM_Infrastructure.Migrations
                     b.Property<DateTime?>("ExpiryDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("HiredCount")
+                        .HasColumnType("int");
+
                     b.Property<int?>("PositionID")
                         .HasColumnType("int");
+
+                    b.Property<decimal?>("SalaryMax")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("SalaryMin")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -454,6 +479,9 @@ namespace HRM_Infrastructure.Migrations
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("Vacancies")
+                        .HasColumnType("int");
 
                     b.HasKey("JobID");
 
@@ -1403,6 +1431,17 @@ namespace HRM_Infrastructure.Migrations
                     b.Navigation("Modifier");
                 });
 
+            modelBuilder.Entity("HRM_Domain.Entities.Candidate", b =>
+                {
+                    b.HasOne("HRM_Domain.Entities.JobPosting", "JobPosting")
+                        .WithMany()
+                        .HasForeignKey("JobID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("JobPosting");
+                });
+
             modelBuilder.Entity("HRM_Domain.Entities.CourseMaterial", b =>
                 {
                     b.HasOne("HRM_Domain.Entities.TrainingCourse", "TrainingCourse")
@@ -1496,6 +1535,10 @@ namespace HRM_Infrastructure.Migrations
 
             modelBuilder.Entity("HRM_Domain.Entities.JobPosting", b =>
                 {
+                    b.HasOne("HRM_Domain.Entities.UserAccount", "CreatedByUserAccount")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy");
+
                     b.HasOne("HRM_Domain.Entities.Employee", "Creator")
                         .WithMany()
                         .HasForeignKey("CreatedBy");
@@ -1507,6 +1550,8 @@ namespace HRM_Infrastructure.Migrations
                     b.HasOne("HRM_Domain.Entities.Position", "Position")
                         .WithMany()
                         .HasForeignKey("PositionID");
+
+                    b.Navigation("CreatedByUserAccount");
 
                     b.Navigation("Creator");
 
