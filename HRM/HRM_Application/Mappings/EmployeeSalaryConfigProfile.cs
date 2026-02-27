@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using HRM_Application.DTOs.EmployeeSalaryConfig;
+using HRM_Application.DTOs.PayRoll;
 using HRM_Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -20,6 +21,7 @@ namespace HRM_Application.Mappings
 
             // Map từ DTO -> Entity
             CreateMap<AssignSalaryConfigDTO, EmployeeSalaryConfig>();
+            CreateMap<MonthlyPayroll, PayrollDTO>();
         }
     }
 }

@@ -17,7 +17,7 @@ namespace HRM_Infrastructure.Repositories.Payroll
         public async Task<IEnumerable<EmployeeSalaryConfig>> GetByEmployeeIdAsync(int employeeId)
         {
             return await _context.EmployeeSalaryConfigs
-                .Include(x => x.SalaryComponent)
+                .Include(x => x.SalaryComponent) // Bắt buộc phải có dòng này để lấy ComponentName
                 .Where(x => x.EmployeeID == employeeId && x.IsActive)
                 .ToListAsync();
         }

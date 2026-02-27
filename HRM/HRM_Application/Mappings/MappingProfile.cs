@@ -1,7 +1,9 @@
 // File: HRM_Application/Mappings/MappingProfile.cs
 using AutoMapper;
+using HRM_Application.DTOs.EmployeeSalaryConfig;
 using HRM_Application.DTOs.Goals;
 using HRM_Application.DTOs.MonthlyTimesheet;
+using HRM_Application.DTOs.PayRoll;
 using HRM_Application.DTOs.TimeAttendance;
 using HRM_Domain.Entities;
 using HRM_Domain.Entities.TimeAttendance;
@@ -32,6 +34,29 @@ namespace HRM_Application.Mappings
 
                 .ForMember(dest => dest.PositionName, opt => opt.MapFrom(src =>
                     (src.Employee != null && src.Employee.Position != null) ? src.Employee.Position.PositionName : "N/A"));
+
+
+            CreateMap<MonthlyPayroll, PayrollDTO>()
+    // Bổ sung Mapping ID để FE lấy được khóa chính gọi API duyệt & điều chỉnh
+    .ForMember(dest => dest.PayrollID, opt => opt.MapFrom(src => src.PayrollID))
+    // Lấy tên nhân viên
+    .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.Employee != null ? src.Employee.FullName : "N/A"))
+    // Ánh xạ các trường tài chính để FE không hiện 0đ
+    .ForMember(dest => dest.BaseSalary, opt => opt.MapFrom(src => src.BaseSalary))
+    .ForMember(dest => dest.ActualWorkDays, opt => opt.MapFrom(src => src.ActualWorkDays))
+    .ForMember(dest => dest.StandardWorkDays, opt => opt.MapFrom(src => src.StandardWorkDays))
+    .ForMember(dest => dest.TotalAllowance, opt => opt.MapFrom(src => src.TotalAllowance))
+    .ForMember(dest => dest.TotalDeduction, opt => opt.MapFrom(src => src.TotalDeduction))
+    .ForMember(dest => dest.FinalNetSalary, opt => opt.MapFrom(src => src.FinalNetSalary));
+
+            // 2. Mapping cho UC2: Cấu hình lương (EmployeeSalaryConfig -> EmployeeSalaryConfigDTO)
+            CreateMap<EmployeeSalaryConfig, EmployeeSalaryConfigDTO>()
+                .ForMember(dest => dest.EmployeeName, opt => opt.MapFrom(src =>
+                    src.Employee != null ? src.Employee.FullName : "N/A"))
+                .ForMember(dest => dest.ComponentName, opt => opt.MapFrom(src =>
+                    src.SalaryComponent != null ? src.SalaryComponent.ComponentName : string.Empty)) // Khớp với ComponentName
+                .ForMember(dest => dest.Type, opt => opt.MapFrom(src =>
+                    src.SalaryComponent != null ? src.SalaryComponent.Type : string.Empty));
         }
     }
 }

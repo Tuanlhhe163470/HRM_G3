@@ -27,7 +27,8 @@ namespace HRM_Domain.Entities
         [Column(TypeName = "decimal(18,2)")]
         public decimal BaseSalary { get; set; }
 
-        public int StandardWorkDays { get; set; }
+        [Column(TypeName = "decimal(5,2)")]
+        public decimal StandardWorkDays { get; set; }
 
         [Column(TypeName = "decimal(4,1)")]
         public decimal ActualWorkDays { get; set; }
@@ -51,5 +52,13 @@ namespace HRM_Domain.Entities
 
         [StringLength(20)]
         public string Status { get; set; } = "Draft";
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal AdjustmentAmount { get; set; } = 0; // Số tiền điều chỉnh thủ công
+        public string? AdjustmentReason { get; set; }    // Lý do điều chỉnh
+
+        // Cho UC: Payroll Approval
+        public int? ApprovedBy { get; set; }           // ID người duyệt
+        public DateTime? ApprovedDate { get; set; }
     }
 }
