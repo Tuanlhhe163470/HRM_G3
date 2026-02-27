@@ -67,6 +67,7 @@ namespace HRM_Application.Services.TimeAttendance
                                 AttendanceStatus.Absent => "A",      // Absent (Vắng mặt)
                                 AttendanceStatus.MissingCheckOut => "A", // Quên check-out (Phạt coi như Vắng)
                                 AttendanceStatus.Holiday => "H",     // Holiday (Lễ tết)
+                                AttendanceStatus.OnLeave => "V",
                                 _ => ""
                             };
 
