@@ -99,5 +99,13 @@ namespace HRM_Infrastructure.Repositories.TimeAttendance
             _context.AttendanceLogs.Update(log);
             await _context.SaveChangesAsync();
         }
+        public async Task<List<AttendanceLog>> GetLogsByDateRangeAsync(int employeeId, DateTime startDate, DateTime endDate)
+        {
+            return await _context.AttendanceLogs
+                .Where(x => x.EmployeeId == employeeId
+                         && x.WorkDate.Date >= startDate.Date
+                         && x.WorkDate.Date <= endDate.Date)
+                .ToListAsync();
+        }
     }
 }

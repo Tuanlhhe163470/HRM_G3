@@ -39,6 +39,37 @@ const attendanceService = {
     // payload: { isApproved: true/false, note: "Lý do..." }
     return await axiosClient.put(`/explanations/${id}/review`, payload);
   },
+
+  getMyBalances: async (year) => {
+    const response = await axiosClient.get(`/leaves/my-balances?year=${year}`);
+    return response; 
+  },
+
+  getLeaveTypes: async () => {
+    const response = await axiosClient.get('/leaves/types');
+    return response;
+  },
+
+  // Nộp đơn xin nghỉ
+  submitLeaveRequest: async (payload) => {
+    const response = await axiosClient.post('/leaves/request', payload);
+    return response;
+  },
+  getMyLeaveRequests: async () => {
+    const response = await axiosClient.get('/leaves/my-requests');
+    return response;
+  },
+  // Lấy danh sách đơn xin nghỉ phép đang chờ duyệt (Backend đã tự động lọc theo Role)
+  getPendingLeaveRequests: async () => {
+    const response = await axiosClient.get('/leaves/pending');
+    return response;
+  },
+
+  // Manager/HR gửi quyết định Duyệt hoặc Từ chối đơn nghỉ phép
+  reviewLeaveRequest: async (id, payload) => {
+    const response = await axiosClient.put(`/leaves/${id}/review`, payload);
+    return response;
+  }
 };
 
 export default attendanceService;

@@ -208,14 +208,23 @@ export default function TimesheetPage() {
             </p>
           </div>
 
-          <div className="bg-white p-4 rounded-xl border border-purple-200 shadow-sm relative overflow-hidden">
+          {/* CARD 2: NGHỈ CÓ LƯƠNG (Gộp cả Giờ và Số ngày phép) */}
+          <div className="bg-white p-4 rounded-xl border border-purple-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
             <p className="text-xs font-bold text-slate-500 uppercase">
               Nghỉ có lương (Lễ/Phép)
             </p>
-            <p className="text-2xl font-black mt-1 text-purple-600">
-              {summary?.paidLeaveHours || 0}{" "}
-              <span className="text-sm font-semibold text-purple-400">giờ</span>
-            </p>
+            <div className="flex items-end gap-2 mt-1">
+              {/* Cột 1: Hiển thị tổng số Giờ */}
+              <p className="text-2xl font-black text-purple-600">
+                {summary?.paidLeaveHours || 0}{" "}
+                <span className="text-sm font-semibold text-purple-400">giờ</span>
+              </p>
+              
+              {/* Cột 2: Hiển thị Số ngày nghỉ phép (đọc từ biến onLeaveCount mới thêm) */}
+              <p className="text-sm font-bold text-purple-400 mb-1 border-l-2 border-purple-200 pl-2" title="Số ngày đã dùng phép">
+                {summary?.onLeaveCount || 0} ngày phép
+              </p>
+            </div>
           </div>
 
           <div className="bg-white p-4 rounded-xl border border-orange-200 shadow-sm relative overflow-hidden flex flex-col justify-between">

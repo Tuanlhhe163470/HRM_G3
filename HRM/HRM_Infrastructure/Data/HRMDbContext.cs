@@ -38,6 +38,9 @@ namespace HRM_Infrastructure.Data
         public DbSet<MonthlyTimesheet> MonthlyTimesheets { get; set; }
         public DbSet<PublicHoliday> PublicHolidays { get; set; }
         public DbSet<AttendanceExplanation> AttendanceExplanations { get; set; }
+        public DbSet<LeaveType> LeaveTypes { get; set; }
+        public DbSet<LeaveBalance> LeaveBalances { get; set; }
+        public DbSet<LeaveRequest> LeaveRequests { get; set; }
 
         // ================= 5. PAYROLL MODULE =================
         public DbSet<MonthlyPayroll> MonthlyPayrolls { get; set; }
