@@ -50,6 +50,15 @@ namespace HRM_Application.Mappings
      .ForMember(dest => dest.DepartmentName, opt => opt.MapFrom(src => src.JobPosting.Department.DepartmentName))
      .ForMember(dest => dest.DepartmentID, opt => opt.MapFrom(src => src.JobPosting.Department.DepartmentID));
 
+           
+            CreateMap<Interview, ScheduleInterviewDto>()
+                .ForMember(dest => dest.Location, opt => opt.MapFrom(src => src.Location)) 
+                .ForMember(dest => dest.CandidateName, opt => opt.MapFrom(src => src.Candidate.FullName))
+                .ForMember(dest => dest.CandidatePhone, opt => opt.MapFrom(src => src.Candidate.Phone))
+                .ForMember(dest => dest.JobTitle, opt => opt.MapFrom(src => src.Candidate.JobPosting.Title));
+
+            CreateMap<ScheduleInterviewDto, Interview>();
+
             CreateMap<MonthlyPayroll, PayrollDTO>()
                // Bổ sung Mapping ID để FE lấy được khóa chính gọi API duyệt & điều chỉnh
                .ForMember(dest => dest.PayrollID, opt => opt.MapFrom(src => src.PayrollID))

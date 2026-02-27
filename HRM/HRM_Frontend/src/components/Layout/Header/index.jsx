@@ -21,7 +21,7 @@ import "../styles.css";
 import UseWindowSize from "src/lib/useWindowSize";
 import LoginModal from "@/components/Modal/Login/page";
 import ContactModal from "@/components/Modal/Contact/page";
-import Cookies from 'js-cookie';
+import Cookies from "js-cookie";
 
 export default function Header() {
   const isMobile = UseWindowSize.isMobile();
@@ -59,17 +59,17 @@ export default function Header() {
   }, [isLoginOpen, mounted]);
 
   const handleLogout = () => {
-  // Xóa localStorage
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
+    // Xóa localStorage
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
 
-  // Xóa Cookie
-  Cookies.remove('token');
-  Cookies.remove('role');
+    // Xóa Cookie
+    Cookies.remove("token");
+    Cookies.remove("role");
 
-  router.push("/");
-  router.refresh(); 
-};
+    router.push("/");
+    router.refresh();
+  };
 
   const renderNavByRole = () => {
     if (isMobile) return null;
@@ -99,8 +99,8 @@ export default function Header() {
       );
     }
 
-    const role = user.roleName ;
-
+    const role = user.roleName;
+    
     switch (role) {
       case "HR":
         return (
@@ -154,7 +154,7 @@ export default function Header() {
             </Link>
           </nav>
         );
-       case "Manager":
+      case "Manager":
         return (
           <nav className="hidden md:flex items-center gap-4 lg:gap-6">
             <Link
@@ -189,7 +189,7 @@ export default function Header() {
             </Link>
           </nav>
         );
-        default:
+      default:
         return (
           <nav className="hidden md:flex items-center gap-8">
             <Link
@@ -228,6 +228,21 @@ export default function Header() {
   if (!mounted)
     return <div className="admin-header bg-white shadow-sm h-[65px]"></div>;
 
+  const getRoleLabel = (role) => {
+      switch (role) {
+        case "Admin":
+          return "Admin";
+        case "HR":
+          return "HR";
+        case "Manager":
+          return "Manager";
+        case "Employee":
+          return "Nhân viên";
+        default:
+          return role;
+      }
+    };
+    
   return (
     <LayoutStyled>
       <header className="admin-header bg-white shadow-sm">
@@ -269,6 +284,9 @@ export default function Header() {
                     <Space className="ml-1">
                       <span className="font-semibold text-gray-700">
                         {user.fullName}
+                      </span>
+                      <span className="text-[10px] px-2 py-[2px] rounded-full bg-gray-100 text-gray-600 font-medium">
+                        {getRoleLabel(user.roleName)}
                       </span>
                       <DownOutlined className="text-xs text-gray-400" />
                     </Space>

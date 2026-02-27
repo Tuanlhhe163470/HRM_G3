@@ -60,6 +60,7 @@ namespace HRM_Infrastructure.Extensions
             services.AddScoped<IAttendanceRepository, AttendanceRepository>();
             services.AddScoped<ICandidateRepository, CandidateRepository>();
             // services.AddScoped<IShiftRepository, ShiftRepository>(); 
+            services.AddScoped<IInterviewRepository, InterviewRepository>();
             services.AddScoped<IEmployeeSalaryConfigRepository, EmployeeSalaryConfigRepository>();
             services.AddScoped<IEmployeeSalaryConfigService, EmployeeSalaryConfigService>();
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();

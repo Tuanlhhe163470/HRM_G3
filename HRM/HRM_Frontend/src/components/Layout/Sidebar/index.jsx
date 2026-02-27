@@ -71,6 +71,11 @@ export default function SidebarHRM() {
           { key: "/recruitment/candidates/shorted-list", label: <Link href="/recruitment/candidates/shorted-list">Danh sách rút gọn</Link>, icon: <SnippetsOutlined /> },
         ],
       },
+      {
+        key: "/recruitment/interview/schedule",
+        label: <Link href="/recruitment/interview/schedule"><span className="font-bold text-[13px] uppercase tracking-tight">Hẹn lịch phỏng vấn</span></Link>,
+        icon: <CalendarOutlined />,
+      },
     ];
 
     if (role === "Manager") return [

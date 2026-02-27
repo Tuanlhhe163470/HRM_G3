@@ -40,7 +40,6 @@ export default function ManagerApprovalPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // API này đã được BE xử lý để chỉ lấy ứng viên thuộc phòng ban của Manager (dựa vào Token)
       const candidateRes = await candidateService.getAdminList();
 
       // Chỉ hiển thị những người đang chờ Manager duyệt

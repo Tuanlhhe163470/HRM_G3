@@ -4,6 +4,7 @@ using HRM_Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HRM_Infrastructure.Migrations
 {
     [DbContext(typeof(HRMDbContext))]
-    partial class HRMDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260227092600_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -426,7 +429,7 @@ namespace HRM_Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InterviewID"));
 
-                    b.Property<int>("CandidateID")
+                    b.Property<int>("ApplicationID")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("InterviewDate")
@@ -439,16 +442,13 @@ namespace HRM_Infrastructure.Migrations
                     b.Property<int?>("InterviewerID")
                         .HasColumnType("int");
 
-                    b.Property<string>("Location")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Result")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
                     b.HasKey("InterviewID");
 
-                    b.HasIndex("CandidateID");
+                    b.HasIndex("ApplicationID");
 
                     b.HasIndex("InterviewerID");
 
@@ -1714,9 +1714,9 @@ namespace HRM_Infrastructure.Migrations
 
             modelBuilder.Entity("HRM_Domain.Entities.Interview", b =>
                 {
-                    b.HasOne("HRM_Domain.Entities.Candidate", "Candidate")
+                    b.HasOne("HRM_Domain.Entities.Application", "Application")
                         .WithMany()
-                        .HasForeignKey("CandidateID")
+                        .HasForeignKey("ApplicationID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1724,7 +1724,7 @@ namespace HRM_Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("InterviewerID");
 
-                    b.Navigation("Candidate");
+                    b.Navigation("Application");
 
                     b.Navigation("Interviewer");
                 });
