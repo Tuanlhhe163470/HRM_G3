@@ -47,7 +47,7 @@ namespace HRM_Infrastructure.Data
         public DbSet<SalaryComponent> SalaryComponents { get; set; }
         public DbSet<MonthlyPayrollDetail> MonthlyPayrollDetails { get; set; }
         public DbSet<EmployeeSalaryConfig> EmployeeSalaryConfigs { get; set; }
-        
+
 
         // ================= 6. TRAINING & EVALUATION MODULE =================
         public DbSet<ReviewCycle> ReviewCycles { get; set; }
@@ -129,6 +129,18 @@ namespace HRM_Infrastructure.Data
                 .WithMany()
                 .HasForeignKey(ut => ut.AssignedByReviewID)
                 .OnDelete(DeleteBehavior.SetNull);
+            modelBuilder.Entity<Application>()
+        .HasOne(a => a.JobPosting) // Tên property điều hướng trong class Application (có thể của bạn là Job)
+        .WithMany() // Nếu trong JobPosting có List<Application> thì điền vào đây, VD: .WithMany(j => j.Applications)
+        .HasForeignKey(a => a.JobID)
+        .OnDelete(DeleteBehavior.Restrict); // <--- CHÌA KHÓA NẰM Ở ĐÂY
+
+            // (Tùy chọn) Tắt luôn xóa dây chuyền từ Candidate -> Application cho chắc cú
+            modelBuilder.Entity<Application>()
+                .HasOne(a => a.Candidate)
+                .WithMany()
+                .HasForeignKey(a => a.CandidateID)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // ==========================================================
             // ĐỊNH DẠNG DỮ LIỆU TỰ ĐỘNG
