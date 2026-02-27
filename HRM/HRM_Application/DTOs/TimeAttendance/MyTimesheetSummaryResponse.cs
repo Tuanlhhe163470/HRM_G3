@@ -19,6 +19,7 @@ namespace HRM_Application.DTOs.TimeAttendance
 
         public int MissingCheckOutCount { get; set; }
         public int AbsentCount { get; set; }
+        public int OnLeaveCount { get; set; }
 
         public List<AttendanceLogResponse> Logs { get; set; } = new List<AttendanceLogResponse>();
     }

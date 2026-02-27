@@ -1,5 +1,5 @@
-import { Inter, Roboto } from "next/font/google"; 
-import { ConfigProvider } from 'antd'; 
+import { Inter, Roboto } from "next/font/google";
+import Providers from "./providers";
 import "./globals.css";
 
 const inter = Inter({
@@ -8,7 +8,7 @@ const inter = Inter({
 });
 
 const robotoMono = Roboto({
-  weight: ['400', '700'],
+  weight: ["400", "700"],
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
@@ -22,18 +22,18 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link 
-          rel="stylesheet" 
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" 
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
         />
       </head>
       <body
         className={`${inter.variable} ${robotoMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <ConfigProvider theme={{ token: { primaryColor: '#1677ff' } }}>
+        <Providers>
           {children}
-        </ConfigProvider>
+        </Providers>
       </body>
     </html>
   );
