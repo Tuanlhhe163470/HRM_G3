@@ -2,6 +2,7 @@
 using HRM_Application.Contracts.Repositories;
 using HRM_Application.Contracts.Services;
 using HRM_Application.DTOs.TimeAttendance;
+using HRM_Application.Interfaces.Repositories;
 using HRM_Domain.Entities;
 using HRM_Domain.Entities.TimeAttendance;
 using HRM_Domain.Enums;
@@ -20,6 +21,7 @@ namespace HRM_Application.Services.TimeAttendance
         private readonly IShiftRepository _shiftRepo;
         private readonly IPublicHolidayRepository _publicHolidayRepo;
         private readonly IMonthlyTimesheetRepository _monthlyTimesheetRepo;
+        private readonly ILeaveRequestRepository _leaveRequestRepo;
         private readonly IMapper _mapper;
 
         public AttendanceService(
@@ -27,13 +29,15 @@ namespace HRM_Application.Services.TimeAttendance
             IShiftRepository shiftRepo,
             IPublicHolidayRepository publicHolidayRepo,
             IMapper mapper,
-            IMonthlyTimesheetRepository monthlyTimesheetRepo)
+            IMonthlyTimesheetRepository monthlyTimesheetRepo,
+            ILeaveRequestRepository leaveRequestRepo)
         {
             _attendanceRepo = attendanceRepo;
             _shiftRepo = shiftRepo;
             _publicHolidayRepo = publicHolidayRepo;
             _mapper = mapper;
             _monthlyTimesheetRepo = monthlyTimesheetRepo;
+            _leaveRequestRepo = leaveRequestRepo;
         }
         public async Task<AttendanceLogResponse> CheckInAsync(int employeeId, CheckInRequest request)
         {
@@ -145,7 +149,6 @@ namespace HRM_Application.Services.TimeAttendance
         {
             var today = DateTime.Today;
 
-            // 1. Lấy bản ghi Check-in cũ
             var log = await _attendanceRepo.GetActiveLogAsync(employeeId);
             if (log == null)
             {
@@ -161,19 +164,15 @@ namespace HRM_Application.Services.TimeAttendance
                 throw new InvalidOperationException($"Ca làm việc ngày {log.WorkDate:dd/MM} đã quá hạn để Check-out. Hệ thống đã tự động chốt là 'Quên Check-out'!");
             }
 
-            // 2. Cập nhật dữ liệu
             log.CheckOutTime = DateTime.Now;
             log.CheckOutIp = request.CheckOutIp;
             if (!string.IsNullOrEmpty(request.Note)) log.Note += $" | Out: {request.Note}";
 
-            // 3. Tính toán công (Logic tách hàm private như cũ)
-            // Vì Repository đã Include ShiftConfig nên log.ShiftConfig sẽ có dữ liệu
             if (log.ShiftConfig != null)
             {
                 CalculateAttendanceMetrics(log, log.ShiftConfig);
             }
 
-            // 4. Update qua Repository
             await _attendanceRepo.UpdateAsync(log);
 
             return _mapper.Map<AttendanceLogResponse>(log);
@@ -205,16 +204,17 @@ namespace HRM_Application.Services.TimeAttendance
             var logs = await _attendanceRepo.GetByMonthAsync(employeeId, month, year);
 
 
-            var actualHours = logs.Where(x => x.Status == HRM_Domain.Enums.AttendanceStatus.OnTime ||
-                                              x.Status == HRM_Domain.Enums.AttendanceStatus.Late ||
-                                              x.Status == HRM_Domain.Enums.AttendanceStatus.EarlyLeave)
+            var actualHours = logs.Where(x => x.Status == AttendanceStatus.OnTime ||
+                                              x.Status == AttendanceStatus.Late ||
+                                              x.Status == AttendanceStatus.EarlyLeave)
                                   .Sum(x => x.WorkingHours ?? 0);
 
-            var holidayHours = logs.Where(x => x.Status == HRM_Domain.Enums.AttendanceStatus.Holiday)
-                                   .Sum(x => x.WorkingHours ?? 0);
+            var holidayHours = logs.Where(x => x.Status == AttendanceStatus.Holiday ||
+                                       x.Status == AttendanceStatus.OnLeave)
+                           .Sum(x => x.WorkingHours ?? 0);
 
-            var lateLogs = logs.Where(x => x.Status == HRM_Domain.Enums.AttendanceStatus.Late).ToList();
-            var earlyLogs = logs.Where(x => x.Status == HRM_Domain.Enums.AttendanceStatus.EarlyLeave).ToList();
+            var lateLogs = logs.Where(x => x.Status == AttendanceStatus.Late).ToList();
+            var earlyLogs = logs.Where(x => x.Status == AttendanceStatus.EarlyLeave).ToList();
 
             return new MyTimesheetSummaryResponse
             {
@@ -227,8 +227,9 @@ namespace HRM_Application.Services.TimeAttendance
                 EarlyLeaveCount = earlyLogs.Count,
                 TotalEarlyLeaveMinutes = earlyLogs.Sum(x => x.EarlyLeaveMinutes),
 
-                MissingCheckOutCount = logs.Count(x => x.Status == HRM_Domain.Enums.AttendanceStatus.MissingCheckOut),
-                AbsentCount = logs.Count(x => x.Status == HRM_Domain.Enums.AttendanceStatus.Absent),
+                MissingCheckOutCount = logs.Count(x => x.Status == AttendanceStatus.MissingCheckOut),
+                AbsentCount = logs.Count(x => x.Status == AttendanceStatus.Absent),
+                OnLeaveCount = logs.Count(x => x.Status == AttendanceStatus.OnLeave),
 
                 Logs = _mapper.Map<List<AttendanceLogResponse>>(logs)
             };
@@ -411,6 +412,22 @@ namespace HRM_Application.Services.TimeAttendance
                     continue;
                 }
 
+                var approvedLeave = await _leaveRequestRepo.GetApprovedLeaveOnDateAsync(employeeId, date);
+                if (approvedLeave != null)
+                {
+                    logsToAdd.Add(new AttendanceLog
+                    {
+                        EmployeeId = employeeId,
+                        ShiftId = shift.Id,
+                        WorkDate = date,
+                        Status = AttendanceStatus.OnLeave, // Trạng thái 9: Nghỉ có phép
+                        IsSystemGenerated = true,
+                        Note = $"[System: Nghỉ có phép] {approvedLeave.LeaveType?.Name}",
+                        WorkingHours = 0
+                    });
+                    continue;
+                }
+
                 // 3. CUỐI CÙNG: KHÔNG LỄ, KHÔNG CUỐI TUẦN, KHÔNG LOG -> VẮNG MẶT
                 logsToAdd.Add(new AttendanceLog
                 {
@@ -489,7 +506,9 @@ namespace HRM_Application.Services.TimeAttendance
                     x.Status == AttendanceStatus.EarlyLeave);
 
                 // Đếm ngày nghỉ (Có phép/Lễ và Không phép/Quên chấm)
-                decimal paidLeaveDays = logs.Count(x => x.Status == AttendanceStatus.Holiday);
+                decimal paidLeaveDays = logs.Count(x =>
+                    x.Status == AttendanceStatus.Holiday ||
+                    x.Status == AttendanceStatus.OnLeave);
                 decimal loggedUnpaidLeave = logs.Count(x =>
                     x.Status == AttendanceStatus.Absent ||
                     x.Status == AttendanceStatus.MissingCheckOut);

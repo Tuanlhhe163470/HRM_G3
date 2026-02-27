@@ -15,6 +15,7 @@ namespace HRM_Domain.Enums
         Overtime = 5,  // Làm thêm giờ
         MissingCheckOut = 6, // Quên chấm công ra
         Holiday = 7,  // Nghỉ lễ hưởng lương
-        DayOff = 8    // Ngày nghỉ cuối tuần
+        DayOff = 8,    // Ngày nghỉ cuối tuần
+        OnLeave = 9
     }
 }

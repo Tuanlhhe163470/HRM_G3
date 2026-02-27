@@ -90,6 +90,7 @@ export default function CompanyTimesheetPage() {
       case "A": return <div className="w-6 h-6 flex items-center justify-center text-[10px] font-bold rounded-sm border bg-rose-50 text-rose-600 border-rose-200">A</div>;
       case "H": return <div className="w-6 h-6 flex items-center justify-center text-[10px] font-bold rounded-sm border bg-slate-100 text-slate-500 border-slate-200">H</div>;
       case "LE": return <div className="w-6 h-6 flex items-center justify-center text-[10px] font-bold rounded-sm border bg-blue-50 text-blue-600 border-blue-200">LE</div>;
+      case "V": return <div className="w-6 h-6 flex items-center justify-center text-[10px] font-bold rounded-sm border bg-purple-50 text-blue-600 border-blue-200">V</div>;
       default: return null;
     }
   };
