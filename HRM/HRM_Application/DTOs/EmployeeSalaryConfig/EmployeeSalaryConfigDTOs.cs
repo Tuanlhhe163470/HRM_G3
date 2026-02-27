@@ -16,6 +16,7 @@ namespace HRM_Application.DTOs.EmployeeSalaryConfig
         public decimal Amount { get; set; }
         public DateTime EffectiveDate { get; set; }
         public bool IsActive { get; set; }
+        public string EmployeeName { get; set; } = string.Empty;
     }
 
     // DTO để nhận dữ liệu từ Client gửi lên (Thêm/Sửa)

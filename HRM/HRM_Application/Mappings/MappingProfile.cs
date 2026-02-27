@@ -1,7 +1,9 @@
 // File: HRM_Application/Mappings/MappingProfile.cs
 using AutoMapper;
+using HRM_Application.DTOs.EmployeeSalaryConfig;
 using HRM_Application.DTOs.Goals;
 using HRM_Application.DTOs.MonthlyTimesheet;
+using HRM_Application.DTOs.PayRoll;
 using HRM_Application.DTOs.Recruitment;
 using HRM_Application.DTOs.TimeAttendance;
 using HRM_Domain.Entities;
@@ -33,19 +35,6 @@ namespace HRM_Application.Mappings
 
                 .ForMember(dest => dest.PositionName, opt => opt.MapFrom(src =>
                     (src.Employee != null && src.Employee.Position != null) ? src.Employee.Position.PositionName : "N/A"));
-
-            CreateMap<AttendanceExplanation, AttendanceExplanationResponse>()
-                .ForMember(dest => dest.EmployeeName, opt => opt.MapFrom(src => src.AttendanceLog.Employee.FullName))
-                .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.AttendanceLog.Employee.AvatarURL))
-                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
-                .ForMember(dest => dest.ShiftName, opt => opt.MapFrom(src => src.AttendanceLog != null && src.AttendanceLog.ShiftConfig != null ? src.AttendanceLog.ShiftConfig.ShiftName : null))
-                .ForMember(dest => dest.WorkDate, opt => opt.MapFrom(src => src.AttendanceLog != null ? src.AttendanceLog.WorkDate : (DateTime?)null));
-
-            CreateMap<SubmitExplanationRequest, AttendanceExplanation>();
-            CreateMap<Candidate, CandidateDto>()
-     .ForMember(dest => dest.JobTitle, opt => opt.MapFrom(src => src.JobPosting.Title))
-     .ForMember(dest => dest.DepartmentName, opt => opt.MapFrom(src => src.JobPosting.Department.DepartmentName)) 
-     .ForMember(dest => dest.DepartmentID, opt => opt.MapFrom(src => src.JobPosting.Department.DepartmentID)); 
         }
 
     }

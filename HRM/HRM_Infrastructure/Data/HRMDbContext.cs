@@ -47,7 +47,7 @@ namespace HRM_Infrastructure.Data
         public DbSet<SalaryComponent> SalaryComponents { get; set; }
         public DbSet<MonthlyPayrollDetail> MonthlyPayrollDetails { get; set; }
         public DbSet<EmployeeSalaryConfig> EmployeeSalaryConfigs { get; set; }
-        public DbSet<Payroll> Payrolls { get; set; } // Thực thể tính lương mới (UC3)
+        
 
         // ================= 6. TRAINING & EVALUATION MODULE =================
         public DbSet<ReviewCycle> ReviewCycles { get; set; }
