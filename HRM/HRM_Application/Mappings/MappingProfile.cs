@@ -4,6 +4,7 @@ using HRM_Application.DTOs.EmployeeSalaryConfig;
 using HRM_Application.DTOs.Goals;
 using HRM_Application.DTOs.MonthlyTimesheet;
 using HRM_Application.DTOs.PayRoll;
+using HRM_Application.DTOs.Positions;
 using HRM_Application.DTOs.Recruitment;
 using HRM_Application.DTOs.TimeAttendance;
 using HRM_Domain.Entities;
@@ -94,6 +95,10 @@ namespace HRM_Application.Mappings
                     src.SalaryComponent != null ? src.SalaryComponent.ComponentName : string.Empty)) // Khớp với ComponentName
                 .ForMember(dest => dest.Type, opt => opt.MapFrom(src =>
                     src.SalaryComponent != null ? src.SalaryComponent.Type : string.Empty));
+            CreateMap<Position, PositionResponse>();
+
+            CreateMap<CreatePositionRequest, Position>();
+            CreateMap<UpdatePositionRequest, Position>();
         }
 
     }

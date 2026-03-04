@@ -32,6 +32,8 @@ using HRM_Infrastructure.PayRoll.Repositories;
 using HRM_Infrastructure.Repositories;
 using HRM_Application.Interfaces.Repositories;
 using HRM_Application.Interfaces.Services;
+using HRM_Infrastructure.Repositories.HRCore;
+using HRM_Application.Services.HRCore;
 
 namespace HRM_Infrastructure.Extensions
 {
@@ -82,6 +84,8 @@ namespace HRM_Infrastructure.Extensions
             services.AddScoped<ILeaveService, LeaveService>();
             services.AddScoped<ILeaveRequestRepository, LeaveRequestRepository>();
             services.AddScoped<ILeaveTypeRepository, LeaveTypeRepository>();
+            services.AddScoped<IPositionRepository, PositionRepository>();
+            services.AddScoped<IPositionService, PositionService>();
 
             return services;
         }
