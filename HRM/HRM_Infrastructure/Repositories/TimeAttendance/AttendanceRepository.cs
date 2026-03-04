@@ -31,13 +31,14 @@ namespace HRM_Infrastructure.Repositories.TimeAttendance
             await _context.SaveChangesAsync();
         }
 
-        public Task<AttendanceLog?> GetActiveLogAsync(int employeeId)
+        public async Task<AttendanceLog> GetActiveLogAsync(int employeeId)
         {
-            return _context.AttendanceLogs
-                .Include(x => x.ShiftConfig)
-                .FirstOrDefaultAsync(x => x.EmployeeId == employeeId
-                && x.CheckInTime != null
-                && x.CheckOutTime == null);
+            return await _context.AttendanceLogs
+                .Where(x => x.EmployeeId == employeeId
+                         && x.CheckOutTime == null
+                         && x.Status != AttendanceStatus.MissingCheckOut)
+                .OrderByDescending(x => x.CheckInTime)
+                .FirstOrDefaultAsync();
         }
 
         public async Task<List<AttendanceLog>> GetAllLogsByMonthAsync(int month, int year)

@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Modal } from 'antd'; 
 import shiftService from '@/services/TimeAndAttendance/shiftService'; 
 import publicHolidayService from '@/services/TimeAndAttendance/publicHolidayService';
+import useNotice from '@/components/Notice';
 
+// Constant đưa ra ngoài component để tránh bị re-create mỗi lần render
 const DAYS_OF_WEEK = [
   { value: 1, label: 'Thứ 2'},
   { value: 2, label: 'Thứ 3'},
@@ -15,27 +18,21 @@ const DAYS_OF_WEEK = [
 ];
 
 export default function ShiftConfigPage() {
+  const notice = useNotice();
+
   /**
-   * HOOKS & STATES
+   * ==========================================
+   * 1. STATE MANAGEMENT
+   * ==========================================
    */
   const [loading, setLoading] = useState(true);
   
-  // Shift States
+  // --- States: Ca làm việc (Shifts) ---
   const [shifts, setShifts] = useState([]);
   const [isShiftModalOpen, setIsShiftModalOpen] = useState(false);
   const [isEditingShift, setIsEditingShift] = useState(false);
-  const [selectedDays, setSelectedDays] = useState([1,2,3,4,5]);
-
-  const toggleDay = (dayValue) => {
-    setShiftForm(prev => {
-      const currentDays = prev.workDays || [];
-      if (currentDays.includes(dayValue)) {
-        return { ...prev, workDays: currentDays.filter(d => d !== dayValue) };
-      }
-      return { ...prev, workDays: [...currentDays, dayValue].sort() };
-    });
-  };
   
+  // Ghi chú: Đã xóa state `selectedDays` thừa vì bạn đã lưu nó trong `shiftForm.workDays`
   const [shiftForm, setShiftForm] = useState({
     id: 0,
     shiftName: '',
@@ -49,7 +46,7 @@ export default function ShiftConfigPage() {
     workDays: [1, 2, 3, 4, 5] 
   });
 
-  // Holiday States
+  // --- States: Ngày lễ (Holidays) ---
   const [holidays, setHolidays] = useState([]);
   const [isHolidayModalOpen, setIsHolidayModalOpen] = useState(false);
   const [isEditingHoliday, setIsEditingHoliday] = useState(false);
@@ -62,7 +59,10 @@ export default function ShiftConfigPage() {
   });
 
   /**
-   * DATA INITIALIZATION
+   * ==========================================
+   * 2. DATA INITIALIZATION
+   * Lấy song song cả 2 API để giảm thời gian chờ (Promise.all)
+   * ==========================================
    */
   const fetchData = async () => {
     setLoading(true);
@@ -74,9 +74,13 @@ export default function ShiftConfigPage() {
 
       setShifts(shiftRes?.data || shiftRes || []);
       setHolidays(holidayRes?.data || holidayRes || []);
-
     } catch (error) {
-      console.error("Lỗi tải dữ liệu:", error);
+      console.error("[ShiftConfig] Fetch error:", error);
+      notice({
+        msg: "Lỗi tải dữ liệu",
+        desc: "Không thể tải cấu hình chấm công. Vui lòng tải lại trang.",
+        isSuccess: false
+      });
     } finally {
       setLoading(false);
     }
@@ -87,8 +91,20 @@ export default function ShiftConfigPage() {
   }, []);
 
   /**
-   * SHIFT MANAGEMENT HANDLERS
+   * ==========================================
+   * 3. SHIFT MANAGEMENT HANDLERS (CA LÀM VIỆC)
+   * ==========================================
    */
+  const toggleDay = (dayValue) => {
+    setShiftForm(prev => {
+      const currentDays = prev.workDays || [];
+      if (currentDays.includes(dayValue)) {
+        return { ...prev, workDays: currentDays.filter(d => d !== dayValue) };
+      }
+      return { ...prev, workDays: [...currentDays, dayValue].sort() };
+    });
+  };
+
   const handleOpenAddShift = () => {
     setIsEditingShift(false);
     setShiftForm({ 
@@ -110,6 +126,7 @@ export default function ShiftConfigPage() {
     setIsEditingShift(true);
     setShiftForm({
       ...shift,
+      // Đảm bảo parse đúng format thời gian HH:mm để nhét vào input type="time"
       startTime: shift.startTime?.substring(0, 5) || '08:00',
       endTime: shift.endTime?.substring(0, 5) || '17:30',
       breakStartTime: shift.breakStartTime?.substring(0, 5) || '',
@@ -129,31 +146,59 @@ export default function ShiftConfigPage() {
         const { id, ...dataToSend } = shiftForm;
         await shiftService.create(dataToSend);
       }
+      
       setIsShiftModalOpen(false);
       fetchData();
-      alert(isEditingShift ? "Cập nhật thành công!" : "Thêm mới thành công!");
+      notice({
+        msg: isEditingShift ? "Cập nhật ca làm việc thành công" : "Tạo ca làm việc thành công",
+        desc: `Ca "${shiftForm.shiftName}" đã được lưu vào hệ thống.`,
+        isSuccess: true
+      });
     } catch (error) {
-      alert("Lỗi: " + error.message);
+      notice({
+        msg: "Lỗi lưu ca làm việc",
+        desc: error.message || "Có lỗi xảy ra, vui lòng thử lại.",
+        isSuccess: false
+      });
     }
   };
 
-  const handleDeleteShift = async (id) => {
-    if (confirm('Bạn chắc chắn muốn xóa ca làm việc này?')) {
-      try {
-        await shiftService.delete(id);
-        fetchData();
-      } catch (error) {
-        alert("Lỗi: " + error.message);
+  const handleDeleteShift = (id) => {
+    // Sử dụng Modal.confirm của Antd thay cho window.confirm xấu xí
+    Modal.confirm({
+      title: 'Xác nhận xóa',
+      content: 'Bạn có chắc chắn muốn xóa ca làm việc này? Dữ liệu không thể khôi phục.',
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await shiftService.delete(id);
+          fetchData();
+          notice({
+            msg: "Đã xóa ca làm việc",
+            desc: "Ca làm việc đã được xóa khỏi hệ thống.",
+            isSuccess: true
+          });
+        } catch (error) {
+          notice({
+            msg: "Lỗi xóa dữ liệu",
+            desc: error.message || "Không thể xóa ca làm việc lúc này.",
+            isSuccess: false
+          });
+        }
       }
-    }
+    });
   };
 
   /**
-   * HOLIDAY MANAGEMENT HANDLERS
+   * ==========================================
+   * 4. HOLIDAY MANAGEMENT HANDLERS (NGÀY LỄ)
+   * ==========================================
    */
   const formatDateInput = (dateString) => {
     if (!dateString) return '';
-    return dateString.split('T')[0];
+    return dateString.split('T')[0]; // Format sang yyyy-MM-dd cho input type="date"
   };
 
   const handleOpenAddHoliday = () => {
@@ -178,6 +223,7 @@ export default function ShiftConfigPage() {
     const { name, value } = e.target;
     setHolidayForm(prev => {
       const newData = { ...prev, [name]: value };
+      // UX Tweak: Nếu đang tạo mới, khi chọn Ngày bắt đầu thì tự động điền luôn Ngày kết thúc
       if (name === 'startDate' && !isEditingHoliday && !prev.endDate) {
         newData.endDate = value;
       }
@@ -187,8 +233,14 @@ export default function ShiftConfigPage() {
 
   const handleSaveHoliday = async (e) => {
     e.preventDefault();
+    
+    // Business Validation: Ngày kết thúc không được nhỏ hơn ngày bắt đầu
     if (new Date(holidayForm.endDate) < new Date(holidayForm.startDate)) {
-      alert("Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu!"); return;
+      return notice({
+        msg: "Dữ liệu không hợp lệ",
+        desc: "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu!",
+        isSuccess: false
+      });
     }
 
     try {
@@ -198,22 +250,54 @@ export default function ShiftConfigPage() {
         const { id, ...dataToSend } = holidayForm;
         await publicHolidayService.create(dataToSend);
       }
+      
       setIsHolidayModalOpen(false);
       fetchData();
-      alert(isEditingHoliday ? "Cập nhật thành công!" : "Thêm mới thành công!");
+      notice({
+        msg: isEditingHoliday ? "Cập nhật ngày lễ thành công" : "Tạo ngày lễ thành công",
+        desc: `Kỳ nghỉ "${holidayForm.holidayName}" đã được thiết lập.`,
+        isSuccess: true
+      });
     } catch (error) {
-      alert("Lỗi: " + error.message);
+      notice({
+        msg: "Lỗi lưu ngày lễ",
+        desc: error.message || "Có lỗi xảy ra, vui lòng thử lại.",
+        isSuccess: false
+      });
     }
   };
 
-  const handleDeleteHoliday = async (id) => {
-    if (confirm("Bạn chắc chắn muốn xóa ngày lễ này?")) {
-      try { await publicHolidayService.delete(id); fetchData(); } catch (e) { alert("Lỗi xóa: " + e.message); }
-    }
+  const handleDeleteHoliday = (id) => {
+    Modal.confirm({
+      title: 'Xóa ngày lễ',
+      content: 'Bạn có chắc chắn muốn xóa ngày lễ này khỏi lịch công ty?',
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try { 
+          await publicHolidayService.delete(id); 
+          fetchData(); 
+          notice({
+            msg: "Xóa thành công",
+            desc: "Ngày lễ đã được xóa khỏi cấu hình.",
+            isSuccess: true
+          });
+        } catch (e) { 
+          notice({
+            msg: "Lỗi xóa dữ liệu",
+            desc: e.message || "Không thể xóa ngày lễ lúc này.",
+            isSuccess: false
+          });
+        }
+      }
+    });
   };
 
   /**
-   * RENDER HELPERS
+   * ==========================================
+   * 5. RENDER HELPERS
+   * ==========================================
    */
   const formatDateRange = (start, end) => {
     if (!start) return '';
