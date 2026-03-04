@@ -1,49 +1,73 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Table, Tag, Button, Modal, Input, message, Avatar } from "antd";
+import { Table, Tag, Button, Modal, Input, Avatar } from "antd";
 import { CheckOutlined, CloseOutlined, CalendarOutlined } from "@ant-design/icons";
-import attendanceService from "@/services/TimeAndAttendance/attendanceService";
 import dayjs from "dayjs";
 
+import attendanceService from "@/services/TimeAndAttendance/attendanceService";
+import useNotice from '@/components/Notice'; 
+
 export default function LeaveApprovalPage() {
-  // --- STATES ---
+  const notice = useNotice();
+
+  /**
+   * STATE MANAGEMENT
+   */
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState([]); 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [reviewNote, setReviewNote] = useState("");
 
-  // --- FETCH DATA ---
-  const fetchPendingLeaves = useCallback(async () => {
+  /**
+   * DATA FETCHING
+   * Fetch pending leave requests and normalize the response payload.
+   */
+  const fetchPendingLeaves = async () => {
     setLoading(true);
     try {
       const res = await attendanceService.getPendingLeaveRequests();
       
-      // Bóc tách dữ liệu phòng thủ (Defensive Programming)
+      // Defensive Programming: Handle inconsistent backend wrappers.
+      // C#/.NET backend APIs might return raw arrays or wrap them in 'data' objects 
+      // depending on whether it's mapped via a standard response format or not.
       let rawData = [];
       if (Array.isArray(res)) rawData = res;
       else if (res?.data && Array.isArray(res.data)) rawData = res.data;
       else if (res?.data?.data && Array.isArray(res.data.data)) rawData = res.data.data;
 
+      // Force a new array reference to ensure the Table re-renders correctly.
       setData([...rawData]); 
     } catch (error) {
-      console.error("Lỗi tải danh sách chờ duyệt:", error);
-      message.error("Không thể tải danh sách đơn nghỉ phép.");
+      console.error("[LeaveApprovalPage] fetch error:", error);
+      notice({
+        msg: "Lỗi tải dữ liệu",
+        desc: "Không thể tải danh sách đơn nghỉ phép. Vui lòng kiểm tra lại kết nối.",
+        isSuccess: false
+      });
       setData([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
     fetchPendingLeaves();
-  }, [fetchPendingLeaves]);
+  }, []);
 
-  // --- XỬ LÝ PHÊ DUYỆT ---
+  /**
+   * WORKFLOW HANDLERS
+   * Process the Approve/Reject action and update the UI accordingly.
+   */
   const handleReview = async (id, isApproved) => {
+    // Business Rule Validation: Reject actions strictly require a justification note.
     if (!isApproved && !reviewNote.trim()) {
-      return message.warning("Vui lòng nhập lý do nếu bạn từ chối đơn này.");
+      return notice({
+        msg: "Yêu cầu lý do",
+        desc: "Vui lòng nhập lý do nếu bạn quyết định từ chối đơn nghỉ phép này.",
+        isSuccess: false
+      });
     }
 
     try {
@@ -53,23 +77,35 @@ export default function LeaveApprovalPage() {
         note: reviewNote,
       });
 
-      message.success(isApproved ? "Đã phê duyệt đơn nghỉ phép." : "Đã từ chối đơn.");
+      notice({
+        msg: isApproved ? "Phê duyệt thành công" : "Đã từ chối đơn",
+        desc: isApproved ? "Đơn nghỉ phép đã được cập nhật vào hệ thống." : "Đã phản hồi từ chối đến nhân viên.",
+        isSuccess: true
+      });
+
+      // UI Cleanup & Sync state with Server
       setIsModalOpen(false);
       setReviewNote("");
-      await fetchPendingLeaves(); // Refresh dữ liệu
+      await fetchPendingLeaves(); 
     } catch (error) {
-      const errorMsg = error.response?.data?.Message || "Có lỗi xảy ra khi xử lý hệ thống.";
-      message.error(errorMsg);
+      notice({
+        msg: "Lỗi hệ thống",
+        desc: error.response?.data?.Message || "Có lỗi xảy ra khi xử lý đơn nghỉ phép.",
+        isSuccess: false
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  // --- CẤU HÌNH CỘT BẢNG ---
+  /**
+   * TABLE COLUMNS CONFIGURATION
+   * Memoized to prevent unnecessary recalculations during standard state updates.
+   */
   const columns = useMemo(() => [
     {
       title: "NHÂN VIÊN",
-      dataIndex: "employeeName", // Tuỳ thuộc Backend bạn trả về tên hay ID
+      dataIndex: "employeeName", 
       key: "employee",
       width: 250,
       render: (text, record) => (
@@ -151,6 +187,7 @@ export default function LeaveApprovalPage() {
     },
   ], []);
 
+  // --- RENDER ---
   return (
     <div className="p-8 bg-slate-50 min-h-screen">
       {/* HEADER SECTION */}
@@ -254,7 +291,7 @@ export default function LeaveApprovalPage() {
             </div>
 
             {/* HIỂN THỊ NOTE CỦA MANAGER NẾU LÀ HR ĐANG DUYỆT */}
-            {selectedRequest.status === 2 && ( // 2 = PendingHR
+            {selectedRequest.status === 2 && ( 
               <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
                 <div className="flex items-center gap-2 mb-1">
                   <CheckOutlined className="text-emerald-500" />
