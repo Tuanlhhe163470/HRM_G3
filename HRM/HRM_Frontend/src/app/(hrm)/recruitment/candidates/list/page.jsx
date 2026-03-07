@@ -141,8 +141,7 @@ export default function CandidateListPage() {
     } catch (error) {
       notification.error({
         title: "Lỗi",
-        description:
-          error.response?.data?.message,
+        description: error.response?.data?.message,
       });
     } finally {
       setLoading(false);
@@ -326,6 +325,22 @@ export default function CandidateListPage() {
                 {record.isFailEmailSent ? "Đã gửi email" : "Gửi mail trượt"}
               </Button>
             )}
+
+            {record.status === "Passed" && (
+              <Button
+                type="primary"
+                size="small"
+                icon={<SendOutlined />}
+                className="bg-amber-500 hover:bg-amber-600 border-none rounded-lg"
+                onClick={() => {
+                  router.push(
+                    `/recruitment/offer/create?candidateId=${record.candidateID}`,
+                  );
+                }}
+              >
+                Tạo Offer
+              </Button>
+            )}
           </Space>
         );
       },
@@ -339,7 +354,7 @@ export default function CandidateListPage() {
           DANH SÁCH ỨNG VIÊN
         </h1>
 
-        {/* BỘ LỌC GIỮ NGUYÊN */}
+        {/* BỘ LỌC */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-4 pt-3 bg-[#fcfcfc] border-b border-gray-100">
             <Tabs

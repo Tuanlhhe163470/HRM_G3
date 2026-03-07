@@ -20,7 +20,8 @@ import {
   OrderedListOutlined,
   SnippetsOutlined,
   FormOutlined,
-  AuditOutlined
+  AuditOutlined,
+  CheckOutlined
 } from "@ant-design/icons";
 
 export default function SidebarHRM() {
@@ -54,7 +55,7 @@ export default function SidebarHRM() {
     
     if (role === "HR") return [
       {
-        key: "sub-jobposting",
+        key: "job-posting",
         label: <span className="font-bold text-[13px] uppercase tracking-tight">Quản lý tin tuyển dụng</span>,
         icon: <FileSearchOutlined />,
         children: [
@@ -63,19 +64,25 @@ export default function SidebarHRM() {
         ],
       },
       {
-        key: "sub-candidate-tracking",
-        label: <span className="font-bold text-[13px] uppercase tracking-tight">Theo dõi ứng viên</span>,
+        key: "/recruitment/candidates/list",
+        label: <Link href="/recruitment/candidates/list"><span className="font-bold text-[13px] uppercase tracking-tight">Theo dõi ứng viên</span></Link>,
         icon: <UserOutlined />,
-        children: [
-          { key: "/recruitment/candidates/list", label: <Link href="/recruitment/candidates/list">Danh sách ứng viên</Link>, icon: <UnorderedListOutlined /> },
-          { key: "/recruitment/candidates/shorted-list", label: <Link href="/recruitment/candidates/shorted-list">Danh sách rút gọn</Link>, icon: <SnippetsOutlined /> },
-        ],
+      
       },
       {
         key: "/recruitment/interview/hr-schedule",
         label: <Link href="/recruitment/interview/hr-schedule"><span className="font-bold text-[13px] uppercase tracking-tight">Hẹn lịch phỏng vấn</span></Link>,
         icon: <CalendarOutlined />,
       },
+      {
+        key:"offer",
+        label: <span className="font-bold text-[13px] uppercase tracking-tight">Thư mời làm việc</span>,
+        icon: <SnippetsOutlined />,
+        children: [
+          { key: "/recruitment/offer/create", label: <Link href="/recruitment/offer/create">Tạo thư mời</Link>, icon: <PlusCircleOutlined /> },
+          { key: "/recruitment/offer/list", label: <Link href="/recruitment/offer/list">Danh sách thư mời</Link>, icon: <OrderedListOutlined /> },
+        ],
+      }
     ];
 
     if (role === "Manager") return [
@@ -91,6 +98,8 @@ export default function SidebarHRM() {
         children: [
           { key: "/recruitment/candidates/manager-review", label: <Link href="/recruitment/candidates/manager-review">Phê duyệt ứng viên</Link>, icon: <FormOutlined /> },
           { key: "/recruitment/interview/manager-schedule", label: <Link href="/recruitment/interview/manager-schedule">Lịch phỏng vấn của tôi</Link>, icon: <CalendarOutlined /> },
+          { key: "/recruitment/interview/manager-list-result", label: <Link href="/recruitment/interview/manager-list-result">Kết quả phỏng vấn</Link>, icon: <CheckOutlined /> },
+        
         ],
       },
     ];

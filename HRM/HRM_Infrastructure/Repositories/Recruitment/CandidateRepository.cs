@@ -37,7 +37,8 @@ namespace HRM_Infrastructure.Repositories.Recruitment
         {
             return await _context.Candidates
                 .Include(c => c.JobPosting)
-                .ThenInclude(j => j.Department)// Để lấy DepartmentID lọc cho Manager
+                .ThenInclude(j => j.Department)
+                .Include(c => c.Interviews)
                 .OrderByDescending(c => c.CreatedAt)
                 .ToListAsync();
         }

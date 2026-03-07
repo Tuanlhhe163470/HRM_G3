@@ -21,5 +21,8 @@ namespace HRM_Application.DTOs.Recruitment
         public int? Score { get; set; }     
         public string? Comments { get; set; }
         public bool IsFailEmailSent { get; set; }
+        public DateTime? InterviewDate { get; set; }
+        public string? InterviewType { get; set; }
+        public string? Location { get; set; }
     }
 }

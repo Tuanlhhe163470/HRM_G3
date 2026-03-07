@@ -262,12 +262,9 @@ export default function ManagerInterviewPage() {
     <div className="mx-auto max-w-[1440px] p-6 lg:p-10 flex flex-col gap-8 text-left min-h-screen">
       <div className="flex justify-between items-end">
         <div>
-          <Title
-            level={2}
-            className="m-0 text-3xl font-black text-[#154398] uppercase tracking-tight"
-          >
+          <h1 className="text-2xl mb-4 font-black text-[#154398] uppercase">
             LỊCH PHỎNG VẤN
-          </Title>
+          </h1>
           <Text type="secondary" className="font-bold">
             {managerInfo?.deptName} (ID: {managerInfo?.deptId})
           </Text>
@@ -513,7 +510,7 @@ export default function ManagerInterviewPage() {
                       <Text strong className="text-[#154398] text-sm">
                         {inv.candidateName}
                       </Text>
-                      
+
                       <Tag
                         color="emerald"
                         className="m-0 font-bold text-[10px]"
@@ -522,8 +519,7 @@ export default function ManagerInterviewPage() {
                       </Tag>
                     </div>
                     <Text className="text-[11px] block text-slate-500 mt-1">
-                      <EnvironmentOutlined />{" "}
-                      {inv.location}
+                      <EnvironmentOutlined /> {inv.location}
                     </Text>
                     <Divider className="my-2" />
                     <Button

@@ -153,7 +153,9 @@ export default function ManagerApprovalPage() {
     <div className="bg-[#f8fafc] min-h-screen p-6">
       <div className="max-w-[1400px] mx-auto flex flex-col gap-6">
         <div className="flex justify-between items-center">
-          <Title level={3} className="text-[#154398] font-black uppercase m-0">Phê duyệt hồ sơ ứng viên</Title>
+          <h1 className="text-2xl mb-4 font-black text-[#154398] uppercase">
+          Phê duyệt hồ sơ ứng viên
+        </h1>
           <Space>
             <Button danger disabled={selectedRowKeys.length === 0} onClick={() => openModal("reject")}>Từ chối hàng loạt ({selectedRowKeys.length})</Button>
             <Button type="primary" className="bg-green-600 border-none" disabled={selectedRowKeys.length === 0} onClick={() => openModal("approve")}>Phê duyệt hàng loạt ({selectedRowKeys.length})</Button>
