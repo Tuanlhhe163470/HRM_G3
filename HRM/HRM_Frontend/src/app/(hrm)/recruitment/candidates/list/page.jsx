@@ -96,7 +96,14 @@ export default function CandidateListPage() {
       return matchTab && matchName && matchEmail && matchPhone && matchDept;
     });
     setFilteredCandidates(filtered);
-  }, [searchName, searchEmail, searchPhone, filterDeptId, activeTab, candidates]);
+  }, [
+    searchName,
+    searchEmail,
+    searchPhone,
+    filterDeptId,
+    activeTab,
+    candidates,
+  ]);
 
   const handleProcess = async (id, action) => {
     setLoading(true);
@@ -108,8 +115,8 @@ export default function CandidateListPage() {
           action === "accept"
             ? "Đã chuyển ứng viên sang Screening."
             : action === "send_to_manager"
-            ? "Đã gửi hồ sơ cho Manager."
-            : "Đã cập nhật trạng thái.",
+              ? "Đã gửi hồ sơ cho Manager."
+              : "Đã cập nhật trạng thái.",
       });
       fetchData();
     } catch (error) {
@@ -118,7 +125,29 @@ export default function CandidateListPage() {
       setLoading(false);
     }
   };
+  const handleSendFailEmail = async (id) => {
+    setLoading(true);
+    try {
+      // Gọi đến API mới vừa tạo ở Backend
+      await axiosClient.post(`/Candidates/${id}/send-fail-email`);
 
+      notification.success({
+        title: "Thành công",
+        description: "Đã gửi email thông báo trượt phỏng vấn cho ứng viên.",
+      });
+
+      // Tải lại dữ liệu để cập nhật trạng thái nút (isFailEmailSent)
+      fetchData();
+    } catch (error) {
+      notification.error({
+        title: "Lỗi",
+        description:
+          error.response?.data?.message,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
   const columns = [
     {
       title: <div className="text-center w-full">Thông tin ứng viên</div>,
@@ -166,7 +195,8 @@ export default function CandidateListPage() {
           Screening: { color: "cyan", label: "Đang lọc" },
           Manager_Review: { color: "orange", label: "Sếp duyệt" },
           Interview: { color: "purple", label: "Phỏng vấn" },
-          Passed: { color: "#a0d911", label: "Đạt" },
+          Passed: { color: "#a0d911", label: "Đạt PV" },
+          Fail: { color: "red", label: "Trượt PV" },
           Offered: { color: "#faad14", label: "Offer" },
           Hired: { color: "green", label: "Hired" },
           Rejected: { color: "red", label: "Loại" },
@@ -188,7 +218,9 @@ export default function CandidateListPage() {
       align: "center",
       render: (_, record) => {
         // Kiểm tra ứng viên đã có lịch hẹn trong bảng Interviews chưa
-        const isScheduled = interviews.some((inv) => inv.candidateID === record.candidateID);
+        const isScheduled = interviews.some(
+          (inv) => inv.candidateID === record.candidateID,
+        );
 
         return (
           <Space size="small">
@@ -196,7 +228,9 @@ export default function CandidateListPage() {
               <Button
                 type="text"
                 icon={<FilePdfOutlined className="text-red-500 text-xl" />}
-                onClick={() => window.open(`https://localhost:7167${record.cvUrl}`, "_blank")}
+                onClick={() =>
+                  window.open(`https://localhost:7167${record.cvUrl}`, "_blank")
+                }
               />
             </Tooltip>
 
@@ -243,7 +277,9 @@ export default function CandidateListPage() {
                   size="small"
                   icon={<SendOutlined />}
                   className="bg-[#154398] border-none"
-                  onClick={() => handleProcess(record.candidateID, "send_to_manager")}
+                  onClick={() =>
+                    handleProcess(record.candidateID, "send_to_manager")
+                  }
                 >
                   Gửi Manager
                 </Button>
@@ -256,15 +292,38 @@ export default function CandidateListPage() {
                 size="small"
                 // Đổi icon và màu sắc nếu đã có lịch hẹn
                 icon={isScheduled ? <EyeOutlined /> : <CalendarOutlined />}
-                className={isScheduled 
-                    ? "bg-emerald-600 hover:bg-emerald-700 border-none" 
-                    : "bg-purple-600 hover:bg-purple-700 border-none"}
+                className={
+                  isScheduled
+                    ? "bg-emerald-600 hover:bg-emerald-700 border-none"
+                    : "bg-purple-600 hover:bg-purple-700 border-none"
+                }
                 onClick={() => {
-                  router.push(`/recruitment/interview/hr-schedule?candidateId=${record.candidateID}`);
+                  router.push(
+                    `/recruitment/interview/hr-schedule?candidateId=${record.candidateID}`,
+                  );
                 }}
               >
                 {/* Đổi text nút bấm dựa trên trạng thái lịch hẹn */}
                 {isScheduled ? "Xem lịch phỏng vấn" : "Hẹn phỏng vấn"}
+              </Button>
+            )}
+
+            {record.status === "Fail" && (
+              <Button
+                type="primary"
+                size="small"
+                danger
+                icon={<SendOutlined />}
+                loading={loading}
+                disabled={record.isFailEmailSent}
+                className={
+                  record.isFailEmailSent
+                    ? "bg-gray-300 border-none text-gray-500"
+                    : "bg-red-500 border-none"
+                }
+                onClick={() => handleSendFailEmail(record.candidateID)}
+              >
+                {record.isFailEmailSent ? "Đã gửi email" : "Gửi mail trượt"}
               </Button>
             )}
           </Space>
@@ -289,26 +348,153 @@ export default function CandidateListPage() {
               onChange={(key) => setActiveTab(key)}
               tabBarStyle={{ marginBottom: 0, borderBottom: "none" }}
               items={[
-                { key: "ALL", label: <span className="px-2 font-bold uppercase text-[12px]">Tất cả ({candidates.length})</span> },
-                { key: "Applied", label: <span className="px-2 font-bold uppercase text-[12px] text-blue-600">Mới ({candidates.filter((c) => c.status === "Applied").length})</span> },
-                { key: "Screening", label: <span className="px-2 font-bold uppercase text-[12px] text-cyan-600">Đang lọc ({candidates.filter((c) => c.status === "Screening").length})</span> },
-                { key: "Manager_Review", label: <span className="px-2 font-bold uppercase text-[12px] text-orange-600">Chờ duyệt ({candidates.filter((c) => c.status === "Manager_Review").length})</span> },
-                { key: "Interview", label: <span className="px-2 font-bold uppercase text-[12px] text-purple-600">PV ({candidates.filter((c) => c.status === "Interview").length})</span> },
-                { key: "Passed", label: <span className="px-2 font-bold uppercase text-[12px]" style={{ color: "#a0d911" }}>Đạt ({candidates.filter((c) => c.status === "Passed").length})</span> },
-                { key: "Offered", label: <span className="px-2 font-bold uppercase text-[12px]" style={{ color: "#faad14" }}>Offer ({candidates.filter((c) => c.status === "Offered").length})</span> },
-                { key: "Hired", label: <span className="px-2 font-bold uppercase text-[12px] text-green-600">Hired ({candidates.filter((c) => c.status === "Hired").length})</span> },
-                { key: "Rejected", label: <span className="px-2 font-bold uppercase text-[12px] text-red-600">Loại ({candidates.filter((c) => c.status === "Rejected").length})</span> },
+                {
+                  key: "ALL",
+                  label: (
+                    <span className="px-2 font-bold uppercase text-[12px]">
+                      Tất cả ({candidates.length})
+                    </span>
+                  ),
+                },
+                {
+                  key: "Applied",
+                  label: (
+                    <span className="px-2 font-bold uppercase text-[12px] text-blue-600">
+                      Mới (
+                      {candidates.filter((c) => c.status === "Applied").length})
+                    </span>
+                  ),
+                },
+                {
+                  key: "Screening",
+                  label: (
+                    <span className="px-2 font-bold uppercase text-[12px] text-cyan-600">
+                      Đang lọc (
+                      {
+                        candidates.filter((c) => c.status === "Screening")
+                          .length
+                      }
+                      )
+                    </span>
+                  ),
+                },
+                {
+                  key: "Manager_Review",
+                  label: (
+                    <span className="px-2 font-bold uppercase text-[12px] text-orange-600">
+                      Chờ duyệt (
+                      {
+                        candidates.filter((c) => c.status === "Manager_Review")
+                          .length
+                      }
+                      )
+                    </span>
+                  ),
+                },
+                {
+                  key: "Interview",
+                  label: (
+                    <span className="px-2 font-bold uppercase text-[12px] text-purple-600">
+                      PHỎNG VẤN (
+                      {
+                        candidates.filter((c) => c.status === "Interview")
+                          .length
+                      }
+                      )
+                    </span>
+                  ),
+                },
+                {
+                  key: "Passed",
+                  label: (
+                    <span
+                      className="px-2 font-bold uppercase text-[12px]"
+                      style={{ color: "#a0d911" }}
+                    >
+                      Đạt PV (
+                      {candidates.filter((c) => c.status === "Passed").length})
+                    </span>
+                  ),
+                },
+                {
+                  key: "Fail",
+                  label: (
+                    <span className="px-2 font-bold uppercase text-[12px] text-red-600">
+                      Trượt PV (
+                      {candidates.filter((c) => c.status === "Fail").length})
+                    </span>
+                  ),
+                },
+                {
+                  key: "Offered",
+                  label: (
+                    <span
+                      className="px-2 font-bold uppercase text-[12px]"
+                      style={{ color: "#faad14" }}
+                    >
+                      Offer (
+                      {candidates.filter((c) => c.status === "Offered").length})
+                    </span>
+                  ),
+                },
+                {
+                  key: "Hired",
+                  label: (
+                    <span className="px-2 font-bold uppercase text-[12px] text-green-600">
+                      Hired (
+                      {candidates.filter((c) => c.status === "Hired").length})
+                    </span>
+                  ),
+                },
+                {
+                  key: "Rejected",
+                  label: (
+                    <span className="px-2 font-bold uppercase text-[12px] text-red-600">
+                      Loại (
+                      {candidates.filter((c) => c.status === "Rejected").length}
+                      )
+                    </span>
+                  ),
+                },
               ]}
             />
           </div>
           <div className="p-4">
             <div className="flex flex-row items-center gap-3">
-              <Input placeholder="Họ tên..." prefix={<UserOutlined className="text-gray-400" />} className="flex-1" value={searchName} onChange={(e) => setSearchName(e.target.value)} allowClear />
-              <Input placeholder="Email..." prefix={<MailOutlined className="text-gray-400" />} className="flex-1" value={searchEmail} onChange={(e) => setSearchEmail(e.target.value)} allowClear />
-              <Input placeholder="Số điện thoại..." prefix={<PhoneOutlined className="text-gray-400" />} className="flex-1" value={searchPhone} onChange={(e) => setSearchPhone(e.target.value)} allowClear />
-              <Select placeholder="Phòng ban" className="flex-1" allowClear onChange={(v) => setFilterDeptId(v)}>
+              <Input
+                placeholder="Họ tên..."
+                prefix={<UserOutlined className="text-gray-400" />}
+                className="flex-1"
+                value={searchName}
+                onChange={(e) => setSearchName(e.target.value)}
+                allowClear
+              />
+              <Input
+                placeholder="Email..."
+                prefix={<MailOutlined className="text-gray-400" />}
+                className="flex-1"
+                value={searchEmail}
+                onChange={(e) => setSearchEmail(e.target.value)}
+                allowClear
+              />
+              <Input
+                placeholder="Số điện thoại..."
+                prefix={<PhoneOutlined className="text-gray-400" />}
+                className="flex-1"
+                value={searchPhone}
+                onChange={(e) => setSearchPhone(e.target.value)}
+                allowClear
+              />
+              <Select
+                placeholder="Phòng ban"
+                className="flex-1"
+                allowClear
+                onChange={(v) => setFilterDeptId(v)}
+              >
                 {departments.map((d) => (
-                  <Select.Option key={d.departmentID} value={d.departmentID}>{d.departmentName}</Select.Option>
+                  <Select.Option key={d.departmentID} value={d.departmentID}>
+                    {d.departmentName}
+                  </Select.Option>
                 ))}
               </Select>
             </div>
@@ -333,7 +519,11 @@ export default function CandidateListPage() {
         open={isRejectModalOpen}
         centered
         zIndex={2000}
-        title={<span className="text-red-600 font-bold uppercase">Xác nhận loại ứng viên</span>}
+        title={
+          <span className="text-red-600 font-bold uppercase">
+            Xác nhận loại ứng viên
+          </span>
+        }
         onCancel={() => setIsRejectModalOpen(false)}
         onOk={() => {
           handleProcess(selectedCandidateId, "reject");
@@ -342,11 +532,26 @@ export default function CandidateListPage() {
         okText="Đồng ý loại"
         okButtonProps={{ danger: true }}
         footer={[
-          <Button key="back" onClick={() => setIsRejectModalOpen(false)}>Hủy bỏ</Button>,
-          <Button key="confirm" danger type="primary" onClick={() => { handleProcess(selectedCandidateId, "reject"); setIsRejectModalOpen(false); }}>Đồng ý</Button>,
+          <Button key="back" onClick={() => setIsRejectModalOpen(false)}>
+            Hủy bỏ
+          </Button>,
+          <Button
+            key="confirm"
+            danger
+            type="primary"
+            onClick={() => {
+              handleProcess(selectedCandidateId, "reject");
+              setIsRejectModalOpen(false);
+            }}
+          >
+            Đồng ý
+          </Button>,
         ]}
       >
-        <p>Bạn chắc chắn muốn loại ứng viên này? Email thông báo sẽ được gửi tự động.</p>
+        <p>
+          Bạn chắc chắn muốn loại ứng viên này? Email thông báo sẽ được gửi tự
+          động.
+        </p>
       </CustomModal>
     </div>
   );

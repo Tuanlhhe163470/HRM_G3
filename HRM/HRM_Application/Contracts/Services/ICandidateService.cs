@@ -18,5 +18,6 @@ namespace HRM_Application.Contracts.Services
         Task<CandidateDto> GetCandidateByIdAsync(int id);
         Task<IEnumerable<ScheduleInterviewDto>> GetAllInterviewsAsync();
         Task<bool> EvaluateCandidateAsync(EvaluationRequest request);
+        Task<bool> SendFailEmailAsync(int candidateId);
     }
 }

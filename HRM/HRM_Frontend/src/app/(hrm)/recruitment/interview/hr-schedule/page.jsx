@@ -124,7 +124,7 @@ export default function InterviewSchedulePage() {
       notification.success({ message: "Thành công", description: "Đã lưu lịch và gửi mail." });
       setIsModalOpen(false);
       fetchInterviews(); 
-      router.replace("/recruitment/interview/schedule");
+      router.replace("/recruitment/interview/hr-schedule");
     } catch (error) {
       notification.error({ title: "Lỗi", description: "Không thể lưu lịch." });
     } finally {
@@ -237,7 +237,7 @@ export default function InterviewSchedulePage() {
                                     <Tag color={isScheduled ? "green" : "default"} className="text-[9px] m-0 px-1">{isScheduled ? "ĐÃ HẸN" : "CHỜ"}</Tag>
                                 </div>
                                 <div className="flex flex-col mt-0.5">
-                                    <Text className="text-[10px] text-slate-400"><PhoneOutlined className="mr-1" /> {item.phone || "N/A"}</Text>
+                                    <Text className="text-[10px] text-slate-400"><PhoneOutlined className="mr-1" /> {item.phone}</Text>
                                     <Text className="text-[10px] text-blue-500 font-medium truncate"><SolutionOutlined className="mr-1" /> {item.jobTitle}</Text>
                                 </div>
                             </div>
@@ -254,7 +254,7 @@ export default function InterviewSchedulePage() {
                 <div key={inv.interviewID || idx} className="p-4 border-l-4 border-purple-500 bg-purple-50/50 rounded-r-xl transition-all hover:bg-purple-50">
                   <div className="flex justify-between items-start">
                     <div className="flex flex-col">
-                        <Text strong className="text-sm text-[#154398]">{inv.jobTitle || "Phỏng vấn"}</Text>
+                        <Text strong className="text-sm text-[#154398]">{inv.jobTitle }</Text>
                         <Tag color="purple" className="w-fit text-[10px] mt-1">{inv.interviewType}</Tag>
                     </div>
                     <Text strong className="text-blue-600 text-[12px]"><ClockCircleOutlined /> {dayjs(inv.interviewDate).format("HH:mm")}</Text>
@@ -262,7 +262,7 @@ export default function InterviewSchedulePage() {
                   <div className="mt-3 pt-2 border-t border-purple-100 flex flex-col gap-1">
                     <Text className="text-xs"><UserOutlined className="mr-1" /> Ứng viên: <strong>{inv.candidateName}</strong></Text>
                     <Text className="text-[11px] text-slate-500"><PhoneOutlined className="mr-1" /> Liên hệ: {inv.candidatePhone}</Text>
-                    <Text className="text-[11px] text-slate-600 italic"><EnvironmentOutlined className="mr-1" /> Địa điểm: {inv.location || "Chưa có địa điểm"}</Text>
+                    <Text className="text-[11px] text-slate-600 italic"><EnvironmentOutlined className="mr-1" /> Địa điểm: {inv.location}</Text>
                   </div>
                 </div>
               )) : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Không có lịch phỏng vấn" />}
@@ -285,7 +285,6 @@ export default function InterviewSchedulePage() {
           <Form.Item label="Địa điểm" name="location" rules={[{ required: true, message: 'Nhập địa điểm!' }]}>
             <Input prefix={<EnvironmentOutlined />} className="h-11 rounded-xl" placeholder="Link họp hoặc số phòng" />
           </Form.Item>
-          <Form.Item label="Ghi chú" name="note"><Input.TextArea rows={3} className="rounded-xl" /></Form.Item>
           <div className="flex gap-3 mt-4">
             <Button className="flex-1 h-12 rounded-xl font-bold" onClick={() => setIsModalOpen(false)}>Hủy</Button>
             <Button type="primary" htmlType="submit" loading={loadingSubmit} className="flex-1 h-12 rounded-xl bg-[#154398] font-bold">Lưu & Gửi Mail</Button>

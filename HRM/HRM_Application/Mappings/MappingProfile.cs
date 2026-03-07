@@ -46,20 +46,20 @@ namespace HRM_Application.Mappings
 
             CreateMap<SubmitExplanationRequest, AttendanceExplanation>();
             CreateMap<Candidate, CandidateDto>()
-     .ForMember(dest => dest.JobTitle, opt => opt.MapFrom(src => src.JobPosting.Title))
-     .ForMember(dest => dest.DepartmentName, opt => opt.MapFrom(src => src.JobPosting.Department.DepartmentName))
-     .ForMember(dest => dest.DepartmentID, opt => opt.MapFrom(src => src.JobPosting.Department.DepartmentID))
-    .ForMember(dest => dest.Score, opt => opt.MapFrom(src =>
-        src.Interviews != null && src.Interviews.Any()
-        ? src.Interviews.OrderByDescending(i => i.InterviewDate).FirstOrDefault().Score
-        : (int?)null))
-    .ForMember(dest => dest.Comments, opt => opt.MapFrom(src =>
-        src.Interviews != null && src.Interviews.Any()
-        ? src.Interviews.OrderByDescending(i => i.InterviewDate).FirstOrDefault().Comments
-        : null));
+                 .ForMember(dest => dest.JobTitle, opt => opt.MapFrom(src => src.JobPosting.Title))
+                 .ForMember(dest => dest.DepartmentName, opt => opt.MapFrom(src => src.JobPosting.Department.DepartmentName))
+                 .ForMember(dest => dest.DepartmentID, opt => opt.MapFrom(src => src.JobPosting.Department.DepartmentID))
+                .ForMember(dest => dest.Score, opt => opt.MapFrom(src =>
+                    src.Interviews != null && src.Interviews.Any()
+                    ? src.Interviews.OrderByDescending(i => i.InterviewDate).FirstOrDefault().Score
+                    : (int?)null))
+                .ForMember(dest => dest.Comments, opt => opt.MapFrom(src =>
+                    src.Interviews != null && src.Interviews.Any()
+                    ? src.Interviews.OrderByDescending(i => i.InterviewDate).FirstOrDefault().Comments
+                    : null));
 
             CreateMap<Interview, ScheduleInterviewDto>()
-                .ForMember(dest => dest.Location, opt => opt.MapFrom(src => src.Location)) 
+                .ForMember(dest => dest.Location, opt => opt.MapFrom(src => src.Location))
                 .ForMember(dest => dest.CandidateName, opt => opt.MapFrom(src => src.Candidate.FullName))
                 .ForMember(dest => dest.CandidatePhone, opt => opt.MapFrom(src => src.Candidate.Phone))
                 .ForMember(dest => dest.JobTitle, opt => opt.MapFrom(src => src.Candidate.JobPosting.Title))
@@ -90,17 +90,17 @@ namespace HRM_Application.Mappings
                     src.SalaryComponent != null ? src.SalaryComponent.Type : string.Empty));
 
             CreateMap<MonthlyPayroll, PayrollDTO>()
-    // Bổ sung Mapping ID để FE lấy được khóa chính gọi API duyệt & điều chỉnh
-    .ForMember(dest => dest.PayrollID, opt => opt.MapFrom(src => src.PayrollID))
-    // Lấy tên nhân viên
-    .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.Employee != null ? src.Employee.FullName : "N/A"))
-    // Ánh xạ các trường tài chính để FE không hiện 0đ
-    .ForMember(dest => dest.BaseSalary, opt => opt.MapFrom(src => src.BaseSalary))
-    .ForMember(dest => dest.ActualWorkDays, opt => opt.MapFrom(src => src.ActualWorkDays))
-    .ForMember(dest => dest.StandardWorkDays, opt => opt.MapFrom(src => src.StandardWorkDays))
-    .ForMember(dest => dest.TotalAllowance, opt => opt.MapFrom(src => src.TotalAllowance))
-    .ForMember(dest => dest.TotalDeduction, opt => opt.MapFrom(src => src.TotalDeduction))
-    .ForMember(dest => dest.FinalNetSalary, opt => opt.MapFrom(src => src.FinalNetSalary));
+                // Bổ sung Mapping ID để FE lấy được khóa chính gọi API duyệt & điều chỉnh
+                .ForMember(dest => dest.PayrollID, opt => opt.MapFrom(src => src.PayrollID))
+                // Lấy tên nhân viên
+                .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.Employee != null ? src.Employee.FullName : "N/A"))
+                // Ánh xạ các trường tài chính để FE không hiện 0đ
+                .ForMember(dest => dest.BaseSalary, opt => opt.MapFrom(src => src.BaseSalary))
+                .ForMember(dest => dest.ActualWorkDays, opt => opt.MapFrom(src => src.ActualWorkDays))
+                .ForMember(dest => dest.StandardWorkDays, opt => opt.MapFrom(src => src.StandardWorkDays))
+                .ForMember(dest => dest.TotalAllowance, opt => opt.MapFrom(src => src.TotalAllowance))
+                .ForMember(dest => dest.TotalDeduction, opt => opt.MapFrom(src => src.TotalDeduction))
+                .ForMember(dest => dest.FinalNetSalary, opt => opt.MapFrom(src => src.FinalNetSalary));
 
             // 2. Mapping cho UC2: Cấu hình lương (EmployeeSalaryConfig -> EmployeeSalaryConfigDTO)
             CreateMap<EmployeeSalaryConfig, EmployeeSalaryConfigDTO>()

@@ -39,6 +39,7 @@ namespace HRM_Domain.Entities
         public string? Note { get; set; }
 
         public DateTime? UpdatedAt { get; set; }
+        public bool IsFailEmailSent { get; set; } = false;
 
         // --- BỔ SUNG ĐỂ LỌC THEO PHÒNG BAN ---
         public int JobID { get; set; }

@@ -19,6 +19,7 @@ namespace HRM_Application.DTOs.Recruitment
         public string DepartmentName { get; set; } 
         public int? DepartmentID { get; set; }    
         public int? Score { get; set; }     
-        public string? Comments { get; set; } 
+        public string? Comments { get; set; }
+        public bool IsFailEmailSent { get; set; }
     }
 }

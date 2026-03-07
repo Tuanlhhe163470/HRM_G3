@@ -127,5 +127,22 @@ namespace HRM_API.Controllers
 
             return BadRequest(new { message = "Không tìm thấy lịch phỏng vấn phù hợp để đánh giá ứng viên này." });
         }
+        [HttpPost("{id}/send-fail-email")]
+        [Authorize(Roles = "HR")] // Chỉ HR mới có quyền gửi thông báo từ chối chính thức
+        public async Task<IActionResult> SendFailEmail(int id)
+        {
+            // Gọi service để thực hiện gửi mail và cập nhật IsFailEmailSent trong DB
+            var result = await _candidateService.SendFailEmailAsync(id);
+
+            if (result)
+            {
+                return Ok(new { message = "Gửi email thông báo trượt thành công!" });
+            }
+
+            return BadRequest(new
+            {
+                message = "Không thể gửi email. Có thể ứng viên không ở trạng thái Fail hoặc email đã được gửi trước đó."
+            });
+        }
     }
 }

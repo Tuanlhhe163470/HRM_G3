@@ -305,6 +305,72 @@ namespace HRM_Application.Services.Recruitment
 
             return true;
         }
+
+        public async Task<bool> SendFailEmailAsync(int candidateId)
+        {
+            var candidate = await _candidateRepository.GetByIdAsync(candidateId);
+            if (candidate == null || candidate.Status != "Fail" || candidate.IsFailEmailSent)
+                return false;
+
+            string jobTitle = candidate.JobPosting?.Title ?? "vị trí đã ứng tuyển";
+            string subject = $"[HRM System] Thông báo kết quả phỏng vấn - Vị trí {jobTitle}";
+
+            // Giao diện Email chuyên nghiệp đồng bộ với thư mời phỏng vấn
+            string emailBody = $@"
+<div style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #f0f0f0; border-radius: 8px; overflow: hidden;'>
+    
+    <div style='background-color: #154398; padding: 20px; text-align: center;'>
+        <h2 style='color: #ffffff; margin: 0; text-transform: uppercase; letter-spacing: 2px;'>
+            HRM SYSTEM
+        </h2>
+    </div>
+    
+    <div style='padding: 30px; background-color: #ffffff;'>
+        <p style='font-size: 16px;'>Chào <strong>{candidate.FullName}</strong>,</p>
+        
+        <p>
+            Lời đầu tiên, đội ngũ tuyển dụng <strong>HRM System</strong> xin cảm ơn bạn đã dành thời gian và tâm huyết quan tâm đến vị trí <strong>{jobTitle}</strong>.
+        </p>
+
+        <p>
+            Sau khi cân nhắc kỹ lưỡng dựa trên kết quả phỏng vấn và các yêu cầu chuyên môn hiện tại, chúng tôi rất tiếc phải thông báo rằng bạn chưa phù hợp để đi tiếp cùng công ty trong đợt tuyển dụng này.
+        </p>
+
+        <div style='background-color: #f8fafc; border-left: 4px solid #154398; padding: 15px; margin: 20px 0;'>
+            <p style='margin: 0; font-style: italic; color: #555;'>
+                ""Hồ sơ của bạn vẫn sẽ được chúng tôi lưu giữ trong kho dữ liệu tài năng. Chúng tôi sẽ chủ động liên hệ ngay khi có vị trí mới phù hợp với kỹ năng và định hướng nghề nghiệp của bạn.""
+            </p>
+        </div>
+
+        <p>
+            Một lần nữa, cảm ơn bạn về buổi trao đổi vừa qua. Hy vọng sẽ có cơ hội được hợp tác với bạn trong những dự án tương lai. Chúc bạn luôn gặt hái được nhiều thành công trên con đường sự nghiệp.
+        </p>
+
+        <p style='margin-top: 30px;'>Trân trọng,</p>
+        <p><strong>Ban Tuyển dụng HRM System</strong></p>
+    </div>
+    
+    <div style='background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 12px; color: #888;'>
+        <p style='margin: 5px 0;'>Đây là email tự động từ hệ thống quản trị nhân sự HRM.</p>
+        <p style='margin: 5px 0;'>Vui lòng không phản hồi trực tiếp vào email này.</p>
+    </div>
+</div>";
+
+            try
+            {
+                await _emailService.SendEmailAsync(candidate.Email, subject, emailBody);
+
+                // Cập nhật trạng thái để Frontend biết đã gửi email
+                candidate.IsFailEmailSent = true;
+                await _candidateRepository.UpdateAsync(candidate);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // Log lỗi nếu cần thiết
+                return false;
+            }
+        }
     }
 
 }
