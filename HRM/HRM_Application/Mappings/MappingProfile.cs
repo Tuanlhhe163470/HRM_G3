@@ -48,15 +48,22 @@ namespace HRM_Application.Mappings
             CreateMap<Candidate, CandidateDto>()
      .ForMember(dest => dest.JobTitle, opt => opt.MapFrom(src => src.JobPosting.Title))
      .ForMember(dest => dest.DepartmentName, opt => opt.MapFrom(src => src.JobPosting.Department.DepartmentName))
-     .ForMember(dest => dest.DepartmentID, opt => opt.MapFrom(src => src.JobPosting.Department.DepartmentID));
+     .ForMember(dest => dest.DepartmentID, opt => opt.MapFrom(src => src.JobPosting.Department.DepartmentID))
+    .ForMember(dest => dest.Score, opt => opt.MapFrom(src =>
+        src.Interviews != null && src.Interviews.Any()
+        ? src.Interviews.OrderByDescending(i => i.InterviewDate).FirstOrDefault().Score
+        : (int?)null))
+    .ForMember(dest => dest.Comments, opt => opt.MapFrom(src =>
+        src.Interviews != null && src.Interviews.Any()
+        ? src.Interviews.OrderByDescending(i => i.InterviewDate).FirstOrDefault().Comments
+        : null));
 
-           
             CreateMap<Interview, ScheduleInterviewDto>()
                 .ForMember(dest => dest.Location, opt => opt.MapFrom(src => src.Location)) 
                 .ForMember(dest => dest.CandidateName, opt => opt.MapFrom(src => src.Candidate.FullName))
                 .ForMember(dest => dest.CandidatePhone, opt => opt.MapFrom(src => src.Candidate.Phone))
-                .ForMember(dest => dest.JobTitle, opt => opt.MapFrom(src => src.Candidate.JobPosting.Title));
-
+                .ForMember(dest => dest.JobTitle, opt => opt.MapFrom(src => src.Candidate.JobPosting.Title))
+            .ForMember(dest => dest.DepartmentID, opt => opt.MapFrom(src => src.Candidate.JobPosting.DepartmentID));
             CreateMap<ScheduleInterviewDto, Interview>();
 
             CreateMap<MonthlyPayroll, PayrollDTO>()

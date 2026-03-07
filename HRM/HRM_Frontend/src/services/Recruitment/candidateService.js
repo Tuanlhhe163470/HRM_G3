@@ -33,7 +33,17 @@ const candidateService = {
   // 6. Gửi dữ liệu đặt lịch phỏng vấn và kích hoạt gửi Email từ BE
   scheduleInterview: async (data) => {
     return await axiosClient.post("/Candidates/schedule-interview", data);
-  }
+  },
+
+  //7. Đánh giá ứng viên sau phỏng vấn (điểm số, nhận xét, quyết định cuối cùng)
+  evaluateCandidate: async (candidateId, evaluationData) => {
+    return await axiosClient.post(`/Candidates/evaluate`, {
+        candidateID: candidateId,
+        score: evaluationData.score,
+        comment: evaluationData.comment,
+        finalDecision: evaluationData.finalDecision
+    });
+},
 };
 
 export default candidateService;

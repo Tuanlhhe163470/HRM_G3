@@ -49,7 +49,8 @@ namespace HRM_Infrastructure.Repositories.Recruitment
         public async Task<Candidate> GetByIdAsync(int id)
         {
             return await _context.Candidates
-                .Include(c => c.JobPosting) 
+                .Include(c => c.JobPosting)
+                .Include(c => c.Interviews)
                 .FirstOrDefaultAsync(c => c.CandidateID == id);
         }
 

@@ -72,8 +72,8 @@ export default function SidebarHRM() {
         ],
       },
       {
-        key: "/recruitment/interview/schedule",
-        label: <Link href="/recruitment/interview/schedule"><span className="font-bold text-[13px] uppercase tracking-tight">Hẹn lịch phỏng vấn</span></Link>,
+        key: "/recruitment/interview/hr-schedule",
+        label: <Link href="/recruitment/interview/hr-schedule"><span className="font-bold text-[13px] uppercase tracking-tight">Hẹn lịch phỏng vấn</span></Link>,
         icon: <CalendarOutlined />,
       },
     ];
@@ -90,7 +90,7 @@ export default function SidebarHRM() {
         icon: <UserOutlined />,
         children: [
           { key: "/recruitment/candidates/manager-review", label: <Link href="/recruitment/candidates/manager-review">Phê duyệt ứng viên</Link>, icon: <FormOutlined /> },
-          { key: "/recruitment/interviews", label: <Link href="/recruitment/interviews">Lịch phỏng vấn</Link>, icon: <CalendarOutlined /> },
+          { key: "/recruitment/interview/manager-schedule", label: <Link href="/recruitment/interview/manager-schedule">Lịch phỏng vấn của tôi</Link>, icon: <CalendarOutlined /> },
         ],
       },
     ];

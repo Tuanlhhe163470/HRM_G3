@@ -155,7 +155,7 @@ export default function InterviewSchedulePage() {
     <div className="mx-auto max-w-[1440px] p-6 lg:p-10 flex flex-col gap-8 text-slate-900 text-left">
       {/* HEADER */}
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-black text-[#154398]">Lịch Phỏng Vấn</h1>
+        <h1 className="text-3xl font-black text-[#154398] uppercase">Lịch Phỏng Vấn</h1>
         <div className="flex items-center gap-2">
           <button onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() - 1)))} className="p-2 hover:bg-slate-100 rounded-lg">
             <span className="material-symbols-outlined">chevron_left</span>
@@ -211,7 +211,7 @@ export default function InterviewSchedulePage() {
                     </div>
                     <div className="flex flex-col mt-1">
                       <Text type="secondary" className="text-xs truncate"><MailOutlined className="mr-1" /> {candidateInfo.email}</Text>
-                      <Text type="secondary" className="text-xs truncate"><PhoneOutlined className="mr-1" /> {candidateInfo.phone || "N/A"}</Text>
+                      <Text type="secondary" className="text-xs truncate"><PhoneOutlined className="mr-1" /> {candidateInfo.phone}</Text>
                       <Text className="text-[11px] text-blue-600 font-medium flex items-center gap-1 mt-0.5"><SolutionOutlined /> {candidateInfo.jobTitle}</Text>
                     </div>
                   </div>
@@ -219,7 +219,7 @@ export default function InterviewSchedulePage() {
                 <Button type="primary" block icon={<PlusOutlined />} className={`h-11 rounded-xl font-bold ${checkIsScheduled(candidateInfo.candidateID) ? 'bg-slate-400 border-none' : 'bg-[#154398]'}`} onClick={() => setIsModalOpen(true)}>
                   {checkIsScheduled(candidateInfo.candidateID) ? "Đặt thêm lịch hẹn" : "Thiết lập lịch hẹn"}
                 </Button>
-                <Button type="link" size="small" className="text-slate-400" onClick={() => router.replace("/recruitment/interview/schedule")}>Chọn ứng viên khác</Button>
+                <Button type="link" size="small" className="text-slate-400" onClick={() => router.replace("/recruitment/interview/hr-schedule")}>Chọn ứng viên khác</Button>
               </div>
             ) : (
               <div className="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">

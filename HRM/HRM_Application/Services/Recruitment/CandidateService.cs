@@ -284,6 +284,27 @@ namespace HRM_Application.Services.Recruitment
             var interviews = await _interviewRepository.GetAllWithCandidateAsync();
             return _mapper.Map<IEnumerable<ScheduleInterviewDto>>(interviews);
         }
+        public async Task<bool> EvaluateCandidateAsync(EvaluationRequest request)
+        {
+            var interview = (await _interviewRepository.GetByCandidateIdAsync(request.CandidateID))
+                            .OrderByDescending(i => i.InterviewDate)
+                            .FirstOrDefault();
+
+            if (interview == null) return false;
+
+            // Gán dữ liệu đánh giá mới
+            interview.Score = request.Score;
+            interview.Comments = request.Comment;
+            interview.Result = request.FinalDecision; // PASS hoặc FAIL
+
+            await _interviewRepository.UpdateAsync(interview);
+
+            // Cập nhật trạng thái ứng viên dựa trên quyết định
+            string newStatus = request.FinalDecision == "PASS" ? "Passed" : "Fail";
+            await _candidateRepository.UpdateStatusAsync(request.CandidateID, newStatus);
+
+            return true;
+        }
     }
 
 }

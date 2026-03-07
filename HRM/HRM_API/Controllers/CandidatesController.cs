@@ -106,5 +106,26 @@ namespace HRM_API.Controllers
             var result = await _candidateService.GetAllInterviewsAsync();
             return Ok(result);
         }
+        /// <summary>
+        /// API dành cho Manager đánh giá ứng viên sau phỏng vấn
+        /// </summary>
+        [HttpPost("evaluate")]
+        [Authorize(Roles = "Manager")] 
+        public async Task<IActionResult> EvaluateCandidate([FromBody] EvaluationRequest request)
+        {
+            if (request == null || request.CandidateID <= 0)
+            {
+                return BadRequest(new { message = "Thông tin đánh giá không hợp lệ." });
+            }
+
+            var result = await _candidateService.EvaluateCandidateAsync(request);
+
+            if (result)
+            {
+                return Ok(new { message = "Lưu đánh giá và cập nhật trạng thái ứng viên thành công!" });
+            }
+
+            return BadRequest(new { message = "Không tìm thấy lịch phỏng vấn phù hợp để đánh giá ứng viên này." });
+        }
     }
 }

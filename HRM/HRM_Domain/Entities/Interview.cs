@@ -26,7 +26,8 @@ namespace HRM_Domain.Entities
         public int? InterviewerID { get; set; }
         [ForeignKey("InterviewerID")]
         public virtual Employee? Interviewer { get; set; }
-
+        public int? Score { get; set; } // Lưu điểm từ 1-10
+        public string? Comments { get; set; } // Lưu nhận xét của Manager
         [StringLength(50)]
         public string? Result { get; set; }
     }

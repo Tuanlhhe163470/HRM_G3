@@ -45,6 +45,7 @@ namespace HRM_Domain.Entities
 
         [ForeignKey("JobID")]
         public virtual JobPosting JobPosting { get; set; } = null!;
+        public virtual ICollection<Interview> Interviews { get; set; } = new List<Interview>();
     }
     /// <summary>
     /// Luồng: Applied -> Screening -> Manager_Review -> Interview -> Passed -> Offered -> Hired

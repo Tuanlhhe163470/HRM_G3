@@ -260,7 +260,7 @@ export default function CandidateListPage() {
                     ? "bg-emerald-600 hover:bg-emerald-700 border-none" 
                     : "bg-purple-600 hover:bg-purple-700 border-none"}
                 onClick={() => {
-                  router.push(`/recruitment/interview/schedule?candidateId=${record.candidateID}`);
+                  router.push(`/recruitment/interview/hr-schedule?candidateId=${record.candidateID}`);
                 }}
               >
                 {/* Đổi text nút bấm dựa trên trạng thái lịch hẹn */}
@@ -276,9 +276,9 @@ export default function CandidateListPage() {
   return (
     <div className="bg-[#f8fafc] min-h-screen p-6 text-left">
       <div className="max-w-[1440px] mx-auto flex flex-col gap-6">
-        <Title level={3} className="text-[#154398] font-black uppercase m-0">
-          Quản lý toàn bộ ứng viên
-        </Title>
+        <h1 className="text-2xl mb-4 font-black text-[#154398] uppercase">
+          DANH SÁCH ỨNG VIÊN
+        </h1>
 
         {/* BỘ LỌC GIỮ NGUYÊN */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

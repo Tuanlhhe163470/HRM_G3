@@ -104,12 +104,12 @@ export default function CreateJobRequisition() {
   return (
     <div className={styles.pageContainer}>
       <div className={styles.titleSection}>
-        <Title level={2}>
+        <h1 className="text-2xl  font-black text-[#154398] uppercase">
           <FormOutlined /> TẠO MỚI TIN TUYỂN DỤNG
-        </Title>
+        </h1>
       </div>
 
-      <Divider style={{ margin: "12px 0" }} />
+      <Divider style={{ margin: "4px 0" }} />
 
       <Form
         form={form}

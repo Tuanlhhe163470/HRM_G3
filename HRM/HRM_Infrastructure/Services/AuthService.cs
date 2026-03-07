@@ -49,9 +49,11 @@ namespace HRM_Infrastructure.Services
                 Subject = new ClaimsIdentity(new[]
                 {
                     new Claim(ClaimTypes.Name, user.Username),
+                    new Claim(ClaimTypes.NameIdentifier, user.AccountID.ToString()),
                     new Claim(ClaimTypes.Role, user.Role?.RoleName ?? "Employee"),
                     new Claim("EmployeeID", user.EmployeeID?.ToString() ?? ""),
                     new Claim("DepartmentId", user.Employee?.DepartmentID.ToString() ?? "0"),
+                    new Claim("DepartmentName", user.Employee?.Department?.DepartmentName ?? "N/A"),
                 }),
                 Expires = DateTime.UtcNow.AddMinutes(double.Parse(_config["Jwt:DurationInMinutes"]!)),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),

@@ -6,7 +6,7 @@ import {
   EyeOutlined,
   ReloadOutlined,
   RocketOutlined,
-  StopOutlined
+  StopOutlined,
 } from "@ant-design/icons";
 import {
   App,
@@ -21,7 +21,7 @@ import {
   Table,
   Tag,
   Tooltip,
-  Typography
+  Typography,
 } from "antd";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
@@ -267,87 +267,85 @@ export default function JobManagementPage() {
 
   return (
     <div className="job-management-container">
-      <Card variant="borderless">
-        <Title level={3}>QUẢN LÝ YÊU CẦU & TIN TUYỂN DỤNG</Title>
-        <Table
-          columns={columns}
-          dataSource={data}
-          rowKey="jobID"
-          loading={loading}
-          bordered
-        />
+      <h1 className="text-2xl mb-4 font-black text-[#154398] uppercase">QUẢN LÝ YÊU CẦU & TIN TUYỂN DỤNG</h1>
+      <Table
+        columns={columns}
+        dataSource={data}
+        rowKey="jobID"
+        loading={loading}
+        bordered
+      />
 
-        {/* MODAL XEM CHI TIẾT */}
-        <Modal
-          title="CHI TIẾT YÊU CẦU TUYỂN DỤNG"
-          open={isPreviewOpen}
-          onCancel={() => setIsPreviewOpen(false)}
-          footer={null}
-          width={800}
-        >
-          {selectedRecord && (
-            <div className="jd-preview-content">
-              <p>
-                <b>Tiêu đề:</b> {selectedRecord.title}
-              </p>
-              <p>
-                <b>Phòng ban:</b> {selectedRecord.department?.departmentName}
-              </p>
-              <p>
-                <b>Vị trí:</b> {selectedRecord.position?.positionName}
-              </p>
-              <p>
-                <b>Mô tả:</b>
-              </p>
-              <div
-                className="quill-content-view"
-                style={{ padding: 12, background: "#f5f5f5", borderRadius: 8 }}
-                dangerouslySetInnerHTML={{ __html: selectedRecord.description }}
-              />
-            </div>
-          )}
-        </Modal>
+      {/* MODAL XEM CHI TIẾT */}
+      <Modal
+        title="CHI TIẾT YÊU CẦU TUYỂN DỤNG"
+        open={isPreviewOpen}
+        onCancel={() => setIsPreviewOpen(false)}
+        footer={null}
+        width={800}
+      >
+        {selectedRecord && (
+          <div className="jd-preview-content">
+            <p>
+              <b>Tiêu đề:</b> {selectedRecord.title}
+            </p>
+            <p>
+              <b>Phòng ban:</b> {selectedRecord.department?.departmentName}
+            </p>
+            <p>
+              <b>Vị trí:</b> {selectedRecord.position?.positionName}
+            </p>
+            <p>
+              <b>Mô tả:</b>
+            </p>
+            <div
+              className="quill-content-view"
+              style={{ padding: 12, background: "#f5f5f5", borderRadius: 8 }}
+              dangerouslySetInnerHTML={{ __html: selectedRecord.description }}
+            />
+          </div>
+        )}
+      </Modal>
 
-        {/* MODAL CHỈNH SỬA */}
-        <Modal
-          title="CHỈNH SỬA THÔNG TIN TUYỂN DỤNG"
-          open={isEditOpen}
-          onOk={() => form.submit()}
-          onCancel={() => setIsEditOpen(false)}
-          width={600}
-          okText="Lưu thay đổi"
-          cancelText="Hủy"
-        >
-          <Form form={form} layout="vertical" onFinish={handleUpdate}>
+      {/* MODAL CHỈNH SỬA */}
+      <Modal
+        title="CHỈNH SỬA THÔNG TIN TUYỂN DỤNG"
+        open={isEditOpen}
+        onOk={() => form.submit()}
+        onCancel={() => setIsEditOpen(false)}
+        width={600}
+        okText="Lưu thay đổi"
+        cancelText="Hủy"
+      >
+        <Form form={form} layout="vertical" onFinish={handleUpdate}>
+          <Form.Item
+            name="title"
+            label="Tiêu đề tin"
+            rules={[{ required: true }]}
+          >
+            <Input />
+          </Form.Item>
+          <Space size="large">
             <Form.Item
-              name="title"
-              label="Tiêu đề tin"
+              name="vacancies"
+              label="Số lượng"
               rules={[{ required: true }]}
             >
-              <Input />
+              <InputNumber min={1} />
             </Form.Item>
-            <Space size="large">
-              <Form.Item
-                name="vacancies"
-                label="Số lượng"
-                rules={[{ required: true }]}
-              >
-                <InputNumber min={1} />
-              </Form.Item>
-              <Form.Item
-                name="expiryDate"
-                label="Hạn nộp hồ sơ"
-                rules={[{ required: true }]}
-              >
-                <DatePicker format="DD/MM/YYYY" />
-              </Form.Item>
-            </Space>
-            <Form.Item name="description" label="Mô tả công việc (JD)">
-              <Input.TextArea rows={6} />
+            <Form.Item
+              name="expiryDate"
+              label="Hạn nộp hồ sơ"
+              rules={[{ required: true }]}
+            >
+              <DatePicker format="DD/MM/YYYY" />
             </Form.Item>
-          </Form>
-        </Modal>
-      </Card>
+          </Space>
+          <Form.Item name="description" label="Mô tả công việc (JD)">
+            <Input.TextArea rows={6} />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 }

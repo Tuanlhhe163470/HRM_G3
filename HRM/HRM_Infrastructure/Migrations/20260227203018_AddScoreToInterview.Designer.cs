@@ -4,6 +4,7 @@ using HRM_Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HRM_Infrastructure.Migrations
 {
     [DbContext(typeof(HRMDbContext))]
-    partial class HRMDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260227203018_AddScoreToInterview")]
+    partial class AddScoreToInterview
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1721,7 +1724,7 @@ namespace HRM_Infrastructure.Migrations
             modelBuilder.Entity("HRM_Domain.Entities.Interview", b =>
                 {
                     b.HasOne("HRM_Domain.Entities.Candidate", "Candidate")
-                        .WithMany("Interviews")
+                        .WithMany()
                         .HasForeignKey("CandidateID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2059,11 +2062,6 @@ namespace HRM_Infrastructure.Migrations
                     b.Navigation("Employee");
 
                     b.Navigation("TrainingCourse");
-                });
-
-            modelBuilder.Entity("HRM_Domain.Entities.Candidate", b =>
-                {
-                    b.Navigation("Interviews");
                 });
 
             modelBuilder.Entity("HRM_Domain.Entities.Role", b =>

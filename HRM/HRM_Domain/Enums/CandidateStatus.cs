@@ -15,6 +15,7 @@ namespace HRM_Domain.Enums
         Passed,
         Offered,
         Hired,
-        Rejected
+        Rejected,
+        Fail
     }
 }
