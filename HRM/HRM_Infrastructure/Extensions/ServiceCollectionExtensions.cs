@@ -83,6 +83,9 @@ namespace HRM_Infrastructure.Extensions
             services.AddScoped<IDepartmentService, DepartmentService>();
             services.AddScoped<ILaborContractRepository, LaborContractRepository>();
             services.AddScoped<ILaborContractService, LaborContractService>();
+            services.AddScoped<ILeaveBalanceRepository, LeaveBalanceRepository>();
+            services.AddScoped<ILeaveService, LeaveService>();
+            services.AddScoped<ILeaveBalanceService, LeaveBalanceService>();
 
             return services;
         }
