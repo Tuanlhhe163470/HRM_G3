@@ -203,7 +203,6 @@ namespace HRM_Application.Services.TimeAttendance
 
             var logs = await _attendanceRepo.GetByMonthAsync(employeeId, month, year);
 
-
             var actualHours = logs.Where(x => x.Status == AttendanceStatus.OnTime ||
                                               x.Status == AttendanceStatus.Late ||
                                               x.Status == AttendanceStatus.EarlyLeave)

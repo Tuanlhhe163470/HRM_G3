@@ -20,20 +20,12 @@ using HRM_Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using HRM_Application.Services;
-using HRM_Infrastructure.Repositories.TimeAttendance;
-using HRM_Application.Contracts.Services;
-using HRM_Application.Services.TimeAttendance;
-using HRM_Application.Services.PayRoll;
-using HRM_Infrastructure.Repositories.Payroll;
-using HRM_Infrastructure.Repositories.PayRoll;
-using HRM_Infrastructure.PayRoll.Repositories;
 using HRM_Infrastructure.Repositories;
 using HRM_Application.Interfaces.Repositories;
 using HRM_Application.Interfaces.Services;
 using HRM_Infrastructure.Repositories.HRCore;
 using HRM_Application.Services.HRCore;
+using HRM_Application.Services.Department;
 
 namespace HRM_Infrastructure.Extensions
 {
@@ -64,7 +56,8 @@ namespace HRM_Infrastructure.Extensions
             // services.AddScoped<IShiftRepository, ShiftRepository>(); 
             services.AddScoped<IEmployeeSalaryConfigRepository, EmployeeSalaryConfigRepository>();
             services.AddScoped<IEmployeeSalaryConfigService, EmployeeSalaryConfigService>();
-            services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+            services.AddScoped<IEmployeeRepository, Repositories.HRCore.EmployeeRepository>();
+            services.AddScoped<IEmployeeService, EmployeeService>();
             services.AddScoped<IPayrollRepository, PayrollRepository>();
             services.AddScoped<IPayrollService, PayrollService>();
             services.AddScoped<IMonthlyTimesheetService, MonthlyTimesheetService>();
@@ -86,6 +79,10 @@ namespace HRM_Infrastructure.Extensions
             services.AddScoped<ILeaveTypeRepository, LeaveTypeRepository>();
             services.AddScoped<IPositionRepository, PositionRepository>();
             services.AddScoped<IPositionService, PositionService>();
+            services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+            services.AddScoped<IDepartmentService, DepartmentService>();
+            services.AddScoped<ILaborContractRepository, LaborContractRepository>();
+            services.AddScoped<ILaborContractService, LaborContractService>();
 
             return services;
         }
