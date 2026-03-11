@@ -1,12 +1,14 @@
 ﻿using HRM_Application.Contracts.Services;
 using HRM_Application.DTOs.Positions;
 using HRM_Application.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HRM_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "HR, Admin")]
     public class PositionsController : ControllerBase
     {
         private readonly IPositionService _positionService;
