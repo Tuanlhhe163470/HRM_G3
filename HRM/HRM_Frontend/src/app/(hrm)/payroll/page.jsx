@@ -7,17 +7,17 @@ import SalaryComponentTable from '@/components/features/payroll/SalaryComponentT
 
 export default function SalaryConfigPage() {
   // --- STATE QUẢN LÝ DỮ LIỆU ---
-  const [allComponents, setAllComponents] = useState([]); // Chứa toàn bộ dữ liệu từ API
-  const [displayData, setDisplayData] = useState([]);     // Chứa dữ liệu hiển thị trên trang hiện tại
+  const [allComponents, setAllComponents] = useState([]); 
+  const [displayData, setDisplayData] = useState([]);     
   const [loading, setLoading] = useState(true);
 
   // --- STATE PHÂN TRANG ---
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5; // Số dòng trên 1 trang (có thể chỉnh thành 10 tùy ý)
+  const itemsPerPage = 5; 
 
   // --- STATE MODAL ---
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('create'); // Các chế độ: 'create', 'edit', 'view'
+  const [modalMode, setModalMode] = useState('create'); 
   const [selectedItem, setSelectedItem] = useState(null);
 
   // 1. Hàm load dữ liệu
@@ -25,11 +25,10 @@ export default function SalaryConfigPage() {
     try {
       setLoading(true);
       const data = await salaryComponentService.getAll();
-      // Sắp xếp ID giảm dần (mới nhất lên đầu)
       const sortedData = data.sort((a, b) => b.componentID - a.componentID);
       setAllComponents(sortedData);
     } catch (error) {
-      console.error("Failed to fetch data", error);
+      console.error("Lỗi khi lấy dữ liệu", error);
     } finally {
       setLoading(false);
     }
@@ -41,7 +40,7 @@ export default function SalaryConfigPage() {
 
   // --- STATE TÌM KIẾM & SẮP XẾP ---
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('newest'); // 'newest', 'name_asc', 'name_desc', 'amount_asc', 'amount_desc'
+  const [sortBy, setSortBy] = useState('newest'); 
 
   // --- CÁC HÀM MỞ MODAL ---
   const handleOpenCreate = () => {
@@ -62,14 +61,12 @@ export default function SalaryConfigPage() {
     setIsModalOpen(true);
   };
 
-  // 3. Logic Tìm kiếm & Sắp xếp (Áp dụng lên toàn bộ data trước khi phân trang)
+  // 3. Logic Tìm kiếm & Sắp xếp
   const filteredAndSortedData = React.useMemo(() => {
-    // Lọc theo tên
     let result = allComponents.filter(item =>
       (item.componentName || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // Sắp xếp
     result.sort((a, b) => {
       switch (sortBy) {
         case 'name_asc': return (a.componentName || '').localeCompare(b.componentName || '');
@@ -84,7 +81,7 @@ export default function SalaryConfigPage() {
     return result;
   }, [allComponents, searchTerm, sortBy]);
 
-  // 4. Logic Phân trang (Cắt mảng dữ liệu ĐÃ LỌC & SẮP XẾP)
+  // 4. Logic Phân trang
   useEffect(() => {
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -92,23 +89,21 @@ export default function SalaryConfigPage() {
     setDisplayData(currentItems);
   }, [filteredAndSortedData, currentPage]);
 
-  // --- XỬ LÝ LƯU (Create hoặc Update) ---
+  // --- XỬ LÝ LƯU ---
   const handleSave = async (formData) => {
     try {
       if (modalMode === 'edit' && selectedItem) {
-        // Gọi API Update
         await salaryComponentService.update(selectedItem.componentID, formData);
         alert("Cập nhật thành công!");
       } else if (modalMode === 'create') {
-        // Gọi API Create
         await salaryComponentService.create(formData);
         alert("Thêm mới thành công!");
       }
-      setIsModalOpen(false); // Đóng modal
-      fetchData(); // Load lại toàn bộ dữ liệu
-      setCurrentPage(1); // Quay về trang 1
+      setIsModalOpen(false);
+      fetchData();
+      setCurrentPage(1);
     } catch (error) {
-      console.error("Save failed", error);
+      console.error("Lưu thất bại", error);
       alert("Có lỗi xảy ra khi lưu!");
     }
   };
@@ -119,8 +114,6 @@ export default function SalaryConfigPage() {
       try {
         await salaryComponentService.delete(id);
         fetchData();
-
-        // Nếu xóa dòng cuối cùng của trang hiện tại, lùi về trang trước
         if (displayData.length === 1 && currentPage > 1) {
           setCurrentPage(currentPage - 1);
         }
@@ -132,10 +125,10 @@ export default function SalaryConfigPage() {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Header Page */}
+      {/* Tiêu đề trang */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Cấu hình lương & Phụ cấp</h1>
+          <h1 className="text-2xl font-bold text-gray-800">Cấu hình Lương & Phụ cấp</h1>
           <p className="text-gray-500 text-sm">Quản lý các thành phần lương trong hệ thống</p>
         </div>
         <button
@@ -146,7 +139,7 @@ export default function SalaryConfigPage() {
         </button>
       </div>
 
-      {/* Toolbar: Tìm kiếm & Sắp xếp */}
+      {/* Thanh công cụ: Tìm kiếm & Sắp xếp */}
       <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-4 flex flex-col sm:flex-row gap-4 justify-between items-center">
         <div className="relative w-full sm:w-1/3">
           <input
@@ -176,7 +169,7 @@ export default function SalaryConfigPage() {
         </div>
       </div>
 
-      {/* Table Content */}
+      {/* Nội dung bảng */}
       <div className="bg-white rounded-lg shadow border border-gray-100 p-2">
         {loading ? (
           <div className="text-center py-10">Đang tải dữ liệu...</div>
@@ -186,7 +179,6 @@ export default function SalaryConfigPage() {
             onView={handleOpenView}
             onEdit={handleOpenEdit}
             onDelete={handleDelete}
-            // Props cho phân trang
             currentPage={currentPage}
             totalItems={filteredAndSortedData.length}
             itemsPerPage={itemsPerPage}
@@ -196,7 +188,7 @@ export default function SalaryConfigPage() {
         )}
       </div>
 
-      {/* Modal Form */}
+      {/* Modal nhập liệu */}
       <SalaryComponentFormModal
         isOpen={isModalOpen}
         mode={modalMode}

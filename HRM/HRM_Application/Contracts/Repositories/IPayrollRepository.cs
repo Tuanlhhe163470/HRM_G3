@@ -1,4 +1,4 @@
-﻿using HRM_Domain.Entities;
+using HRM_Domain.Entities;
 
 namespace HRM_Application.Contracts.Repositories
 {
@@ -10,6 +10,9 @@ namespace HRM_Application.Contracts.Repositories
 
         // Hai hàm mới cho Review và Approval
         Task UpdateAdjustmentAsync(int payrollId, decimal amount, string reason);
+        Task AddAdjustmentAsync(int payrollId, decimal amount, string reason); // Cộng dồn nhiều lần
         Task ApproveStatusAsync(int payrollId, string status, int managerId);
+        Task<MonthlyPayroll?> GetEmployeePayrollAsync(int employeeId, int month, int year);
+        
     }
 }

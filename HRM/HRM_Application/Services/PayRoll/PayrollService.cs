@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -35,11 +35,9 @@ namespace HRM_Application.Services.PayRoll
 
             foreach (var emp in employees)
             {
-                // 1. Lấy dữ liệu công thực tế
                 var timesheet = await _payrollRepo.GetTimesheetAsync(emp.EmployeeID, month, year);
                 if (timesheet == null) continue;
 
-                // 2. Lấy các khoản lương cấu hình (UC2)
                 var configs = await _configRepo.GetByEmployeeIdAsync(emp.EmployeeID);
 
                 decimal baseSalary = configs
@@ -54,11 +52,9 @@ namespace HRM_Application.Services.PayRoll
                     .Where(c => c.SalaryComponent != null && c.SalaryComponent.Type == "Deduction")
                     .Sum(c => c.Amount);
 
-                // 3. Tính toán theo trường mới trong MonthlyPayroll.cs
                 decimal salaryPerDay = timesheet.StandardWorkDays > 0 ? (baseSalary / timesheet.StandardWorkDays) : 0;
                 decimal netSalary = (salaryPerDay * timesheet.ActualWorkDays) + totalAllowance - totalDeduction;
 
-                // 4. Map dữ liệu vào Entity MonthlyPayroll mới
                 var payroll = new MonthlyPayroll
                 {
                     EmployeeID = emp.EmployeeID,
@@ -72,7 +68,7 @@ namespace HRM_Application.Services.PayRoll
                     TotalAllowance = totalAllowance,
                     TotalDeduction = totalDeduction,
                     FinalNetSalary = netSalary,
-                    Status = "Draft" // Trạng thái mặc định
+                    Status = "Draft"
                 };
 
                 await _payrollRepo.UpsertPayrollAsync(payroll);
@@ -82,24 +78,45 @@ namespace HRM_Application.Services.PayRoll
 
         public async Task<IEnumerable<PayrollDTO>> GetPayrollByMonthAsync(int month, int year)
         {
-            // Lấy dữ liệu từ Repo và dùng Mapper để chuyển sang DTO trả về cho Client
             var data = await _payrollRepo.GetMonthlyPayrollAsync(month, year);
             return _mapper.Map<IEnumerable<PayrollDTO>>(data);
         }
 
-        // 1. UC: Draft Payroll Review (Dành cho HR)
         public async Task<bool> AdjustPayrollAsync(int id, decimal amount, string reason)
         {
             await _payrollRepo.UpdateAdjustmentAsync(id, amount, reason);
             return true;
         }
 
-        // UC: Payroll Approval
+        // Cộng dồn thêm điều chỉnh (hỗ trợ nhiều lần thưởng/phạt)
+        public async Task<bool> AddAdjustmentAsync(int id, decimal amount, string reason)
+        {
+            await _payrollRepo.AddAdjustmentAsync(id, amount, reason);
+            return true;
+        }
+
         public async Task<bool> ApprovePayrollAsync(int id, int managerId, bool isApproved)
         {
-            string status = isApproved ? "Approved" : "Rejected";
+            string status = isApproved ? "APPROVED" : "REJECTED"; // Cập nhật IN HOA cho đồng bộ
             await _payrollRepo.ApproveStatusAsync(id, status, managerId);
             return true;
+        }
+
+        // ĐÃ SỬA: Trả về PayrollDTO và ép ToUpper() khi kiểm tra status
+        public async Task<PayrollDTO?> GetPersonalPayrollAsync(int employeeId, int month, int year)
+        {
+            var payroll = await _payrollRepo.GetEmployeePayrollAsync(employeeId, month, year);
+
+            if (payroll == null) return null;
+
+            var status = payroll.Status?.ToUpper();
+            // Hiển thị khi bảng lương đã được tính (Draft), duyệt (Approved) hoặc chi trả (Paid)
+            if (status != "APPROVED" && status != "PAID" && status != "DRAFT")
+            {
+                return null;
+            }
+
+            return _mapper.Map<PayrollDTO>(payroll);
         }
     }
 }
