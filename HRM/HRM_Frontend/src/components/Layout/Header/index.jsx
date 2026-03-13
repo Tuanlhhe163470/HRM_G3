@@ -119,7 +119,7 @@ export default function Header() {
             </Link>
             <Link
               href="/attendance/checkin"
-              className={`menu-item font-medium text-[13px] uppercase tracking-tighter ${pathname.startsWith("/attendance") ? "text-[#00aeef] font-bold" : ""}`}
+              className={`menu-item font-medium text-[13px] uppercase tracking-tighter ${pathname.startsWith("/attendance/checkin") ? "text-[#00aeef] font-bold" : ""}`}
             >
               <DashboardOutlined /> Chấm công
             </Link>
@@ -171,7 +171,7 @@ export default function Header() {
             </Link>
             <Link
               href="/attendance/checkin"
-              className={`menu-item font-medium text-[13px] uppercase tracking-tighter ${pathname.startsWith("/attendance") ? "text-[#00aeef] font-bold" : ""}`}
+              className={`menu-item font-medium text-[13px] uppercase tracking-tighter ${pathname.startsWith("/attendance/checkin") ? "text-[#00aeef] font-bold" : ""}`}
             >
               <DashboardOutlined /> Chấm công
             </Link>
@@ -193,7 +193,7 @@ export default function Header() {
         return (
           <nav className="hidden md:flex items-center gap-8">
             <Link
-              href="/attendance"
+              href="/attendance/checkin"
               className="menu-item font-medium text-[#00aeef] text-sm"
             >
               CHẤM CÔNG
