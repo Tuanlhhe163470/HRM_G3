@@ -41,6 +41,7 @@ namespace HRM_Infrastructure.Data
         public DbSet<LeaveType> LeaveTypes { get; set; }
         public DbSet<LeaveBalance> LeaveBalances { get; set; }
         public DbSet<LeaveRequest> LeaveRequests { get; set; }
+        public DbSet<OvertimeRequest> OvertimeRequests { get; set; }
 
         // ================= 5. PAYROLL MODULE =================
         public DbSet<MonthlyPayroll> MonthlyPayrolls { get; set; }
@@ -64,6 +65,17 @@ namespace HRM_Infrastructure.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<Employee>()
+                .HasOne(e => e.Department)
+                .WithMany() 
+                .HasForeignKey(e => e.DepartmentID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Department>()
+                .HasOne(d => d.Manager)
+                .WithMany()
+                .HasForeignKey(d => d.ManagerID)
+                .OnDelete(DeleteBehavior.Restrict);
             // 1. Cấu hình quan hệ 1-1 giữa Employee và UserAccount
             modelBuilder.Entity<UserAccount>()
                 .HasOne(u => u.Employee)

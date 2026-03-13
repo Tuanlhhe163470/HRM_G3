@@ -1,9 +1,16 @@
 // File: HRM_Application/Mappings/MappingProfile.cs
 using AutoMapper;
+using HRM_Application.DTOs.Commons;
+using HRM_Application.DTOs.Department.Requests;
+using HRM_Application.DTOs.Department.Responses;
+using HRM_Application.DTOs.Employee;
 using HRM_Application.DTOs.EmployeeSalaryConfig;
 using HRM_Application.DTOs.Goals;
+using HRM_Application.DTOs.LaborContract;
 using HRM_Application.DTOs.MonthlyTimesheet;
+using HRM_Application.DTOs.Overtime;
 using HRM_Application.DTOs.PayRoll;
+using HRM_Application.DTOs.Positions;
 using HRM_Application.DTOs.Recruitment;
 using HRM_Application.DTOs.TimeAttendance;
 using HRM_Domain.Entities;
@@ -75,6 +82,54 @@ namespace HRM_Application.Mappings
                     src.SalaryComponent != null ? src.SalaryComponent.ComponentName : string.Empty))
                 .ForMember(dest => dest.Type, opt => opt.MapFrom(src =>
                     src.SalaryComponent != null ? src.SalaryComponent.Type : string.Empty));
+
+            CreateMap<Position, PositionResponse>();
+            CreateMap<CreatePositionRequest, Position>();
+            CreateMap<UpdatePositionRequest, Position>();
+
+            CreateMap<Employee, BaseReferenceResponse>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.EmployeeID))
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.FullName));
+            CreateMap<Department, DepartmentResponse>();
+            CreateMap<CreateDepartmentRequest, Department>();
+            CreateMap<UpdateDepartmentRequest, Department>();
+
+            CreateMap<Position, BaseReferenceResponse>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.PositionID))
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.PositionName));
+
+            CreateMap<Department, BaseReferenceResponse>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.DepartmentID))
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.DepartmentName));
+
+            CreateMap<CreateEmployeeRequest, Employee>();
+            CreateMap<UpdateEmployeeRequest, Employee>();
+
+            CreateMap<Employee, EmployeeResponse>()
+                .ForMember(dest => dest.Department, opt => opt.MapFrom(src => src.Department))
+                .ForMember(dest => dest.Position, opt => opt.MapFrom(src => src.Position))
+                .ForMember(dest => dest.Manager, opt => opt.MapFrom(src => src.Manager));
+            CreateMap<CreateLaborContractRequest, LaborContract>();
+            CreateMap<UpdateLaborContractRequest, LaborContract>();
+
+            CreateMap<LaborContract, DTOs.LaborContract.Responses.LaborContractResponse>()
+                .ForMember(dest => dest.Employee, opt => opt.MapFrom(src => src.Employee));
+            CreateMap<HRM_Domain.Entities.LeaveBalance, DTOs.LeaveBalance.Responses.LeaveBalanceResponse>()
+                .ForMember(dest => dest.Employee, opt => opt.MapFrom(src => src.Employee))
+                .ForMember(dest => dest.LeaveType, opt => opt.MapFrom(src => src.LeaveType));
+
+            CreateMap<HRM_Domain.Entities.LeaveType, HRM_Application.DTOs.Commons.BaseReferenceResponse>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name));
+
+            CreateMap<HRM_Domain.Entities.LeaveBalance, HRM_Application.DTOs.LeaveBalance.Responses.LeaveBalanceResponse>()
+                .ForMember(dest => dest.Employee, opt => opt.MapFrom(src => src.Employee))
+                .ForMember(dest => dest.LeaveType, opt => opt.MapFrom(src => src.LeaveType));
+
+            CreateMap<CreateOvertimeRequestDto, OvertimeRequest>();
+
+            CreateMap<OvertimeRequest, OvertimeRequestHistoryDto>()
+                .ForMember(dest => dest.EmployeeName, opt => opt.MapFrom(src => src.Employee != null ? src.Employee.FullName : "Unknown"));
         }
 
     }

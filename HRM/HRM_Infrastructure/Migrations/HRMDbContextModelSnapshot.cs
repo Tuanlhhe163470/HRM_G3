@@ -319,6 +319,8 @@ namespace HRM_Infrastructure.Migrations
 
                     b.HasKey("DepartmentID");
 
+                    b.HasIndex("ManagerID");
+
                     b.ToTable("Departments");
                 });
 
@@ -1455,6 +1457,59 @@ namespace HRM_Infrastructure.Migrations
                     b.ToTable("AttendanceLogs");
                 });
 
+            modelBuilder.Entity("HRM_Domain.Entities.TimeAttendance.OvertimeRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<double>("ApprovedHours")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<TimeSpan>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<int?>("HRAdminId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("HRNote")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ManagerId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ManagerNote")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("time");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.ToTable("OvertimeRequests");
+                });
+
             modelBuilder.Entity("HRM_Domain.Entities.TimeAttendance.ShiftConfig", b =>
                 {
                     b.Property<int>("Id")
@@ -1706,11 +1761,22 @@ namespace HRM_Infrastructure.Migrations
                     b.Navigation("TrainingCourse");
                 });
 
+            modelBuilder.Entity("HRM_Domain.Entities.Department", b =>
+                {
+                    b.HasOne("HRM_Domain.Entities.Employee", "Manager")
+                        .WithMany()
+                        .HasForeignKey("ManagerID")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Manager");
+                });
+
             modelBuilder.Entity("HRM_Domain.Entities.Employee", b =>
                 {
                     b.HasOne("HRM_Domain.Entities.Department", "Department")
                         .WithMany()
-                        .HasForeignKey("DepartmentID");
+                        .HasForeignKey("DepartmentID")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("HRM_Domain.Entities.Employee", "Manager")
                         .WithMany()
@@ -2055,6 +2121,17 @@ namespace HRM_Infrastructure.Migrations
                     b.Navigation("Employee");
 
                     b.Navigation("ShiftConfig");
+                });
+
+            modelBuilder.Entity("HRM_Domain.Entities.TimeAttendance.OvertimeRequest", b =>
+                {
+                    b.HasOne("HRM_Domain.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
                 });
 
             modelBuilder.Entity("HRM_Domain.Entities.UserAccount", b =>
