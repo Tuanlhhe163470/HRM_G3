@@ -59,6 +59,7 @@ namespace HRM_Infrastructure.Repositories.TimeAttendance
             return await _context.OvertimeRequests
                 .Where(o => o.Date.Month == month
                          && o.Date.Year == year
+                         && o.Date.Date <= DateTime.Today
                          && o.Status == HRM_Domain.Enums.ExplanationStatus.Approved)
                 .ToListAsync();
         }
