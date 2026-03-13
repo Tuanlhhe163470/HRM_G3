@@ -6,7 +6,7 @@ namespace HRM_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    // [Authorize(Roles = "HR, Admin")] // Sau này có phân quyền thì mở comment dòng này để bảo mật
+    //[Authorize(Roles = "HR, Admin")]
     public class TimesheetController : ControllerBase
     {
         private readonly IAttendanceService _attendanceService;

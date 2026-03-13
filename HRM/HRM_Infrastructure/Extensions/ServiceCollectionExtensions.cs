@@ -86,6 +86,8 @@ namespace HRM_Infrastructure.Extensions
             services.AddScoped<ILeaveBalanceRepository, LeaveBalanceRepository>();
             services.AddScoped<ILeaveService, LeaveService>();
             services.AddScoped<ILeaveBalanceService, LeaveBalanceService>();
+            services.AddScoped<IOvertimeService, OvertimeService>();
+            services.AddScoped<IOvertimeRequestRepository, OvertimeRequestRepository>();
 
             return services;
         }

@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import * as XLSX from "xlsx"; 
-import { 
+import * as XLSX from "xlsx";
+import {
   FileExcelOutlined,
-  SearchOutlined, 
-  BankOutlined, 
+  SearchOutlined,
+  BankOutlined,
   FilterOutlined,
   CalendarOutlined,
   ReloadOutlined,
@@ -26,14 +26,18 @@ export default function CompanyTimesheetPage() {
   const [timesheets, setTimesheets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCalculating, setIsCalculating] = useState(false);
-  
+
   /**
    * ==========================================
    * 2. STATE QUẢN LÝ BỘ LỌC (FILTERS)
    * ==========================================
    */
-  const [month, setMonth] = useState(2); 
-  const [year, setYear] = useState(2026);
+  // Lấy thời gian thực tại thời điểm HR mở trang web
+  const currentDate = new Date();
+
+  // getMonth() của JavaScript chạy từ 0-11 (Tháng 1 là 0), nên phải + 1
+  const [month, setMonth] = useState(currentDate.getMonth() + 1);
+  const [year, setYear] = useState(currentDate.getFullYear());
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDept, setSelectedDept] = useState("Tất cả");
   const [selectedStatus, setSelectedStatus] = useState("Tất cả");
@@ -77,13 +81,13 @@ export default function CompanyTimesheetPage() {
     setIsCalculating(true);
     try {
       await timesheetService.calculateTimesheets(month, year);
-      
+
       notice({
         msg: "Hoàn tất",
         desc: `Đã tính toán xong công tháng ${month}/${year}.`,
         isSuccess: true
       });
-      
+
       // Reload lại lưới dữ liệu sau khi server tính xong
       fetchTimesheets();
     } catch (error) {
@@ -118,7 +122,7 @@ export default function CompanyTimesheetPage() {
     return timesheets.filter((emp) => {
       // 4.1. Lọc theo từ khóa (hỗ trợ tìm Tên, Mã NV, hoặc Chức vụ)
       const keyword = searchTerm.toLowerCase();
-      const matchSearch = 
+      const matchSearch =
         emp.employeeName.toLowerCase().includes(keyword) ||
         emp.employeeID.toString().includes(keyword) ||
         emp.positionName.toLowerCase().includes(keyword);
@@ -184,6 +188,7 @@ export default function CompanyTimesheetPage() {
         rowData["Nghỉ có lương"] = emp.paidLeaveDays;
         rowData["Nghỉ không lương"] = emp.unpaidLeaveDays;
         rowData["Tổng giờ (h)"] = emp.totalWorkingHours;
+        rowData["Giờ OT (h)"] = emp.totalOvertimeHours;
         rowData["Trễ (phút)"] = emp.totalLateMinutes;
         rowData["Về sớm (phút)"] = emp.totalEarlyLeaveMinutes;
 
@@ -193,7 +198,7 @@ export default function CompanyTimesheetPage() {
       // BƯỚC 2: Khởi tạo Workbook & Worksheet từ dữ liệu đã flatten
       const worksheet = XLSX.utils.json_to_sheet(excelData);
       const workbook = XLSX.utils.book_new();
-      
+
       // UX Tweak: Mở rộng tự động (Autofit) độ rộng của một số cột quan trọng để text không bị khuất
       const wscols = [
         { wch: 5 },  // STT
@@ -209,13 +214,13 @@ export default function CompanyTimesheetPage() {
       // BƯỚC 3: Gắn dữ liệu vào Book và gọi lệnh tải xuống
       XLSX.utils.book_append_sheet(workbook, worksheet, `T${month}_${year}`);
       XLSX.writeFile(workbook, `Bang_Cham_Cong_Thang_${month}_${year}.xlsx`);
-      
+
       notice({
         msg: "Xuất file thành công",
         desc: "File Excel đã được tải xuống máy của bạn.",
         isSuccess: true
       });
-      
+
     } catch (err) {
       console.error("Lỗi xuất Excel:", err);
       notice({
@@ -231,7 +236,7 @@ export default function CompanyTimesheetPage() {
 
   return (
     <div className="flex flex-col h-full bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-      
+
       {/* HEADER BAR */}
       <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-white">
         <div>
@@ -242,14 +247,14 @@ export default function CompanyTimesheetPage() {
           <button onClick={fetchTimesheets} className="px-4 py-2 border border-slate-200 bg-white text-slate-600 text-sm font-medium rounded-md hover:bg-slate-50 transition-colors">
             <ReloadOutlined className="mr-2" /> Làm mới
           </button>
-          <button 
-            onClick={handleExportExcel} 
+          <button
+            onClick={handleExportExcel}
             className="px-4 py-2 border border-emerald-600 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-md hover:bg-emerald-100 transition-colors"
           >
             <FileExcelOutlined className="mr-2" /> Xuất Excel
           </button>
-          <button 
-            onClick={handleCalculate} 
+          <button
+            onClick={handleCalculate}
             disabled={isCalculating}
             className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
@@ -260,12 +265,12 @@ export default function CompanyTimesheetPage() {
 
       {/* FILTER BAR */}
       <div className="flex flex-wrap items-center gap-4 p-4 border-b border-slate-100 bg-slate-50/50">
-        
+
         {/* Lọc Tháng / Năm */}
         <div className="flex items-center border border-slate-200 bg-white rounded-md px-3 py-1.5 shadow-sm">
           <CalendarOutlined className="text-slate-400 mr-2" />
-          <input 
-            type="month" 
+          <input
+            type="month"
             className="text-sm text-slate-700 outline-none bg-transparent cursor-pointer"
             value={`${year}-${month.toString().padStart(2, '0')}`}
             onChange={(e) => {
@@ -280,7 +285,7 @@ export default function CompanyTimesheetPage() {
         <div className="flex items-center border border-slate-200 bg-white rounded-md px-3 py-1.5 shadow-sm">
           <BankOutlined className="text-slate-400 mr-2" />
           <span className="text-sm font-medium text-slate-600 mr-2">Phòng ban:</span>
-          <select 
+          <select
             className="text-sm text-slate-700 outline-none bg-transparent cursor-pointer"
             value={selectedDept}
             onChange={(e) => setSelectedDept(e.target.value)}
@@ -293,7 +298,7 @@ export default function CompanyTimesheetPage() {
         <div className="flex items-center border border-slate-200 bg-white rounded-md px-3 py-1.5 shadow-sm">
           <FilterOutlined className="text-slate-400 mr-2" />
           <span className="text-sm font-medium text-slate-600 mr-2">Trạng thái:</span>
-          <select 
+          <select
             className="text-sm text-slate-700 outline-none bg-transparent cursor-pointer"
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
@@ -308,9 +313,9 @@ export default function CompanyTimesheetPage() {
         {/* Ô Search */}
         <div className="flex items-center border border-slate-200 bg-white rounded-md px-3 py-1.5 shadow-sm flex-1 max-w-md focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all">
           <SearchOutlined className="text-slate-400 mr-2" />
-          <input 
-            type="text" 
-            placeholder="Tìm kiếm theo tên, phòng ban, vị trí nhân viên" 
+          <input
+            type="text"
+            placeholder="Tìm kiếm theo tên, phòng ban, vị trí nhân viên"
             className="w-full text-sm outline-none text-slate-700 bg-transparent placeholder-slate-400"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -355,7 +360,7 @@ export default function CompanyTimesheetPage() {
                       <span className="font-mono bg-slate-100 px-1 rounded text-slate-400">#{emp.employeeID}</span>
                     </div>
                   </td>
-                  
+
                   {daysArray.map(day => (
                     <td key={day} className="border-b border-r border-slate-100 p-1">
                       <div className="flex justify-center">
@@ -363,9 +368,14 @@ export default function CompanyTimesheetPage() {
                       </div>
                     </td>
                   ))}
-                  
+
                   <td className="sticky right-0 bg-white group-hover:bg-slate-50/50 px-4 py-2 border-b border-l border-slate-200 text-right shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)]">
                     <div className="font-bold text-slate-700">{emp.totalWorkingHours}h</div>
+                    {emp.totalOvertimeHours > 0 && (
+                      <div className="text-[9px] font-bold text-emerald-600 bg-emerald-50 inline-block px-1 rounded">
+                        + {emp.totalOvertimeHours}h OT
+                      </div>
+                    )}
                     {emp.totalLateMinutes > 0 && <div className="text-[9px] font-medium text-amber-500">Trễ {emp.totalLateMinutes}p</div>}
                   </td>
                 </tr>

@@ -34,6 +34,7 @@ namespace HRM_Infrastructure.Repositories.TimeAttendance
         public async Task<AttendanceLog> GetActiveLogAsync(int employeeId)
         {
             return await _context.AttendanceLogs
+                .Include(x => x.ShiftConfig)
                 .Where(x => x.EmployeeId == employeeId
                          && x.CheckOutTime == null
                          && x.Status != AttendanceStatus.MissingCheckOut)
