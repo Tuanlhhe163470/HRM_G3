@@ -20,7 +20,8 @@ import {
   OrderedListOutlined,
   SnippetsOutlined,
   FormOutlined,
-  AuditOutlined
+  AuditOutlined,
+  AccountBookOutlined
 } from "@ant-design/icons";
 
 export default function SidebarHRM() {
@@ -180,38 +181,66 @@ export default function SidebarHRM() {
 
   // --- MODULE LƯƠNG ---
   const getPayrollItems = () => {
-    if (role === "Employee") return [];
-    
-    return [
-      {
-        // Key này phải khớp với URL thực tế để menu sáng màu xanh khi bạn đang ở trang đó
-        key: "/payroll", 
-        label: (
-          <Link href="/payroll">
-            <span className="font-bold text-[13px] uppercase tracking-tight">Cấu hình lương</span>
-          </Link>
-        ),
-        icon: <DollarOutlined />,
-      },
-      {
-        key: "/payroll/payroll-processing",
-        label: (
-          <Link href="/payroll/payroll-processing">
-            <span className="font-bold text-[13px] uppercase tracking-tight">Xử lý lương</span>
-          </Link>
-        ),
-        icon: <FileSearchOutlined />,
-      },
-      {
-        key: "/payroll/calculation",
-        label: (
-          <Link href="/payroll/calculation">
-            <span className="font-bold text-[13px] uppercase tracking-tight">Tính lương</span>
-          </Link>
-        ),
-        icon: <CalculatorFilled />,
-      },
-    ];
+    const items = [];
+
+      // 1. SIDEBAR QUẢN LÝ (CHỈ DÀNH CHO MANAGER, HR, ADMIN)
+    // Nhân viên (Employee) bình thường sẽ KHÔNG BAO GIỜ nhìn thấy mục này
+    if (role !== "Employee") {
+      items.push({
+        key: "sub-manage-payroll",
+        label: <span className="font-bold text-[13px] uppercase tracking-tight">Quản lý Hệ thống</span>,
+        icon: <SettingOutlined />,
+        children: [
+          {
+            key: "/payroll/payroll-processing",
+            label: <Link href="/payroll/payroll-processing">Xử lý bảng lương</Link>,
+            icon: <FileSearchOutlined />,
+          },
+          {
+            key: "/payroll/calculation",
+            label: <Link href="/payroll/calculation">Tính lương tự động</Link>,
+            icon: <CalculatorFilled />,
+          },
+          {
+            key: "/payroll", 
+            label: <Link href="/payroll">Cấu hình lương</Link>,
+            icon: <SettingOutlined />,
+          },
+          {
+            key: "/advance-approvals",
+            label: <Link href="/advance-approvals">Duyệt ứng lương</Link>,
+            icon: <AuditOutlined />,
+          },
+        ]
+      });
+    }
+
+    // 2. SIDEBAR CÁ NHÂN (AI ĐĂNG NHẬP VÀO CŨNG SẼ THẤY PHẦN NÀY)
+    // Cả Manager và Employee đều cần xem Phiếu lương và Ứng lương của chính mình
+    items.push({
+      key: "sub-my-payroll",
+      label: <span className="font-bold text-[13px] uppercase tracking-tight">Lương & Tạm ứng</span>,
+      icon: <DollarOutlined />,
+      children: [
+        { 
+          key: "/my-payroll", 
+          label: <Link href="/my-payroll">Phiếu lương của tôi</Link>, 
+          icon: <SnippetsOutlined /> 
+        },
+        { 
+          key: "/my-advance", 
+          label: <Link href="/my-advance">Xin ứng lương</Link>, 
+          icon: <FormOutlined /> 
+        },
+        { 
+          key: "/my-advance-history", 
+          label: <Link href="/my-advance-history">Lịch sử ứng lương</Link>, 
+          icon: <AccountBookOutlined /> 
+        },
+      ],
+    });
+
+    return items;
   };
 
   // --- MODULE ĐÀO TẠO & ĐÁNH GIÁ ---
@@ -230,13 +259,24 @@ export default function SidebarHRM() {
     ];
   };
 
+  // PHẦN ĐÃ SỬA: Dùng includes để bắt được các link my-advance, advance-approvals và không bị trắng menu
   const getMenuItems = () => {
-    if (pathname.startsWith("/recruitment")) return getRecruitmentItems();
-    if (pathname.startsWith("/core-hr")) return getCoreHRItems();
-    if (pathname.startsWith("/attendance")) return getAttendanceItems();
-    if (pathname.startsWith("/payroll")) return getPayrollItems();
-    if (pathname.startsWith("/evaluation")) return getEvaluationItems();
-    return [];
+    const path = (pathname || "").toLowerCase();
+
+    if (path.includes("recruitment") || path.includes("candidate") || path.includes("job-postings")) return getRecruitmentItems();
+    if (path.includes("core-hr") || path.includes("employee") || path.includes("department")) return getCoreHRItems();
+    if (path.includes("attendance") || path.includes("checkin") || path.includes("timesheet") || path.includes("leave")) return getAttendanceItems();
+    
+    // Nếu URL có chứa chữ "payroll" HOẶC "advance" -> Load menu Lương
+    if (path.includes("payroll") || path.includes("advance")) {
+      return getPayrollItems();
+    }
+    
+    if (path.includes("evaluation")) return getEvaluationItems();
+    
+    // FALLBACK: Tránh lỗi trắng màn hình khi user đứng ở trang chủ (/)
+    if (role === "Employee") return getPayrollItems();
+    return getCoreHRItems();
   };
 
   return (
@@ -244,7 +284,8 @@ export default function SidebarHRM() {
       <Menu
         mode="inline"
         selectedKeys={[pathname]}
-        defaultOpenKeys={["sub-request", "sub-job", "sub-candidate", "sub-my-attendance"]}
+        // PHẦN ĐÃ SỬA: Đã thêm các mục Lương để nó tự động mở ra khi vào trang
+        defaultOpenKeys={["sub-request", "sub-job", "sub-candidate", "sub-my-attendance", "sub-my-payroll", "sub-manage-payroll"]}
         items={getMenuItems()}
         className="custom-sidebar-menu"
       />

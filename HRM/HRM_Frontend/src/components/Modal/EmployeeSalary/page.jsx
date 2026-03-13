@@ -23,9 +23,10 @@ export default function EmployeeSalaryFormModal({ isOpen, onClose, onSave, initi
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <h2 className="text-xl font-bold mb-4">{initialData ? 'Sửa lương' : 'Thêm khoản lương'}</h2>
+    <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm flex items-center justify-center z-50 transition-all">
+      <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/60 p-7 w-full max-w-md animate-in fade-in zoom-in-95">
+        <h2 className="text-xl font-bold text-gray-800 mb-1">{initialData ? 'Sửa khoản lương' : 'Thêm khoản lương'}</h2>
+        <p className="text-sm text-gray-400 mb-5">{initialData ? 'Cập nhật số tiền cho khoản lương này.' : 'Gán một khoản lương mới cho nhân viên.'}</p>
         <form onSubmit={(e) => {
           e.preventDefault();
           onSave({ employeeID: employeeId, componentID: parseInt(formData.componentID), amount: parseFloat(formData.amount), effectiveDate: formData.effectiveDate });

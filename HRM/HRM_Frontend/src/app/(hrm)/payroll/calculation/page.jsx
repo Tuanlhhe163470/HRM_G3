@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Table, Button, Select, Space, Card, Typography, Tag, message } from 'antd';
 import { CalculatorOutlined, FileExcelOutlined } from '@ant-design/icons';
 import { payrollService } from '@/services/Payroll/payrollService';
+import { exportPayrollToExcel } from '@/utils/payrollExport';
 
 const { Title, Text } = Typography;
 
@@ -12,6 +13,7 @@ export default function PayrollCalculationPage() {
     const [payrolls, setPayrolls] = useState([]);
     const [loading, setLoading] = useState(false);
     const [calculating, setCalculating] = useState(false);
+    const [exporting, setExporting] = useState(false);
 
     // --- STATE TÌM KIẾM & SẮP XẾP ---
     const [searchTerm, setSearchTerm] = useState('');
@@ -59,6 +61,23 @@ export default function PayrollCalculationPage() {
             message.error("Tính lương thất bại, vui lòng kiểm tra Backend");
         } finally {
             setCalculating(false);
+        }
+    };
+
+    const handleExportExcel = async () => {
+        if (!payrolls || payrolls.length === 0) {
+            message.warning('Không có dữ liệu để xuất. Vui lòng tính lương trước!');
+            return;
+        }
+        setExporting(true);
+        try {
+            await exportPayrollToExcel(payrolls, month, year);
+            message.success(`Đã xuất Excel bảng lương tháng ${month}/${year} thành công!`);
+        } catch (err) {
+            console.error(err);
+            message.error('Xuất Excel thất bại!');
+        } finally {
+            setExporting(false);
         }
     };
 
@@ -140,7 +159,14 @@ export default function PayrollCalculationPage() {
                         <Text type="secondary">Quản lý và tính toán thu nhập dựa trên dữ liệu công thực tế</Text>
                     </div>
                     <Space>
-                        <Button icon={<FileExcelOutlined />}>Xuất Excel</Button>
+                        <Button
+                            icon={<FileExcelOutlined />}
+                            onClick={handleExportExcel}
+                            loading={exporting}
+                            style={{ borderColor: '#16a34a', color: '#16a34a' }}
+                        >
+                            Xuất Excel
+                        </Button>
                         <Button
                             type="primary"
                             icon={<CalculatorOutlined />}

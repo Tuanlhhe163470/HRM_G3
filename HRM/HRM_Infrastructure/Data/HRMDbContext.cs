@@ -48,6 +48,7 @@ namespace HRM_Infrastructure.Data
         public DbSet<SalaryComponent> SalaryComponents { get; set; }
         public DbSet<MonthlyPayrollDetail> MonthlyPayrollDetails { get; set; }
         public DbSet<EmployeeSalaryConfig> EmployeeSalaryConfigs { get; set; }
+        public DbSet<SalaryAdvance> SalaryAdvances { get; set; }
 
 
         // ================= 6. TRAINING & EVALUATION MODULE =================
