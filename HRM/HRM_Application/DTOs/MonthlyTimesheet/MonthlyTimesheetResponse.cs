@@ -21,9 +21,10 @@ namespace HRM_Application.DTOs.MonthlyTimesheet
         public decimal UnpaidLeaveDays { get; set; }
 
         public double TotalWorkingHours { get; set; }
+        public double TotalOvertimeHours { get; set; }
         public int TotalLateMinutes { get; set; }
         public int TotalEarlyLeaveMinutes { get; set; }
-
+        
         public string Status { get; set; } = string.Empty;
         public DateTime? LastCalculatedDate { get; set; }
 

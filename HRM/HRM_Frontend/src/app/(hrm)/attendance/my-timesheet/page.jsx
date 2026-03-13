@@ -194,11 +194,21 @@ export default function TimesheetPage() {
         </div>
 
         {/* STATS GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
           <div className="bg-white p-4 rounded-xl border border-blue-200 shadow-sm relative overflow-hidden">
             <p className="text-xs font-bold text-slate-500 uppercase">Giờ làm thực tế</p>
             <p className="text-2xl font-black mt-1 text-blue-600">
               {summary?.actualWorkingHours || 0} <span className="text-sm font-semibold text-blue-400">giờ</span>
+            </p>
+          </div>
+
+          <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
+            <p className="text-xs font-bold text-emerald-700 uppercase">Giờ làm thêm (OT)</p>
+            <p className="text-2xl font-black mt-1 text-emerald-600">
+              {summary?.totalOvertimeHours || 0} <span className="text-sm font-semibold text-emerald-400">giờ</span>
+            </p>
+            <p className="text-[10px] font-bold text-emerald-500 mt-1 absolute bottom-2 right-3 italic">
+              *Đã duyệt
             </p>
           </div>
 

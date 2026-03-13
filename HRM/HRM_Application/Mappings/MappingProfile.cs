@@ -8,6 +8,7 @@ using HRM_Application.DTOs.EmployeeSalaryConfig;
 using HRM_Application.DTOs.Goals;
 using HRM_Application.DTOs.LaborContract;
 using HRM_Application.DTOs.MonthlyTimesheet;
+using HRM_Application.DTOs.Overtime;
 using HRM_Application.DTOs.PayRoll;
 using HRM_Application.DTOs.Positions;
 using HRM_Application.DTOs.Recruitment;
@@ -132,6 +133,22 @@ namespace HRM_Application.Mappings
 
             CreateMap<LaborContract, DTOs.LaborContract.Responses.LaborContractResponse>()
                 .ForMember(dest => dest.Employee, opt => opt.MapFrom(src => src.Employee));
+            CreateMap<HRM_Domain.Entities.LeaveBalance, DTOs.LeaveBalance.Responses.LeaveBalanceResponse>()
+                .ForMember(dest => dest.Employee, opt => opt.MapFrom(src => src.Employee))
+                .ForMember(dest => dest.LeaveType, opt => opt.MapFrom(src => src.LeaveType));
+
+            CreateMap<HRM_Domain.Entities.LeaveType, HRM_Application.DTOs.Commons.BaseReferenceResponse>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name));
+
+            CreateMap<HRM_Domain.Entities.LeaveBalance, HRM_Application.DTOs.LeaveBalance.Responses.LeaveBalanceResponse>()
+                .ForMember(dest => dest.Employee, opt => opt.MapFrom(src => src.Employee))
+                .ForMember(dest => dest.LeaveType, opt => opt.MapFrom(src => src.LeaveType));
+
+            CreateMap<CreateOvertimeRequestDto, OvertimeRequest>();
+
+            CreateMap<OvertimeRequest, OvertimeRequestHistoryDto>()
+                .ForMember(dest => dest.EmployeeName, opt => opt.MapFrom(src => src.Employee != null ? src.Employee.FullName : "Unknown"));
         }
 
     }
