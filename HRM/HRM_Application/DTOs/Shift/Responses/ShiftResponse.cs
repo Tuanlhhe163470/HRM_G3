@@ -1,18 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace HRM_Application.DTOs.Shift.Responses
+﻿namespace HRM_Application.DTOs.Shift.Responses
 {
     public class ShiftResponse
     {
         public int Id { get; set; }
-        public string ShiftName { get; set; }
-        public string MorningStart { get; set; } // Trả về dạng "08:00"
-        public string AfternoonEnd { get; set; }
+        public string ShiftName { get; set; } = string.Empty;
+
+        public string StartTime { get; set; }
+        public string EndTime { get; set; }
+
+        public string? BreakStartTime { get; set; }
+        public string? BreakEndTime { get; set; }
+
         public int AllowedLateMinutes { get; set; }
+        public int AllowedEarlyLeaveMinutes { get; set; }
+
         public bool IsActive { get; set; }
+
+        public List<int> WorkDays { get; set; } = new List<int>();
     }
 }

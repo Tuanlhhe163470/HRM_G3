@@ -1,0 +1,83 @@
+.pageContainer {
+  display: flex;
+  flex-direction: column;
+  // Sử dụng chiều cao tối đa của vùng Content để quản lý cuộn nội bộ
+  height: 100%; 
+  background: transparent; // Đảm bảo không có nền riêng
+
+  .titleSection {
+    margin-bottom: 16px;
+    h2 {
+      color: #00aeef;
+      margin: 0;
+      font-weight: 700;
+      font-size: 22px;
+    }
+  }
+
+  .formContainer {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden; // Ngăn cuộn cả trang
+  }
+
+  .mainRow {
+    flex: 1;
+    display: flex;
+    overflow: hidden; // Ép các cột bên trong phải tự quản lý cuộn
+  }
+
+  .leftColumn {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto; // Cho phép cuộn bên trái nếu nhiều nội dung
+    padding-right: 8px;
+  }
+
+  .descriptionItem {
+    flex: 1; // Chiếm hết không gian còn lại của cột trái
+    margin-bottom: 0;
+    
+    :global(.ant-form-item-control), :global(.ant-form-item-control-input), :global(.ant-form-item-control-input-content) {
+      height: 100%;
+    }
+
+    .descriptionArea {
+      height: 100% !important;
+      min-height: 500px; // Đảm bảo diện tích tối thiểu
+      border-radius: 8px;
+      resize: none;
+      background-color: #fafafa;
+    }
+  }
+
+  .sidePanel {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #f0f0f0;
+    position: sticky; 
+    top: 0;
+
+    .infoAlert {
+      margin: 16px 0;
+      padding: 10px;
+      background-color: #e6f7ff;
+      border-radius: 8px;
+      border-left: 4px solid #00aeef;
+      font-size: 13px;
+    }
+
+    .submitBtn {
+      background-color: #00aeef;
+      border-color: #00aeef;
+      height: 44px;
+      font-weight: 600;
+      &:hover {
+        background-color: #0096ce !important;
+      }
+    }
+  }
+}

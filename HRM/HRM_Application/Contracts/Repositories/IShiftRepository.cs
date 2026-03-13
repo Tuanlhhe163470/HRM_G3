@@ -15,5 +15,8 @@ namespace HRM_Application.Contracts.Repositories
         Task AddShiftAsync(ShiftConfig shift);
         Task UpdateShiftAsync(ShiftConfig shift);
         Task DeleteShiftAsync(int id);
+
+        // Lấy ca làm việc mặc định đang hoạt động
+        Task<List<ShiftConfig>> GetActiveShiftAsync();
     }
 }

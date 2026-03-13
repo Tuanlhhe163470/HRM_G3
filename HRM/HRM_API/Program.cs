@@ -1,47 +1,101 @@
-﻿using AutoMapper;
-using HRM_Application.Contracts.Repositories;
+﻿using HRM_Application.Contracts.Repositories;
 using HRM_Application.Contracts.Services;
-using HRM_Application.Mappings;
-using HRM_Application.Services.TimeAttendance;
-using HRM_Infrastructure.Data;
+using HRM_Infrastructure.Extensions;
 using HRM_Infrastructure.Repositories.TimeAttendance;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
+using HRM_Application.Services.TimeAttendance;
+using HRM_Infrastructure.Repositories.PayRoll;
+using HRM_Application.Services.PayRoll;
+using HRM_Infrastructure.Repositories.Recruitment;
+using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.FileProviders;
+using System.Text;
+using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
+var provider = new FileExtensionContentTypeProvider();
+provider.Mappings[".pdf"] = "application/pdf"; // Ép kiểu định dạng PDF
+// 1. Cấu hình JWT Authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+    };
+});
 
+// 2. Add services to the container.
 builder.Services.AddControllers();
-
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "HRM G3 API", Version = "v1" });
 
-// 1. Kết nối DB
-builder.Services.AddDbContext<HRMDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("MyCon")));
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "Dán chuỗi Token của bạn vào đây (Ví dụ: Bearer abcxyz)",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT"
+    });
 
-// 2. Đăng ký AutoMapper
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            new string[] {}
+        }
+    });
+});
 
-// 3. Đăng ký Repository & Service
+// 3. Đăng ký Infrastructure và các Service/Repository
+builder.Services.AddInfrastructure(builder.Configuration);
+
 builder.Services.AddScoped<IShiftRepository, ShiftRepository>();
 builder.Services.AddScoped<IShiftService, ShiftService>();
+builder.Services.AddScoped<IPublicHolidayRepository, PublicHolidayRepository>();
+builder.Services.AddScoped<IPublicHolidayService, PublicHolidaysService>();
+builder.Services.AddScoped<ISalaryComponentRepository, SalaryComponentRepository>();
+builder.Services.AddScoped<ISalaryComponentService, SalaryComponentService>();
 
+// 4. Add AutoMapper
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+// 5. Cấu hình CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
-        builder =>
+        b =>
         {
-            builder.AllowAnyOrigin()    // Cho phép mọi nguồn (Frontend nào cũng gọi được)
-                   .AllowAnyMethod()    // Cho phép GET, POST, PUT, DELETE...
-                   .AllowAnyHeader();   // Cho phép mọi Header
+            b.AllowAnyOrigin()
+             .AllowAnyMethod()
+             .AllowAnyHeader()
+             .WithExposedHeaders("Content-Disposition");
         });
 });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// --- CẤU HÌNH HTTP REQUEST PIPELINE ---
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -50,33 +104,27 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapControllers();
+// 1. Kích hoạt Static Files mặc định để đọc mọi thứ trong wwwroot
 
-var summaries = new[]
+app.UseStaticFiles(new StaticFileOptions
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
-
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "wwwroot")), // Chỉ định rõ đường dẫn vật lý
+    RequestPath = "",
+    ContentTypeProvider = provider,
+    OnPrepareResponse = ctx =>
+    {
+        // Cho phép trình duyệt xem file trực tiếp thay vì tải về
+        ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "*");
+        ctx.Context.Response.Headers.Append("Content-Disposition", "inline");
+    }
+});
+// 2. Thứ tự Middleware quan trọng
 app.UseCors("AllowAll");
 
-app.Run();
+app.UseAuthentication();
+app.UseAuthorization();
 
-internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+app.MapControllers();
+
+app.Run();

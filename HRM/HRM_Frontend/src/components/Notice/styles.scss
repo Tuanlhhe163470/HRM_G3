@@ -1,0 +1,35 @@
+
+@mixin responsive($canvas) {
+  @if $canvas == "sm" {
+    @media only screen and (max-width: 576px) { @content; }
+  }
+}
+
+
+.notification-custom {
+  box-shadow: 0px 2px 16px rgba(0, 0, 0, 0.24);
+  border-radius: 8px;
+  justify-content: flex-start;
+  display: flex;
+  width: max-content;
+  max-width: 450px;
+  min-width: 320px;
+
+
+  &.success {
+    background-color: #E5F5EB;
+    border-left: 4px solid #52c41a;
+  }
+  
+  &.error {
+    background-color: #FCCED4;
+    border-left: 4px solid #ff4d4f;
+  }
+}
+
+@include responsive("sm") {
+  .notification-custom {
+    max-width: 350px;
+    min-width: 300px;
+  }
+}

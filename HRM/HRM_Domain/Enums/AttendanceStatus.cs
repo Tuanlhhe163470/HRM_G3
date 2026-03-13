@@ -12,6 +12,10 @@ namespace HRM_Domain.Enums
         Late = 2,      // Đi muộn
         EarlyLeave = 3,// Về sớm
         Absent = 4,    // Vắng mặt
-        Overtime = 5   // Làm thêm giờ
+        Overtime = 5,  // Làm thêm giờ
+        MissingCheckOut = 6, // Quên chấm công ra
+        Holiday = 7,  // Nghỉ lễ hưởng lương
+        DayOff = 8,    // Ngày nghỉ cuối tuần
+        OnLeave = 9
     }
 }

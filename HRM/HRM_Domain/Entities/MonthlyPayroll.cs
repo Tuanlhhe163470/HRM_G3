@@ -1,0 +1,64 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace HRM_Domain.Entities
+{
+    public class MonthlyPayroll
+    {
+        [Key]
+        public int PayrollID { get; set; }
+
+        public int EmployeeID { get; set; }
+        [ForeignKey("EmployeeID")]
+        public virtual Employee? Employee { get; set; }
+
+        public int TimesheetID { get; set; }
+        [ForeignKey("TimesheetID")]
+        public virtual MonthlyTimesheet? Timesheet { get; set; }
+
+        public int Month { get; set; }
+        public int Year { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal BaseSalary { get; set; }
+
+        [Column(TypeName = "decimal(5,2)")]
+        public decimal StandardWorkDays { get; set; }
+
+        [Column(TypeName = "decimal(4,1)")]
+        public decimal ActualWorkDays { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal SalaryPerDay { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalAllowance { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalDeduction { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TaxAmount { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal FinalNetSalary { get; set; }
+
+        public DateTime? PaymentDate { get; set; }
+
+        [StringLength(20)]
+        public string Status { get; set; } = "Draft";
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal AdjustmentAmount { get; set; } = 0; // Số tiền điều chỉnh thủ công
+        public string? AdjustmentReason { get; set; }    // Lý do điều chỉnh
+
+        // Cho UC: Payroll Approval
+        public int? ApprovedBy { get; set; }           // ID người duyệt
+        public DateTime? ApprovedDate { get; set; }
+    }
+}
