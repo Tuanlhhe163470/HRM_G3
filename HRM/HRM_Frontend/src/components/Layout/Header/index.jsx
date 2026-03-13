@@ -201,7 +201,7 @@ export default function Header() {
             <Link href="/leave" className="menu-item font-medium text-sm">
               NGHỈ PHÉP
             </Link>
-            <Link href="/payslip" className="menu-item font-medium text-sm">
+            <Link href="/my-payroll" className="menu-item font-medium text-sm">
               PHIẾU LƯƠNG
             </Link>
           </nav>

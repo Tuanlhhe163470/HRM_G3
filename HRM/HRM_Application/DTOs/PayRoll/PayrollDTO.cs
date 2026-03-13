@@ -27,4 +27,22 @@ namespace HRM_Application.DTOs.PayRoll
 
         public string Status { get; set; } = string.Empty;
     }
+
+    public class EmployeePayrollDetailDTO
+    {
+        public int PayrollID { get; set; }
+        public int Month { get; set; }
+        public int Year { get; set; }
+        public decimal BaseSalary { get; set; }
+        public decimal ActualWorkDays { get; set; }
+        public decimal TotalAllowance { get; set; }
+        public decimal TotalDeduction { get; set; }
+
+        // Phần minh bạch thưởng phạt
+        public decimal AdjustmentAmount { get; set; }
+        public string? AdjustmentReason { get; set; }
+
+        public decimal FinalNetSalary { get; set; }
+        public string Status { get; set; }
+    }
 }

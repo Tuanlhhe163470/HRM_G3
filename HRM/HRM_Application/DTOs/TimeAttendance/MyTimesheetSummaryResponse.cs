@@ -10,6 +10,7 @@ namespace HRM_Application.DTOs.TimeAttendance
     {
         public double ActualWorkingHours { get; set; }
         public double PaidLeaveHours { get; set; }
+        public double TotalOvertimeHours { get; set; }
 
         public int LateCount { get; set; }
         public int TotalLateMinutes { get; set; }

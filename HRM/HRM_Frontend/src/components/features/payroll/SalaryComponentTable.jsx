@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 
-// Icon Components (SVG)
+// Thành phần Icon (SVG)
 const EyeIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>);
 const EditIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>);
 const TrashIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>);
@@ -18,10 +18,10 @@ const SalaryComponentTable = ({
   onPageChange
 }) => {
   
-  // Chốt an toàn: Đảm bảo data luôn là mảng
+  // Kiểm tra dữ liệu đầu vào
   const safeData = Array.isArray(data) ? data : [];
   
-  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
   return (
@@ -61,11 +61,11 @@ const SalaryComponentTable = ({
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {item.isActive ? (
                           <span className="flex items-center text-green-600">
-                            <span className="h-2 w-2 bg-green-600 rounded-full mr-2"></span> Active
+                            <span className="h-2 w-2 bg-green-600 rounded-full mr-2"></span> Đang hoạt động
                           </span>
                         ) : (
                           <span className="flex items-center text-gray-400">
-                            <span className="h-2 w-2 bg-gray-400 rounded-full mr-2"></span> Inactive
+                            <span className="h-2 w-2 bg-gray-400 rounded-full mr-2"></span> Ngưng hoạt động
                           </span>
                         )}
                       </td>
@@ -81,7 +81,7 @@ const SalaryComponentTable = ({
                           <button 
                             onClick={() => onEdit(item)}
                             className="text-blue-600 hover:text-blue-800 transition-colors"
-                            title="Sửa"
+                            title="Chỉnh sửa"
                           >
                             <EditIcon />
                           </button>
@@ -109,7 +109,7 @@ const SalaryComponentTable = ({
         </div>
       </div>
 
-      {/* Pagination Footer */}
+      {/* Chân trang phân trang */}
       {totalItems > 0 && (
         <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 mt-2 rounded-b-lg">
           <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
@@ -125,7 +125,7 @@ const SalaryComponentTable = ({
                   disabled={currentPage === 1}
                   className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span className="sr-only">Previous</span>
+                  <span className="sr-only">Trang trước</span>
                   &larr;
                 </button>
                 
@@ -152,7 +152,7 @@ const SalaryComponentTable = ({
                   disabled={currentPage === totalPages}
                   className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span className="sr-only">Next</span>
+                  <span className="sr-only">Trang sau</span>
                   &rarr;
                 </button>
               </nav>

@@ -1,4 +1,4 @@
-﻿using HRM_Application.Contracts.Repositories;
+using HRM_Application.Contracts.Repositories;
 using HRM_Domain.Entities;
 using HRM_Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -54,6 +54,31 @@ namespace HRM_Infrastructure.PayRoll.Repositories
             }
         }
 
+        // Cộng dồn điều chỉnh (hỗ trợ nhiều lần thưởng/phạt trong 1 tháng)
+        public async Task AddAdjustmentAsync(int payrollId, decimal amount, string reason)
+        {
+            var payroll = await _context.MonthlyPayrolls.FindAsync(payrollId);
+            if (payroll != null)
+            {
+                // Cộng dồn số tiền
+                payroll.AdjustmentAmount = payroll.AdjustmentAmount + amount;
+
+                // Nối thêm lý do, phân cách bằng " | "
+                var timestamp = DateTime.Now.ToString("dd/MM HH:mm");
+                var newEntry = $"[{timestamp}] {(amount >= 0 ? "Thưởng" : "Phạt")} {Math.Abs(amount).ToString("N0")}đ: {reason}";
+                if (string.IsNullOrWhiteSpace(payroll.AdjustmentReason))
+                    payroll.AdjustmentReason = newEntry;
+                else
+                    payroll.AdjustmentReason = payroll.AdjustmentReason + " | " + newEntry;
+
+                // Tính lại NET salary
+                payroll.FinalNetSalary = (payroll.SalaryPerDay * payroll.ActualWorkDays)
+                                         + payroll.TotalAllowance - payroll.TotalDeduction
+                                         + payroll.AdjustmentAmount;
+                await _context.SaveChangesAsync();
+            }
+        }
+
         public async Task ApproveStatusAsync(int payrollId, string status, int managerId)
         {
             var payroll = await _context.MonthlyPayrolls.FindAsync(payrollId);
@@ -67,6 +92,14 @@ namespace HRM_Infrastructure.PayRoll.Repositories
                 }
                 await _context.SaveChangesAsync();
             }
+        }
+
+        // THÊM MỚI: Triển khai hàm lấy lương cá nhân
+        public async Task<MonthlyPayroll?> GetEmployeePayrollAsync(int employeeId, int month, int year)
+        {
+            return await _context.MonthlyPayrolls
+                .Include(p => p.Employee)
+                .FirstOrDefaultAsync(p => p.EmployeeID == employeeId && p.Month == month && p.Year == year);
         }
     }
 }

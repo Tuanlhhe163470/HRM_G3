@@ -57,6 +57,70 @@ namespace HRM_Infrastructure.Migrations
                     b.ToTable("Applications");
                 });
 
+            modelBuilder.Entity("HRM_Domain.Entities.AttendanceExplanation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AttendanceLogId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ExpectedCheckInTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ExpectedCheckOutTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("HRActionDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("HRAdminId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("HRNote")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime?>("ManagerActionDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ManagerId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ManagerNote")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("ProofUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AttendanceLogId");
+
+                    b.ToTable("AttendanceExplanations");
+                });
+
             modelBuilder.Entity("HRM_Domain.Entities.AttendanceLogHistory", b =>
                 {
                     b.Property<int>("HistoryID")
@@ -254,6 +318,8 @@ namespace HRM_Infrastructure.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.HasKey("DepartmentID");
+
+                    b.HasIndex("ManagerID");
 
                     b.ToTable("Departments");
                 });
@@ -529,6 +595,124 @@ namespace HRM_Infrastructure.Migrations
                     b.ToTable("LaborContracts");
                 });
 
+            modelBuilder.Entity("HRM_Domain.Entities.LeaveBalance", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("LeaveTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<double>("TotalDays")
+                        .HasColumnType("float");
+
+                    b.Property<double>("UsedDays")
+                        .HasColumnType("float");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("LeaveTypeId");
+
+                    b.ToTable("LeaveBalances");
+                });
+
+            modelBuilder.Entity("HRM_Domain.Entities.LeaveRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("HRActionDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("HRAdminId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("HRNote")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("LeaveTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ManagerActionDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ManagerId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ManagerNote")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("LeaveTypeId");
+
+                    b.ToTable("LeaveRequests");
+                });
+
+            modelBuilder.Entity("HRM_Domain.Entities.LeaveType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<bool>("IsPaidLeave")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("LeaveTypes");
+                });
+
             modelBuilder.Entity("HRM_Domain.Entities.MonthlyPayroll", b =>
                 {
                     b.Property<int>("PayrollID")
@@ -539,6 +723,18 @@ namespace HRM_Infrastructure.Migrations
 
                     b.Property<decimal>("ActualWorkDays")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("AdjustmentAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("AdjustmentReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ApprovedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ApprovedDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<decimal>("BaseSalary")
                         .HasColumnType("decimal(18,2)");
@@ -558,8 +754,8 @@ namespace HRM_Infrastructure.Migrations
                     b.Property<decimal>("SalaryPerDay")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("StandardWorkDays")
-                        .HasColumnType("int");
+                    b.Property<decimal>("StandardWorkDays")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -806,7 +1002,7 @@ namespace HRM_Infrastructure.Migrations
 
                     b.HasIndex("EmployeeID");
 
-                    b.ToTable("Payrolls");
+                    b.ToTable("Payroll");
                 });
 
             modelBuilder.Entity("HRM_Domain.Entities.PerformanceGoal", b =>
@@ -1102,6 +1298,47 @@ namespace HRM_Infrastructure.Migrations
                     b.ToTable("Roles");
                 });
 
+            modelBuilder.Entity("HRM_Domain.Entities.SalaryAdvance", b =>
+                {
+                    b.Property<int>("AdvanceID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AdvanceID"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("ApprovalDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ApprovedBy")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EmployeeID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ManagerNote")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("RequestDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("AdvanceID");
+
+                    b.HasIndex("EmployeeID");
+
+                    b.ToTable("SalaryAdvances");
+                });
+
             modelBuilder.Entity("HRM_Domain.Entities.SalaryComponent", b =>
                 {
                     b.Property<int>("ComponentID")
@@ -1216,9 +1453,64 @@ namespace HRM_Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("EmployeeId");
+
                     b.HasIndex("ShiftId");
 
                     b.ToTable("AttendanceLogs");
+                });
+
+            modelBuilder.Entity("HRM_Domain.Entities.TimeAttendance.OvertimeRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<double>("ApprovedHours")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<TimeSpan>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<int?>("HRAdminId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("HRNote")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ManagerId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ManagerNote")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("time");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.ToTable("OvertimeRequests");
                 });
 
             modelBuilder.Entity("HRM_Domain.Entities.TimeAttendance.ShiftConfig", b =>
@@ -1397,18 +1689,29 @@ namespace HRM_Infrastructure.Migrations
                     b.HasOne("HRM_Domain.Entities.Candidate", "Candidate")
                         .WithMany()
                         .HasForeignKey("CandidateID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("HRM_Domain.Entities.JobPosting", "JobPosting")
                         .WithMany()
                         .HasForeignKey("JobID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Candidate");
 
                     b.Navigation("JobPosting");
+                });
+
+            modelBuilder.Entity("HRM_Domain.Entities.AttendanceExplanation", b =>
+                {
+                    b.HasOne("HRM_Domain.Entities.TimeAttendance.AttendanceLog", "AttendanceLog")
+                        .WithMany()
+                        .HasForeignKey("AttendanceLogId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AttendanceLog");
                 });
 
             modelBuilder.Entity("HRM_Domain.Entities.AttendanceLogHistory", b =>
@@ -1461,11 +1764,22 @@ namespace HRM_Infrastructure.Migrations
                     b.Navigation("TrainingCourse");
                 });
 
+            modelBuilder.Entity("HRM_Domain.Entities.Department", b =>
+                {
+                    b.HasOne("HRM_Domain.Entities.Employee", "Manager")
+                        .WithMany()
+                        .HasForeignKey("ManagerID")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Manager");
+                });
+
             modelBuilder.Entity("HRM_Domain.Entities.Employee", b =>
                 {
                     b.HasOne("HRM_Domain.Entities.Department", "Department")
                         .WithMany()
-                        .HasForeignKey("DepartmentID");
+                        .HasForeignKey("DepartmentID")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("HRM_Domain.Entities.Employee", "Manager")
                         .WithMany()
@@ -1566,6 +1880,44 @@ namespace HRM_Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("HRM_Domain.Entities.LeaveBalance", b =>
+                {
+                    b.HasOne("HRM_Domain.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HRM_Domain.Entities.LeaveType", "LeaveType")
+                        .WithMany()
+                        .HasForeignKey("LeaveTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("LeaveType");
+                });
+
+            modelBuilder.Entity("HRM_Domain.Entities.LeaveRequest", b =>
+                {
+                    b.HasOne("HRM_Domain.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HRM_Domain.Entities.LeaveType", "LeaveType")
+                        .WithMany()
+                        .HasForeignKey("LeaveTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("LeaveType");
                 });
 
             modelBuilder.Entity("HRM_Domain.Entities.MonthlyPayroll", b =>
@@ -1733,6 +2085,17 @@ namespace HRM_Infrastructure.Migrations
                     b.Navigation("Review");
                 });
 
+            modelBuilder.Entity("HRM_Domain.Entities.SalaryAdvance", b =>
+                {
+                    b.HasOne("HRM_Domain.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+                });
+
             modelBuilder.Entity("HRM_Domain.Entities.ScreeningResult", b =>
                 {
                     b.HasOne("HRM_Domain.Entities.Application", "Application")
@@ -1746,13 +2109,32 @@ namespace HRM_Infrastructure.Migrations
 
             modelBuilder.Entity("HRM_Domain.Entities.TimeAttendance.AttendanceLog", b =>
                 {
+                    b.HasOne("HRM_Domain.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("HRM_Domain.Entities.TimeAttendance.ShiftConfig", "ShiftConfig")
                         .WithMany()
                         .HasForeignKey("ShiftId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Employee");
+
                     b.Navigation("ShiftConfig");
+                });
+
+            modelBuilder.Entity("HRM_Domain.Entities.TimeAttendance.OvertimeRequest", b =>
+                {
+                    b.HasOne("HRM_Domain.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
                 });
 
             modelBuilder.Entity("HRM_Domain.Entities.UserAccount", b =>
