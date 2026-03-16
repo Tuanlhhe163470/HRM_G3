@@ -21,7 +21,9 @@ import {
   SnippetsOutlined,
   FormOutlined,
   AuditOutlined,
-  AccountBookOutlined
+  AccountBookOutlined,
+  PieChartOutlined,
+  LineChartOutlined
 } from "@ant-design/icons";
 
 export default function SidebarHRM() {
@@ -183,40 +185,41 @@ export default function SidebarHRM() {
   const getPayrollItems = () => {
     const items = [];
 
-      // 1. SIDEBAR QUẢN LÝ (CHỈ DÀNH CHO MANAGER, HR, ADMIN)
+    // 1. SIDEBAR QUẢN LÝ (CHỈ DÀNH CHO MANAGER, HR, ADMIN)
     // Nhân viên (Employee) bình thường sẽ KHÔNG BAO GIỜ nhìn thấy mục này
     if (role !== "Employee") {
+      const manageChildren = [
+        {
+          key: "/payroll/payroll-processing",
+          label: <Link href="/payroll/payroll-processing">Xử lý bảng lương</Link>,
+          icon: <FileSearchOutlined />,
+        },
+        {
+          key: "/payroll/calculation",
+          label: <Link href="/payroll/calculation">Tính lương tự động</Link>,
+          icon: <CalculatorFilled />,
+        },
+        {
+          key: "/payroll", 
+          label: <Link href="/payroll">Cấu hình lương</Link>,
+          icon: <SettingOutlined />,
+        },
+        {
+          key: "/advance-approvals",
+          label: <Link href="/advance-approvals">Duyệt ứng lương</Link>,
+          icon: <AuditOutlined />,
+        },
+      ];
+
       items.push({
         key: "sub-manage-payroll",
         label: <span className="font-bold text-[13px] uppercase tracking-tight">Quản lý Hệ thống</span>,
         icon: <SettingOutlined />,
-        children: [
-          {
-            key: "/payroll/payroll-processing",
-            label: <Link href="/payroll/payroll-processing">Xử lý bảng lương</Link>,
-            icon: <FileSearchOutlined />,
-          },
-          {
-            key: "/payroll/calculation",
-            label: <Link href="/payroll/calculation">Tính lương tự động</Link>,
-            icon: <CalculatorFilled />,
-          },
-          {
-            key: "/payroll", 
-            label: <Link href="/payroll">Cấu hình lương</Link>,
-            icon: <SettingOutlined />,
-          },
-          {
-            key: "/advance-approvals",
-            label: <Link href="/advance-approvals">Duyệt ứng lương</Link>,
-            icon: <AuditOutlined />,
-          },
-        ]
+        children: manageChildren
       });
     }
 
     // 2. SIDEBAR CÁ NHÂN (AI ĐĂNG NHẬP VÀO CŨNG SẼ THẤY PHẦN NÀY)
-    // Cả Manager và Employee đều cần xem Phiếu lương và Ứng lương của chính mình
     items.push({
       key: "sub-my-payroll",
       label: <span className="font-bold text-[13px] uppercase tracking-tight">Lương & Tạm ứng</span>,
@@ -240,9 +243,32 @@ export default function SidebarHRM() {
       ],
     });
 
+    // 👉 THỐNG KÊ THU NHẬP CÁ NHÂN (Ngay dưới Lương & Tạm ứng, ngang hàng)
+    items.push({
+      key: "/my-payroll/analytics",
+      label: (
+        <Link href="/my-payroll/analytics">
+          <span className="font-bold text-[13px] uppercase tracking-tight">Thống kê thu nhập</span>
+        </Link>
+      ),
+      icon: <LineChartOutlined />,
+    });
+
+    // 3. MỤC PHÂN TÍCH (CHỈ DÀNH CHO MANAGER VÀ ADMIN) - NGANG HÀNG
+    if (role === "Manager" || role === "Admin") {
+      items.push({
+        key: "/payroll/analytics",
+        label: (
+          <Link href="/payroll/analytics">
+            <span className="font-bold text-[13px] uppercase tracking-tight">Phân tích chi phí</span>
+          </Link>
+        ),
+        icon: <PieChartOutlined />,
+      });
+    }
+
     return items;
   };
-
   // --- MODULE ĐÀO TẠO & ĐÁNH GIÁ ---
   const getEvaluationItems = () => {
     return [

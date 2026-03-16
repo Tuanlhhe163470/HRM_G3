@@ -23,6 +23,8 @@ namespace HRM_Infrastructure.PayRoll.Repositories
 
             if (existing != null)
             {
+                // Assign the existing ID to the new object so EF Core doesn't think the PK is being changed to 0
+                payroll.PayrollID = existing.PayrollID;
                 _context.Entry(existing).CurrentValues.SetValues(payroll);
             }
             else
@@ -36,6 +38,7 @@ namespace HRM_Infrastructure.PayRoll.Repositories
         {
             var query = _context.MonthlyPayrolls
                 .Include(p => p.Employee)
+                    .ThenInclude(e => e.Department) // Include Department to extract DepartmentName for Analytics
                 .Where(p => p.Month == month && p.Year == year);
 
             if (userRole == "Manager")

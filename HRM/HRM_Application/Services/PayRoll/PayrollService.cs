@@ -104,7 +104,22 @@ namespace HRM_Application.Services.PayRoll
         public async Task<IEnumerable<PayrollDTO>> GetPayrollByMonthAsync(int month, int year, int userId, string userRole)
         {
             var data = await _payrollRepo.GetMonthlyPayrollAsync(month, year, userId, userRole);
-            return _mapper.Map<IEnumerable<PayrollDTO>>(data);
+            var dtos = _mapper.Map<List<PayrollDTO>>(data);
+
+            // 👉 ĐÃ THÊM: Gán tay DepartmentName và FullName để gửi sang Frontend (Dashboard)
+            var dataList = data.ToList();
+            for (int i = 0; i < dtos.Count; i++)
+            {
+                dtos[i].DepartmentName = dataList[i].Employee?.Department?.DepartmentName;
+
+                // Đảm bảo FullName luôn có phòng trường hợp AutoMapper trượt
+                if (string.IsNullOrEmpty(dtos[i].FullName))
+                {
+                    dtos[i].FullName = dataList[i].Employee?.FullName ?? "";
+                }
+            }
+
+            return dtos;
         }
 
         private async Task CheckPayrollAdjustmentAllowedAsync(int payrollId, int managerId)
@@ -115,7 +130,7 @@ namespace HRM_Application.Services.PayRoll
             if (manager == null || payroll == null) throw new KeyNotFoundException("Không tìm thấy dữ liệu.");
 
             var employee = await _employeeRepo.GetEmployeeByIdAsync(payroll.EmployeeID);
-            
+
             if (employee == null || manager.DepartmentID != employee.DepartmentID)
             {
                 throw new UnauthorizedAccessException("Bạn chỉ có thể thao tác với bảng lương của nhân viên thuộc bộ phận của mình.");
@@ -151,7 +166,7 @@ namespace HRM_Application.Services.PayRoll
             if (manager == null || payroll == null) throw new KeyNotFoundException("Không tìm thấy dữ liệu.");
 
             var employee = await _employeeRepo.GetEmployeeByIdAsync(payroll.EmployeeID);
-            
+
             if (employee == null || manager.DepartmentID != employee.DepartmentID)
             {
                 throw new UnauthorizedAccessException("Bạn chỉ có thể thao tác với bảng lương của nhân viên thuộc bộ phận của mình.");
@@ -162,7 +177,6 @@ namespace HRM_Application.Services.PayRoll
             return true;
         }
 
-        // ĐÃ SỬA: Trả về PayrollDTO và ép ToUpper() khi kiểm tra status
         public async Task<PayrollDTO?> GetPersonalPayrollAsync(int employeeId, int month, int year)
         {
             var payroll = await _payrollRepo.GetEmployeePayrollAsync(employeeId, month, year);
@@ -176,7 +190,47 @@ namespace HRM_Application.Services.PayRoll
                 return null;
             }
 
-            return _mapper.Map<PayrollDTO>(payroll);
+            var dto = _mapper.Map<PayrollDTO>(payroll);
+
+            // 👉 ĐÃ THÊM: Gán tay cho phiếu lương cá nhân
+            dto.DepartmentName = payroll.Employee?.Department?.DepartmentName;
+            if (string.IsNullOrEmpty(dto.FullName))
+            {
+                dto.FullName = payroll.Employee?.FullName ?? "";
+            }
+
+            // Truy vấn thêm dữ liệu OT và Ứng lương để chi tiết hóa phiếu lương
+            var approvedAdvances = await _advanceRepo.GetApprovedAdvancesByMonthAsync(month, year);
+            dto.AdvanceDeduction = approvedAdvances.Where(a => a.EmployeeID == employeeId).Sum(a => a.Amount);
+
+            var approvedOTs = await _otRepo.GetApprovedOTByMonthAsync(month, year);
+            var empOTs = approvedOTs.Where(o => o.EmployeeId == employeeId).ToList();
+            dto.OTHours = (decimal)empOTs.Sum(o => o.ApprovedHours);
+
+            // Tính tiền OT
+            if (payroll.StandardWorkDays > 0)
+            {
+                decimal salaryPerDay = payroll.BaseSalary / payroll.StandardWorkDays;
+                decimal hourlyRate = salaryPerDay / 8m;
+                dto.OTPay = hourlyRate * 1.5m * dto.OTHours;
+            }
+
+            dto.PaidLeaveDays = payroll.Timesheet?.PaidLeaveDays ?? 0;
+
+            // Truy vấn chi tiết cấu hình lương để hiển thị minh bạch từng khoản
+            var configs = await _configRepo.GetByEmployeeIdAsync(employeeId);
+
+            dto.Allowances = configs
+                .Where(c => c.SalaryComponent != null && c.SalaryComponent.Type == "Income" && c.SalaryComponent.ComponentName != "Base Salary")
+                .Select(c => new SalaryComponentDetailDTO { ComponentName = c.SalaryComponent.ComponentName, Amount = c.Amount })
+                .ToList();
+
+            dto.Deductions = configs
+                .Where(c => c.SalaryComponent != null && c.SalaryComponent.Type == "Deduction")
+                .Select(c => new SalaryComponentDetailDTO { ComponentName = c.SalaryComponent.ComponentName, Amount = c.Amount })
+                .ToList();
+
+            return dto;
         }
     }
 }

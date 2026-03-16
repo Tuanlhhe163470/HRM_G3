@@ -38,9 +38,27 @@ export default function MyPayrollTable({ data, loading, employeeName }) {
     const standardDays = data.standardWorkDays || 20;
     const actualDays = data.actualWorkDays || 0;
     const paidLeaves = data.paidLeaveDays || 0;
-    const unpaidLeaves = data.unpaidLeaveDays || 0;
+    // backend ActualWorkDays đã bao gồm paidLeaves, nên số ngày đi làm THỰC SỰ là:
+    const actualWorkedOnly = actualDays - paidLeaves;
+    const unpaidLeaves = (standardDays - actualDays > 0) ? (standardDays - actualDays) : 0;
     const adjustment = data.adjustmentAmount || 0;
     const reason = data.adjustmentReason || '';
+
+    const otHours = data.otHours || 0;
+    const otPay = data.otPay || 0;
+    const advanceDeduction = data.advanceDeduction || 0;
+
+    // Tính toán lại Lương cơ bản theo ngày công thực tế và ngày công có lương
+    const salaryPerDay = standardDays > 0 ? (data.baseSalary / standardDays) : 0;
+    const actualWorkPay = salaryPerDay * actualWorkedOnly;
+    const paidLeavePay = salaryPerDay * paidLeaves;
+
+    // Tách riêng các phụ cấp/khấu trừ để không bị cộng gộp 2 lần
+    const otherAllowances = (data.totalAllowance || 0) - otPay;
+    const otherDeductions = (data.totalDeduction || 0) - advanceDeduction;
+
+    const totalEarnings = actualWorkPay + paidLeavePay + (data.totalAllowance || 0);
+    const totalDeductions = data.totalDeduction || 0;
 
     return (
         <div className="flex flex-col md:flex-row gap-6 items-start">
@@ -126,35 +144,106 @@ export default function MyPayrollTable({ data, loading, employeeName }) {
                 <div className="space-y-8">
                     {/* Phần Thu Nhập */}
                     <div>
-                        <h4 className="text-sm font-black uppercase tracking-widest text-gray-800 mb-4 border-b border-gray-100 pb-2">I. THU NHẬP (EARNINGS)</h4>
-                        <div className="space-y-3 px-2">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Lương cơ bản (Theo hợp đồng)</span>
-                                <span className="font-mono font-medium text-gray-900">{(data.baseSalary || 0).toLocaleString()} đ</span>
+                        <div className="flex items-center gap-3 mb-4 border-b border-gray-100 pb-2">
+                            <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                             </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Tổng phụ cấp (Cố định & Biến đổi)</span>
-                                <span className="font-mono font-medium text-gray-900">{(data.totalAllowance || 0).toLocaleString()} đ</span>
-                            </div>
+                            <h4 className="text-sm font-black uppercase tracking-widest text-gray-800">I. THU NHẬP (EARNINGS)</h4>
                         </div>
-                        <div className="flex justify-between text-sm mt-4 p-3 bg-gray-50 rounded-lg">
-                            <span className="font-bold text-gray-800 uppercase">TỔNG THU NHẬP</span>
-                            <span className="font-black font-mono text-gray-900">{((data.baseSalary || 0) + (data.totalAllowance || 0)).toLocaleString()} đ</span>
+                        <div className="space-y-3 px-2">
+                            <div className="flex justify-between text-sm py-1 border-b border-gray-50 border-dashed">
+                                <span className="text-gray-600 flex flex-col">
+                                    <span>Lương cơ bản (Theo Hợp đồng)</span>
+                                    <span className="text-xs text-gray-400">({(data.baseSalary || 0).toLocaleString()} đ / {standardDays} ngày)</span>
+                                </span>
+                            </div>
+                            
+                            <div className="flex justify-between text-sm py-1 border-b border-gray-50 border-dashed">
+                                <span className="text-gray-600">Thù lao Ngày đi làm thực tế ({actualWorkedOnly} ngày)</span>
+                                <span className="font-mono font-medium text-gray-900">{actualWorkPay.toLocaleString(undefined, { maximumFractionDigits: 0 })} đ</span>
+                            </div>
+
+                            {paidLeavePay > 0 && (
+                                <div className="flex justify-between text-sm py-1 border-b border-gray-50 border-dashed">
+                                    <span className="text-gray-600 text-green-700 font-medium">Thù lao Nghỉ phép có lương ({paidLeaves} ngày)</span>
+                                    <span className="font-mono font-medium text-green-700">{paidLeavePay.toLocaleString(undefined, { maximumFractionDigits: 0 })} đ</span>
+                                </div>
+                            )}
+                            
+                            {/* Hiển thị số giờ và thu nhập OT */}
+                            {otPay > 0 && (
+                                <div className="flex justify-between text-sm py-1 border-b border-gray-50 border-dashed">
+                                    <span className="text-gray-600 flex items-center gap-2">
+                                        Thù lao Làm thêm giờ (OT)
+                                        <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">{otHours} giờ</span>
+                                    </span>
+                                    <span className="font-mono font-medium text-gray-900">{otPay.toLocaleString(undefined, { maximumFractionDigits: 0 })} đ</span>
+                                </div>
+                            )}
+
+                            {/* Render các khoản phụ cấp chi tiết */}
+                            {data.allowances && data.allowances.length > 0 && data.allowances.map((allowance, index) => (
+                                <div key={index} className="flex justify-between text-sm py-1 border-b border-gray-50 border-dashed">
+                                    <span className="text-gray-600">{allowance.componentName}</span>
+                                    <span className="font-mono font-medium text-gray-900">{(allowance.amount || 0).toLocaleString()} đ</span>
+                                </div>
+                            ))}
+
+                            {/* Render dự phòng nếu không có danh sách chi tiết nhưng vẫn có OtherAllowances */}
+                            {(!data.allowances || data.allowances.length === 0) && otherAllowances > 0 && (
+                                <div className="flex justify-between text-sm py-1 border-b border-gray-50 border-dashed">
+                                    <span className="text-gray-600">Phụ cấp & Thưởng khác</span>
+                                    <span className="font-mono font-medium text-gray-900">{(otherAllowances).toLocaleString(undefined, { maximumFractionDigits: 0 })} đ</span>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex justify-between text-sm mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl">
+                            <span className="font-bold text-blue-900 uppercase">THU NHẬP TRƯỚC GIẢM TRỪ</span>
+                            <span className="font-black font-mono text-blue-900">{totalEarnings.toLocaleString(undefined, { maximumFractionDigits: 0 })} đ</span>
                         </div>
                     </div>
 
                     {/* Phần Khấu Trừ */}
                     <div>
-                        <h4 className="text-sm font-black uppercase tracking-widest text-gray-800 mb-4 border-b border-gray-100 pb-2">II. KHẤU TRỪ (DEDUCTIONS)</h4>
-                        <div className="space-y-3 px-2">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Khấu trừ bảo hiểm / Thuế</span>
-                                <span className="font-mono font-medium text-gray-900">{(data.totalDeduction || 0).toLocaleString()} đ</span>
+                        <div className="flex items-center gap-3 mb-4 border-b border-gray-100 pb-2">
+                            <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-500">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 12H6"></path></svg>
                             </div>
+                            <h4 className="text-sm font-black uppercase tracking-widest text-gray-800">II. KHẤU TRỪ (DEDUCTIONS)</h4>
                         </div>
-                        <div className="flex justify-between text-sm mt-4 p-3 bg-gray-50 rounded-lg">
-                            <span className="font-bold text-gray-800 uppercase">TỔNG KHẤU TRỪ</span>
-                            <span className="font-black font-mono text-red-600">{(data.totalDeduction || 0).toLocaleString()} đ</span>
+                        <div className="space-y-3 px-2">
+                            {/* Render các khoản khấu trừ chi tiết */}
+                            {data.deductions && data.deductions.length > 0 && data.deductions.map((deduction, index) => (
+                                <div key={index} className="flex justify-between text-sm py-1 border-b border-gray-50 border-dashed">
+                                    <span className="text-gray-600">{deduction.componentName}</span>
+                                    <span className="font-mono font-medium text-gray-900">{(deduction.amount || 0).toLocaleString()} đ</span>
+                                </div>
+                            ))}
+
+                            {/* Render dự phòng nếu không có danh sách chi tiết nhưng vẫn có OtherDeductions */}
+                            {(!data.deductions || data.deductions.length === 0) && otherDeductions > 0 && (
+                                <div className="flex justify-between text-sm py-1 border-b border-gray-50 border-dashed">
+                                    <span className="text-gray-600">Khấu trừ Bảo hiểm / Thuế cá nhân</span>
+                                    <span className="font-mono font-medium text-gray-900">{otherDeductions.toLocaleString(undefined, { maximumFractionDigits: 0 })} đ</span>
+                                </div>
+                            )}
+                            
+                            {/* Hiển thị khoản ứng lương đã trừ */}
+                            {advanceDeduction > 0 && (
+                                <div className="flex justify-between text-sm py-1 border-b border-gray-50 border-dashed">
+                                    <span className="text-gray-600 font-medium whitespace-nowrap">Khấu trừ tiền Ứng khoán (Tạm ứng)</span>
+                                    <span className="font-mono font-medium text-red-600 flex gap-1">
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                      </svg>
+                                      {advanceDeduction.toLocaleString(undefined, { maximumFractionDigits: 0 })} đ
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex justify-between text-sm mt-4 p-4 bg-gradient-to-r from-red-50 to-orange-50 rounded-xl">
+                            <span className="font-bold text-red-900 uppercase">TỔNG KHẤU TRỪ</span>
+                            <span className="font-black font-mono text-red-800">{totalDeductions.toLocaleString(undefined, { maximumFractionDigits: 0 })} đ</span>
                         </div>
                     </div>
 
