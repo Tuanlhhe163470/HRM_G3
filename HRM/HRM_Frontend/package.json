@@ -14,10 +14,11 @@
     "antd": "^6.2.2",
     "axios": "^1.13.5",
     "crypto-js": "^4.2.0",
+    "html2canvas": "^1.4.1",
     "js-cookie": "^3.0.5",
     "js-cookies": "^1.0.4",
-    "jspdf": "^4.2.0",
-    "jspdf-autotable": "^5.0.7",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.8.2",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -27,6 +28,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@fontsource/roboto": "^5.2.10",
     "@tailwindcss/postcss": "^4.1.18",
     "autoprefixer": "^10.4.24",
     "eslint": "^9",

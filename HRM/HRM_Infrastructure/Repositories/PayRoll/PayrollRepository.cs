@@ -32,12 +32,27 @@ namespace HRM_Infrastructure.PayRoll.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<IEnumerable<MonthlyPayroll>> GetMonthlyPayrollAsync(int month, int year)
+        public async Task<IEnumerable<MonthlyPayroll>> GetMonthlyPayrollAsync(int month, int year, int userId, string userRole)
         {
-            return await _context.MonthlyPayrolls
+            var query = _context.MonthlyPayrolls
                 .Include(p => p.Employee)
-                .Where(p => p.Month == month && p.Year == year)
-                .ToListAsync();
+                .Where(p => p.Month == month && p.Year == year);
+
+            if (userRole == "Manager")
+            {
+                var manager = await _context.Employees.FindAsync(userId);
+                if (manager != null)
+                {
+                    query = query.Where(p => p.Employee.DepartmentID == manager.DepartmentID);
+                }
+            }
+
+            return await query.ToListAsync();
+        }
+
+        public async Task<MonthlyPayroll?> GetByIdAsync(int id)
+        {
+            return await _context.MonthlyPayrolls.FindAsync(id);
         }
 
         public async Task UpdateAdjustmentAsync(int payrollId, decimal amount, string reason)
