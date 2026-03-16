@@ -1,0 +1,102 @@
+using AutoMapper;
+using HRM_Application.Contracts.Repositories;
+using HRM_Application.Contracts.Services;
+using HRM_Application.DTOs.PayRoll;
+using HRM_Domain.Entities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace HRM_Application.Services.PayRoll
+{
+    public class SalaryAdvanceService : ISalaryAdvanceService
+    {
+        private readonly ISalaryAdvanceRepository _repo;
+        private readonly IMapper _mapper;
+
+        public SalaryAdvanceService(ISalaryAdvanceRepository repo, IMapper mapper)
+        {
+            _repo = repo;
+            _mapper = mapper;
+        }
+
+        public async Task<bool> RequestAdvanceAsync(int employeeId, CreateSalaryAdvanceDTO dto)
+        {
+            // Logic nghiệp vụ: Số tiền ứng phải lớn hơn 0
+            if (dto.Amount <= 0) return false;
+
+            var advanceRequest = new SalaryAdvance
+            {
+                EmployeeID = employeeId,
+                Amount = dto.Amount,
+                Reason = dto.Reason,
+                RequestDate = DateTime.Now,
+                Status = "PENDING" // Đơn mới luôn ở trạng thái chờ duyệt
+            };
+
+            await _repo.CreateAdvanceRequestAsync(advanceRequest);
+            return true;
+        }
+
+        public async Task<IEnumerable<SalaryAdvanceDTO>> GetMyAdvanceHistoryAsync(int employeeId)
+        {
+            var history = await _repo.GetByEmployeeIdAsync(employeeId);
+
+            // Nhớ thêm CreateMap<SalaryAdvance, SalaryAdvanceDTO>(); vào file Profile của AutoMapper nhé!
+            return _mapper.Map<IEnumerable<SalaryAdvanceDTO>>(history);
+        }
+
+        public async Task<IEnumerable<ManagerAdvanceDTO>> GetPendingRequestsAsync()
+        {
+            var pendingList = await _repo.GetPendingAdvancesAsync();
+
+            return pendingList.Select(sa => new ManagerAdvanceDTO
+            {
+                AdvanceID = sa.AdvanceID,
+                EmployeeName = sa.Employee?.FullName ?? "Unknown",
+                Amount = sa.Amount,
+                Reason = sa.Reason,
+                RequestDate = sa.RequestDate,
+                Status = sa.Status,
+                ManagerNote = sa.ManagerNote,
+                ApprovalDate = sa.ApprovalDate
+            });
+        }
+
+        public async Task<IEnumerable<ManagerAdvanceDTO>> GetAllAdvancesAsync()
+        {
+            var allList = await _repo.GetAllAdvancesAsync();
+
+            return allList.Select(sa => new ManagerAdvanceDTO
+            {
+                AdvanceID = sa.AdvanceID,
+                EmployeeName = sa.Employee?.FullName ?? "Unknown",
+                Amount = sa.Amount,
+                Reason = sa.Reason,
+                RequestDate = sa.RequestDate,
+                Status = sa.Status,
+                ManagerNote = sa.ManagerNote,
+                ApprovalDate = sa.ApprovalDate
+            });
+        }
+
+        public async Task<bool> ProcessAdvanceRequestAsync(int advanceId, ProcessAdvanceRequestDTO request, int managerId)
+        {
+            var advance = await _repo.GetAdvanceByIdAsync(advanceId);
+
+            // Nếu không tìm thấy đơn hoặc đơn đã được duyệt/từ chối rồi thì bỏ qua
+            if (advance == null || advance.Status != "PENDING") return false;
+
+            // Cập nhật trạng thái
+            advance.Status = request.IsApproved ? "APPROVED" : "REJECTED";
+            advance.ManagerNote = request.ManagerNote;
+            advance.ApprovedBy = managerId;
+            advance.ApprovalDate = DateTime.Now;
+
+            await _repo.UpdateAdvanceAsync(advance);
+            return true;
+        }
+    }
+}

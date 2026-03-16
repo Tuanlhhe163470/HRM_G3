@@ -1,5 +1,5 @@
 'use client';
-import { Table, Button, Modal, InputNumber, Input, message, Space, Tag, Tabs, Select } from 'antd';
+import { Table, Button, Modal, message, Space, Tag, Select, Input } from 'antd';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { payrollService } from '@/services/Payroll/payrollService';
@@ -9,12 +9,6 @@ export default function PayrollProcessingPage() {
   const [messageApi, contextHolder] = message.useMessage();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  // State cho Modal điều chỉnh
-  const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState(null);
-  const [adjustAmount, setAdjustAmount] = useState(0);
-  const [adjustReason, setAdjustReason] = useState('');
 
   // State cho Tìm kiếm và Sắp xếp
   const [searchTerm, setSearchTerm] = useState('');
@@ -61,16 +55,9 @@ export default function PayrollProcessingPage() {
     router.push(`/payroll/employee-salary/${employeeId}`);
   };
 
-  // 3. Xử lý Review điều chỉnh (HR)
-  const handleAdjust = async () => {
-    try {
-      await payrollService.adjustPayroll(selectedRecord.payrollID, adjustAmount, adjustReason);
-      messageApi.success("Đã cập nhật điều chỉnh thành công");
-      setIsAdjustModalOpen(false);
-      fetchPayroll();
-    } catch (err) {
-      messageApi.error("Lỗi khi điều chỉnh lương");
-    }
+  // 3. Điều hướng sang trang Điều chỉnh lương
+  const handleReview = (employeeId) => {
+    router.push(`/payroll/adjustment?employeeId=${employeeId}`);
   };
 
   // 4. Xử lý Phê duyệt (Manager)
@@ -132,12 +119,9 @@ export default function PayrollProcessingPage() {
           {/* Nút từ file cũ của bạn */}
           <Button size="small" onClick={() => handleSetupSalary(record.employeeID)}>Cấu hình</Button>
 
-          <Button size="small" type="dashed" onClick={() => {
-            setSelectedRecord(record);
-            setAdjustAmount(record.adjustmentAmount || 0);
-            setAdjustReason(record.adjustmentReason || '');
-            setIsAdjustModalOpen(true);
-          }}>Review</Button>
+          <Button size="small" type="dashed" onClick={() => handleReview(record.employeeID)}>
+            ✎ Điều chỉnh
+          </Button>
 
           {/* CHỈ BẬT HIỂN THỊ NÚT CHO MANAGER, ADMIN VÀ STATUS DRAFT */}
           {record.status === 'Draft' && (userRole === 'Manager' || userRole === 'Admin') && (
@@ -200,34 +184,6 @@ export default function PayrollProcessingPage() {
           pagination={{ pageSize: 10 }}
         />
 
-        {/* Modal điều chỉnh lương (UC Review) */}
-        <Modal
-          title="Điều chỉnh lương thủ công (Thưởng/Phạt)"
-          open={isAdjustModalOpen}
-          onOk={handleAdjust}
-          onCancel={() => setIsAdjustModalOpen(false)}
-          destroyOnHidden
-        >
-          <div style={{ marginBottom: 16 }}>
-            <p>Nhân viên: <b>{selectedRecord?.fullName}</b></p>
-            <label>Số tiền (Dương là Thưởng, Âm là Phạt):</label>
-            <InputNumber
-              style={{ width: '100%' }}
-              formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              value={adjustAmount}
-              onChange={setAdjustAmount}
-            />
-          </div>
-          <div>
-            <label>Lý do:</label>
-            <Input.TextArea
-              rows={3}
-              value={adjustReason}
-              onChange={(e) => setAdjustReason(e.target.value)}
-              placeholder="Nhập lý do điều chỉnh..."
-            />
-          </div>
-        </Modal>
       </div>
     </div>
   );

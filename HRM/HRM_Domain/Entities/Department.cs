@@ -16,6 +16,7 @@ namespace HRM_Domain.Entities
         public string DepartmentName { get; set; } = string.Empty;
 
         public int? ManagerID { get; set; } // Link to Employee later via FluentAPI to avoid cycle
+        public virtual Employee? Manager { get; set; }
 
         [StringLength(20)]
         public string? Phone { get; set; }

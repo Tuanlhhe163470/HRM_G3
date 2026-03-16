@@ -1,48 +1,69 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Table, Button, Modal, Form, Select, DatePicker, Input, message, Tag } from "antd";
-import { PlusOutlined, CalendarOutlined, CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
-import leaveService from "@/services/TimeAndAttendance/attendanceService";
+import React, { useState, useEffect, useCallback } from "react";
+// Đã xóa 'message' vì chúng ta dùng custom notice
+import { Table, Button, Modal, Form, Select, DatePicker, Input, Tag } from "antd";
+import { 
+  PlusOutlined, 
+  CalendarOutlined, 
+  CheckCircleOutlined, 
+  ClockCircleOutlined, 
+  CloseCircleOutlined 
+} from "@ant-design/icons";
 import dayjs from "dayjs";
 
+import leaveService from "@/services/TimeAndAttendance/attendanceService";
+import useNotice from '@/components/Notice';
+
 export default function LeaveRequestPage() {
-  // --- STATES ---
+  const notice = useNotice();
+
+  /**
+   * ==========================================
+   * 1. STATE MANAGEMENT
+   * ==========================================
+   */
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   
+  // Dữ liệu hiển thị (Read-only từ Server)
   const [leaveBalances, setLeaveBalances] = useState([]);
   const [leaveTypes, setLeaveTypes] = useState([]);
-  const [leaveHistory, setLeaveHistory] = useState([]); // Chứa lịch sử đơn đã nộp
+  const [leaveHistory, setLeaveHistory] = useState([]); 
   
+  // Quản lý UI Form
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [form] = Form.useForm();
+  const [form] = Form.useForm(); // Hook của Antd để quản lý state Form không cần qua useState
 
-  // --- FETCH DATA ---
-  const fetchInitialData = async () => {
+  /**
+   * ==========================================
+   * 2. DATA INITIALIZATION
+   * Fetch các Master Data và lịch sử để build giao diện.
+   * Dùng useCallback để hàm này ổn định khi cho vào dependency của useEffect.
+   * ==========================================
+   */
+const fetchInitialData = async () => {
     setLoading(true);
     try {
       const currentYear = new Date().getFullYear();
       
-      // 1. Lấy danh mục loại phép
-      const typesRes = await leaveService.getLeaveTypes();
-      const typesData = Array.isArray(typesRes) ? typesRes : (typesRes?.data || []);
-      setLeaveTypes(typesData);
-
-      // 2. Lấy số dư phép năm
-      const balRes = await leaveService.getMyBalances(currentYear);
-      const balData = Array.isArray(balRes) ? balRes : (balRes?.data || []);
-      setLeaveBalances(balData);
-
-      // 3. Lấy lịch sử nộp đơn (Tạm thời để mảng rỗng chờ viết API)
-      // 3. Lấy lịch sử nộp đơn
-      const historyRes = await leaveService.getMyLeaveRequests();
-      const historyData = Array.isArray(historyRes) ? historyRes : (historyRes?.data || []);
-      setLeaveHistory(historyData);
+      const [typesRes, balRes, historyRes] = await Promise.all([
+        leaveService.getLeaveTypes(),
+        leaveService.getMyBalances(currentYear),
+        leaveService.getMyLeaveRequests()
+      ]);
+      
+      setLeaveTypes(Array.isArray(typesRes) ? typesRes : (typesRes?.data || []));
+      setLeaveBalances(Array.isArray(balRes) ? balRes : (balRes?.data || []));
+      setLeaveHistory(Array.isArray(historyRes) ? historyRes : (historyRes?.data || []));
             
     } catch (error) {
-      console.error("Lỗi tải dữ liệu Nghỉ phép:", error);
-      message.error("Không thể tải dữ liệu. Vui lòng thử lại sau.");
+      console.error("[LeaveRequestPage] Fetch initial data error:", error);
+      notice({
+        msg: "Lỗi tải dữ liệu",
+        desc: "Không thể tải dữ liệu nghỉ phép. Vui lòng tải lại trang hoặc thử lại sau.",
+        isSuccess: false
+      });
     } finally {
       setLoading(false);
     }
@@ -52,10 +73,17 @@ export default function LeaveRequestPage() {
     fetchInitialData();
   }, []);
 
-  // --- XỬ LÝ NỘP ĐƠN ---
+  /**
+   * ==========================================
+   * 3. FORM SUBMISSION HANDLER
+   * ==========================================
+   * Antd Form đã tự động validate 'required' trước khi gọi hàm này.
+   * Tham số 'values' chứa toàn bộ dữ liệu form đã vượt qua bước kiểm duyệt.
+   */
   const handleSubmit = async (values) => {
     setSubmitting(true);
     try {
+      // Chuẩn hóa format Date cho Backend (ISO 8601 hoặc yyyy-MM-ddTHH:mm:ss)
       const payload = {
         leaveTypeId: values.leaveTypeId,
         startDate: dayjs(values.dateRange[0]).format("YYYY-MM-DDTHH:mm:ss"),
@@ -65,21 +93,34 @@ export default function LeaveRequestPage() {
 
       await leaveService.submitLeaveRequest(payload);
       
-      message.success("Đã nộp đơn xin nghỉ phép thành công! Đang chờ duyệt.");
-      setIsModalOpen(false);
-      form.resetFields();
+      notice({
+        msg: "Gửi đơn thành công",
+        desc: "Đơn xin nghỉ phép của bạn đã được gửi và đang chờ Quản lý phê duyệt.",
+        isSuccess: true
+      });
       
-      // Tải lại dữ liệu sau khi nộp
+      // Cleanup UI
+      setIsModalOpen(false);
+      form.resetFields(); // Reset form về rỗng cho lần nộp tiếp theo
+      
+      // Background Refresh: Nạp lại lịch sử và số dư phép ngầm bên dưới
       fetchInitialData();
     } catch (error) {
-      const errorMsg = error.response?.data?.Message || "Có lỗi xảy ra khi nộp đơn!";
-      message.error(errorMsg);
+      notice({
+        msg: "Gửi đơn thất bại",
+        desc: error.response?.data?.Message || "Có lỗi xảy ra khi nộp đơn, vui lòng kiểm tra lại!",
+        isSuccess: false
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
-  // --- CẤU HÌNH BẢNG LỊCH SỬ (Ant Design Table) ---
+  /**
+   * ==========================================
+   * 4. TABLE COLUMNS CONFIGURATION
+   * ==========================================
+   */
   const columns = [
     {
       title: "LOẠI PHÉP",
@@ -101,6 +142,7 @@ export default function LeaveRequestPage() {
       title: "LÝ DO",
       dataIndex: "reason",
       key: "reason",
+      // UI Trick: Dùng line-clamp để text dài không làm vỡ bảng, người dùng có thể hover vào hoặc click xem chi tiết (nếu sau này phát triển thêm Modal View)
       render: (text) => <span className="text-slate-500 italic line-clamp-2 max-w-xs">{text}</span>,
     },
     {
@@ -108,7 +150,7 @@ export default function LeaveRequestPage() {
       dataIndex: "status",
       key: "status",
       render: (status) => {
-        // Ánh xạ trạng thái dựa theo Enum của bạn
+        // Ánh xạ trạng thái dựa theo Enum từ Backend
         if (status === 1 || status === 2) return <Tag icon={<ClockCircleOutlined />} color="warning">Đang chờ duyệt</Tag>;
         if (status === 3) return <Tag icon={<CheckCircleOutlined />} color="success">Đã duyệt</Tag>;
         if (status === 4) return <Tag icon={<CloseCircleOutlined />} color="error">Từ chối</Tag>;
@@ -117,9 +159,17 @@ export default function LeaveRequestPage() {
     },
   ];
 
-  // Tìm quỹ phép năm để hiển thị nổi bật
+  /**
+   * ==========================================
+   * 5. DERIVED STATE / COMPUTED VALUES
+   * ==========================================
+   */
+  // Tìm quỹ phép năm (Giả định leaveTypeId = 1 là ID cứng của Phép năm, có thể cần đổi logic nếu ID động)
   const annualBalance = leaveBalances.find(b => b.leaveTypeId === 1) || { remainingDays: 0, totalDays: 0, usedDays: 0 };
 
+  // ... (Toàn bộ phần RENDER JSX bên dưới giữ nguyên thiết kế của bạn)
+  // ...
+  
   return (
     <div className="p-8 bg-slate-50 min-h-screen">
       
@@ -165,8 +215,6 @@ export default function LeaveRequestPage() {
             </div>
           </div>
         </div>
-
-        {/* Các Card khác có thể bổ sung sau (Nghỉ ốm, Thai sản...) */}
       </div>
 
       {/* BẢNG LỊCH SỬ ĐƠN TỪ (TABLE) */}
