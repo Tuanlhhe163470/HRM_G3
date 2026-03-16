@@ -70,6 +70,7 @@ namespace HRM_Infrastructure.Extensions
             services.AddScoped<IMonthlyTimesheetRepository, MonthlyTimesheetRepository>();
             services.AddScoped<ICandidateRepository, CandidateRepository>();
             services.AddScoped<ICandidateService, CandidateService>();
+            services.AddScoped<IOfferRepository, OfferRepository>();
             // 4. SERVICES (Business Logic Layer)
             // Đăng ký Service GoalService vào đây
             services.AddScoped<ICandidateService, CandidateService>();

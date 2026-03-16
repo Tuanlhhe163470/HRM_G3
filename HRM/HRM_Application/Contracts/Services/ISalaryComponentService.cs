@@ -13,7 +13,7 @@ namespace HRM_Application.Contracts.Services
         Task<SalaryComponentDTO?> GetComponentByIdAsync(int id);
         Task<SalaryComponentDTO> CreateComponentAsync(CreateSalaryComponentDTO request);
         Task<bool> UpdateComponentAsync(int id, UpdateSalaryComponentDTO request);
-        Task<bool> DeleteComponentAsync(int id); // Soft delete hoặc Hard delete tùy nghiệp vụ
+        Task<bool> DeleteComponentAsync(int id); 
         Task<IEnumerable<SalaryComponentDTO>> GetActiveComponentsAsync();
     }
 }

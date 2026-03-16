@@ -22,7 +22,9 @@ const candidateService = {
 
   // 4. Xử lý trạng thái ứng viên (Screening, Reject, Manager_Review...)
   processCandidate: async (id, action) => {
-    return await axiosClient.patch(`/Candidates/${id}/process?action=${action}`);
+    return await axiosClient.patch(
+      `/Candidates/${id}/process?action=${action}`,
+    );
   },
 
   // 5. Lấy toàn bộ danh sách phỏng vấn từ bảng Interviews để hiện lên Calendar
@@ -38,12 +40,17 @@ const candidateService = {
   //7. Đánh giá ứng viên sau phỏng vấn (điểm số, nhận xét, quyết định cuối cùng)
   evaluateCandidate: async (candidateId, evaluationData) => {
     return await axiosClient.post(`/Candidates/evaluate`, {
-        candidateID: candidateId,
-        score: evaluationData.score,
-        comment: evaluationData.comment,
-        finalDecision: evaluationData.finalDecision
+      candidateID: candidateId,
+      score: evaluationData.score,
+      comment: evaluationData.comment,
+      finalDecision: evaluationData.finalDecision,
     });
-},
+  },
+
+  // 8. Tạo Offer mới và gửi Email (Dành cho HR)
+  createOffer: async (data) => {
+    return await axiosClient.post("/Candidates/create-offer", data);
+  },
 };
 
 export default candidateService;

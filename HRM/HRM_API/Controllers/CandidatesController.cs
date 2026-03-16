@@ -128,7 +128,7 @@ namespace HRM_API.Controllers
             return BadRequest(new { message = "Không tìm thấy lịch phỏng vấn phù hợp để đánh giá ứng viên này." });
         }
         [HttpPost("{id}/send-fail-email")]
-        [Authorize(Roles = "HR")] // Chỉ HR mới có quyền gửi thông báo từ chối chính thức
+        [Authorize(Roles = "HR")] 
         public async Task<IActionResult> SendFailEmail(int id)
         {
             // Gọi service để thực hiện gửi mail và cập nhật IsFailEmailSent trong DB
@@ -143,6 +143,35 @@ namespace HRM_API.Controllers
             {
                 message = "Không thể gửi email. Có thể ứng viên không ở trạng thái Fail hoặc email đã được gửi trước đó."
             });
+        }
+        [HttpPost("create-offer")]
+        [Authorize(Roles = "HR")]
+        public async Task<IActionResult> CreateOffer([FromBody] CreateOfferRequest request)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var result = await _candidateService.CreateOfferAsync(request);
+
+            if (result)
+                return Ok(new { message = "Offer đã được lưu và gửi email thành công." });
+
+            return StatusCode(500, new { message = "Offer đã được lưu nhưng email chưa gửi được. Vui lòng kiểm tra lại." });
+        }
+        [HttpPatch("{id}/hire")]
+        [Authorize(Roles = "HR")]
+        public async Task<IActionResult> HireCandidate(int id)
+        {
+            var result = await _candidateService.ConfirmHireAsync(id);
+            return result ? Ok(new { message = "Xác nhận trúng tuyển thành công!" }) : BadRequest();
+        }
+
+        // 2. API Xác nhận Từ chối Offer
+        [HttpPatch("{id}/decline-offer")]
+        [Authorize(Roles = "HR")]
+        public async Task<IActionResult> DeclineOffer(int id, [FromQuery] string reason)
+        {
+            var result = await _candidateService.DeclineOfferAsync(id, reason);
+            return result ? Ok(new { message = "Đã ghi nhận ứng viên từ chối Offer." }) : BadRequest();
         }
     }
 }

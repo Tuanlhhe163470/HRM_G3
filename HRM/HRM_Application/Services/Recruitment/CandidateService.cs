@@ -5,6 +5,7 @@ using HRM_Application.DTOs.Recruitment;
 using HRM_Domain.Entities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -22,14 +23,18 @@ namespace HRM_Application.Services.Recruitment
         private readonly IMapper _mapper;
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly IEmailService _emailService;
-
+        private readonly IOfferRepository _offerRepository;
+        private readonly ILogger<CandidateService> _logger;
+        private readonly JobPostingService _jobService;
         public CandidateService(
             ICandidateRepository candidateRepository,
             IJobPostingRepository jobRepo,
             IInterviewRepository interviewRepository, // Inject thêm vào đây
             IMapper mapper,
             IWebHostEnvironment webHostEnvironment,
-            IEmailService emailService)
+            IEmailService emailService,
+            IOfferRepository offerRepository,
+            ILogger<CandidateService> logger)
         {
             _candidateRepository = candidateRepository;
             _jobRepo = jobRepo;
@@ -37,6 +42,8 @@ namespace HRM_Application.Services.Recruitment
             _mapper = mapper;
             _webHostEnvironment = webHostEnvironment;
             _emailService = emailService;
+            _offerRepository = offerRepository;
+            _logger = logger;
         }
 
         // --- CÁC PHƯƠNG THỨC HỖ TRỢ CV ---
@@ -371,6 +378,193 @@ namespace HRM_Application.Services.Recruitment
                 return false;
             }
         }
-    }
+        public async Task<bool> CreateOfferAsync(CreateOfferRequest request)
 
+        {
+
+            var candidate = await _candidateRepository.GetByIdAsync(request.CandidateID);
+
+            if (candidate == null) throw new Exception("Không tìm thấy thông tin ứng viên.");
+
+
+
+            var job = candidate.JobPosting;
+
+            if (job != null && job.SalaryMin.HasValue && request.BasicSalary < job.SalaryMin.Value)
+
+            {
+
+                throw new Exception($"Mức lương offer ({request.BasicSalary:N0}) thấp hơn lương tối thiểu của vị trí này ({job.SalaryMin.Value:N0}).");
+
+            }
+
+            if (request.BasicSalary <= 0) throw new Exception("Mức lương offer phải lớn hơn 0.");
+
+
+
+            var offer = new Offer
+
+            {
+
+                CandidateID = request.CandidateID,
+
+                OfferedSalary = request.BasicSalary,
+
+                JoinDate = request.JoinDate,
+
+                Note = request.Note,
+
+                OfferStatus = "Pending",
+
+                OfferedDate = DateTime.Now,
+
+                OfferAllowances = request.AllowanceIds?.Select(id => new OfferAllowance { ComponentID = id }).ToList() ?? new List<OfferAllowance>()
+
+            };
+
+
+
+            try
+
+            {
+
+                await _offerRepository.AddAsync(offer);
+
+
+
+                string jobTitle = job?.Title ?? "Vị trí ứng tuyển";
+
+                string subject = $"[HRM System] THƯ MỜI LÀM VIỆC - VỊ TRÍ {jobTitle.ToUpper()}";
+
+
+
+                string emailBody = $@"
+
+<div style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #f0f0f0; border-radius: 8px; overflow: hidden;'>
+
+    <div style='background-color: #154398; padding: 25px; text-align: center;'>
+
+        <h2 style='color: #ffffff; margin: 0; text-transform: uppercase; letter-spacing: 2px;'>THƯ MỜI LÀM VIỆC</h2>
+
+    </div>
+
+    <div style='padding: 30px; background-color: #ffffff;'>
+
+        <p style='font-size: 16px;'>Chào <strong>{candidate.FullName}</strong>,</p>
+
+        <p>Chúc mừng bạn! Sau quá trình phỏng vấn ấn tượng, <strong>HRM System</strong> trân trọng mời bạn gia nhập đội ngũ của chúng tôi.</p>
+
+        <div style='background-color: #f8fafc; border-left: 4px solid #154398; padding: 20px; margin: 25px 0;'>
+
+            <p style='margin: 5px 0;'><strong>💼 Vị trí:</strong> {jobTitle}</p>
+
+            <p style='margin: 5px 0;'><strong>💰 Mức lương:</strong> {request.BasicSalary:N0} VNĐ</p>
+
+            <p style='margin: 5px 0;'><strong>📅 Ngày bắt đầu dự kiến:</strong> {request.JoinDate:dd/MM/yyyy}</p>
+
+        </div>
+
+        <p>Ghi chú từ bộ phận nhân sự: <em>{request.Note ?? "Bạn vui lòng đọc kĩ lời đề nghị hợp tác của chúng tôi."}</em></p>
+
+        <p>Vui lòng phản hồi email này để xác nhận việc chấp thuận lời mời. Chúng tôi rất mong được gặp bạn vào ngày nhận việc!</p>
+
+        <p style='margin-top: 30px;'>Trân trọng,<br><strong>Phòng Nhân sự HRM System</strong></p>
+
+    </div>
+
+    <div style='background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 12px; color: #888;'>
+
+        <p style='margin: 5px 0;'>Vui lòng phản hồi sớm nhất có thể. Nếu sau ba ngày kể từ khi email này được gửi mà bạn không có phản hồi thì chúng tôi xin phép bạn nhường cơ hội làm việc cho các ứng viên khác.</p>
+
+    </div>
+
+</div>";
+
+
+
+                await _emailService.SendEmailAsync(candidate.Email, subject, emailBody);
+
+
+
+                offer.OfferStatus = "Sent";
+
+                await _offerRepository.UpdateAsync(offer);
+
+                await _candidateRepository.UpdateStatusAsync(request.CandidateID, "Offered");
+
+
+
+                return true;
+
+            }
+
+            catch (Exception ex)
+
+            {
+
+                _logger.LogError(ex, $"Lỗi quy trình Offer ứng viên {request.CandidateID}");
+
+                return false;
+
+            }
+
+        }
+        // --- TRƯỜNG HỢP 1: XÁC NHẬN TRÚNG TUYỂN (HIRED) ---
+        public async Task<bool> ConfirmHireAsync(int candidateId)
+        {
+            var candidate = await _candidateRepository.GetByIdAsync(candidateId);
+            if (candidate == null) return false;
+
+            // 1. Cập nhật trạng thái ứng viên
+            await _candidateRepository.UpdateStatusAsync(candidateId, "Hired");
+
+            // 2. Cập nhật Offer cuối cùng thành Accepted
+            var offer = (await _offerRepository.GetOffersByCandidateIdAsync(candidateId))
+                        .OrderByDescending(o => o.OfferedDate)
+                        .FirstOrDefault();
+
+            if (offer != null)
+            {
+                offer.OfferStatus = "Accepted";
+                offer.ResponseDate = DateTime.Now;
+                await _offerRepository.UpdateAsync(offer);
+            }
+
+            // 3. Cập nhật số lượng đã tuyển trong JobPosting
+            if (candidate.JobID > 0)
+            {
+                await _jobService.UpdateHiredCountAsync(candidate.JobID);
+            }
+
+            return true;
+        }
+
+        // --- TRƯỜNG HỢP 2: ỨNG VIÊN TỪ CHỐI OFFER ---
+        public async Task<bool> DeclineOfferAsync(int candidateId, string reason)
+        {
+            var candidate = await _candidateRepository.GetByIdAsync(candidateId);
+            if (candidate == null) return false;
+
+            // 1. Cập nhật trạng thái ứng viên thành Declined (do từ chối offer)
+            await _candidateRepository.UpdateStatusAsync(candidateId, "Declined");
+
+            // 2. Cập nhật Offer cuối cùng thành Declined
+            var offer = (await _offerRepository.GetOffersByCandidateIdAsync(candidateId))
+                        .OrderByDescending(o => o.OfferedDate)
+                        .FirstOrDefault();
+
+            if (offer != null)
+            {
+                offer.OfferStatus = "Declined"; 
+                offer.ResponseDate = DateTime.Now;
+                offer.Note = string.IsNullOrEmpty(reason)
+                             ? offer.Note
+                             : $"{offer.Note} | Lý do từ chối: {reason}";
+
+                await _offerRepository.UpdateAsync(offer);
+            }
+
+            return true;
+        }
+    }
 }
