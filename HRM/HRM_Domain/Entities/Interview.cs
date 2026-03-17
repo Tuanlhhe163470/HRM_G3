@@ -13,19 +13,21 @@ namespace HRM_Domain.Entities
         [Key]
         public int InterviewID { get; set; }
 
-        public int ApplicationID { get; set; }
-        [ForeignKey("ApplicationID")]
-        public virtual Application? Application { get; set; }
+        public int CandidateID { get; set; }
+
+        [ForeignKey("CandidateID")]
+        public virtual Candidate? Candidate { get; set; }
 
         public DateTime InterviewDate { get; set; }
 
         [StringLength(100)]
         public string? InterviewType { get; set; }
-
+        public string? Location { get; set; }
         public int? InterviewerID { get; set; }
         [ForeignKey("InterviewerID")]
         public virtual Employee? Interviewer { get; set; }
-
+        public int? Score { get; set; } // Lưu điểm từ 1-10
+        public string? Comments { get; set; } // Lưu nhận xét của Manager
         [StringLength(50)]
         public string? Result { get; set; }
     }

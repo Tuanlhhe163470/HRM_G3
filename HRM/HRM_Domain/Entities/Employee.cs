@@ -49,5 +49,6 @@ namespace HRM_Domain.Entities
 
         [StringLength(20)]
         public string Status { get; set; } = "Working"; // Working, Resigned...
+        public int? CandidateID { get; set; }
     }
 }

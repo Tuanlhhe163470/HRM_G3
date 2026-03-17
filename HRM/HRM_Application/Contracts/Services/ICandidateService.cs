@@ -14,5 +14,13 @@ namespace HRM_Application.Contracts.Services
 
         Task<IEnumerable<CandidateDto>> GetCandidatesForAdminAsync(string role, int? departmentId);
         Task<bool> ProcessCandidateAsync(int id, string action);
+        Task<bool> ScheduleInterviewAsync(ScheduleInterviewDto dto);
+        Task<CandidateDto> GetCandidateByIdAsync(int id);
+        Task<IEnumerable<ScheduleInterviewDto>> GetAllInterviewsAsync();
+        Task<bool> EvaluateCandidateAsync(EvaluationRequest request);
+        Task<bool> SendFailEmailAsync(int candidateId);
+        Task<bool> CreateOfferAsync(CreateOfferRequest request);
+        Task<bool> ConfirmHireAsync(int candidateId);
+        Task<bool> DeclineOfferAsync(int candidateId, string reason);
     }
 }

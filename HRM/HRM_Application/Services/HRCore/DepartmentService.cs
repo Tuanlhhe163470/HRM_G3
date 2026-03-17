@@ -2,6 +2,7 @@
 using HRM_Application.Commons.Pagination;
 using HRM_Application.Contracts.Repositories;
 using HRM_Application.Contracts.Services;
+using HRM_Application.DTOs.Commons;
 using HRM_Application.DTOs.Department.Requests;
 using HRM_Application.DTOs.Department.Responses;
 using HRM_Domain.Entities;
@@ -80,6 +81,19 @@ namespace HRM_Application.Services.Department
             }
 
             await _repository.DeleteDepartmentAsync(id);
+        }
+        public async Task<IEnumerable<BaseReferenceResponse>> GetEmployeesByDepartmentAsync(int departmentId)
+        {
+            // Kiểm tra phòng ban có tồn tại không
+            var dept = await _repository.GetDepartmentByIdAsync(departmentId);
+            if (dept == null) throw new KeyNotFoundException("Phòng ban không tồn tại");
+
+            // Lấy danh sách nhân viên thuộc phòng ban này
+            // Giả sử repository của bạn có hàm GetEmployeesByDepartmentIdAsync
+            var employees = await _repository.GetEmployeesByDepartmentIdAsync(departmentId);
+
+            // Map sang DTO để trả về (thường là ID và Name)
+            return _mapper.Map<IEnumerable<BaseReferenceResponse>>(employees);
         }
     }
 }

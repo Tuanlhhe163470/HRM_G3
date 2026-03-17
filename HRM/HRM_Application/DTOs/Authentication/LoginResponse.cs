@@ -16,6 +16,7 @@ namespace HRM_Application.DTOs.Authentication
     {
         public int EmployeeID { get; set; }
         public string RoleName { get; set; } = string.Empty;
+        public int? DepartmentID { get; set; }
         public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string? Gender { get; set; }

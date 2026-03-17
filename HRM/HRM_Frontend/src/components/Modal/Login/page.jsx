@@ -39,9 +39,11 @@ const LoginModal = ({ open, onCancel }) => {
         router.refresh();
       }
     } catch (error) {
+      const errorMsg = error.response?.data?.message || error.message;
+
       notice({
-        msg: "Lỗi đăng nhập",
-        desc: error.message || "Tài khoản hoặc mật khẩu không chính xác!",
+        msg: "Đăng nhập thất bại",
+        desc: errorMsg || "Tài khoản hoặc mật khẩu không chính xác!",
         isSuccess: false,
       });
     } finally {

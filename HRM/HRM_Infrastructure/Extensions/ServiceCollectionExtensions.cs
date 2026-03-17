@@ -20,6 +20,15 @@ using HRM_Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
+using HRM_Application.Services;
+using HRM_Infrastructure.Repositories.TimeAttendance;
+using HRM_Application.Contracts.Services;
+using HRM_Application.Services.TimeAttendance;
+using HRM_Application.Services.PayRoll;
+using HRM_Infrastructure.Repositories.Payroll;
+using HRM_Infrastructure.Repositories.PayRoll;
+using HRM_Infrastructure.PayRoll.Repositories;
 using HRM_Infrastructure.Repositories;
 using HRM_Application.Interfaces.Repositories;
 using HRM_Application.Interfaces.Services;
@@ -50,12 +59,16 @@ namespace HRM_Infrastructure.Extensions
 
             // 3. REPOSITORIES (Data Access Layer)
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IAccountService, AccountService>();
+            services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IPerformanceGoalRepository, PerformanceGoalRepository>();
             services.AddScoped<IJobPostingRepository, JobPostingRepository>();
             services.AddScoped<JobPostingService>();
             services.AddScoped<IAttendanceRepository, AttendanceRepository>();
             services.AddScoped<ICandidateRepository, CandidateRepository>();
             // services.AddScoped<IShiftRepository, ShiftRepository>(); 
+            services.AddScoped<IInterviewRepository, InterviewRepository>();
             services.AddScoped<IEmployeeSalaryConfigRepository, EmployeeSalaryConfigRepository>();
             services.AddScoped<IEmployeeSalaryConfigService, EmployeeSalaryConfigService>();
             services.AddScoped<IEmployeeRepository, Repositories.HRCore.EmployeeRepository>();
@@ -70,6 +83,7 @@ namespace HRM_Infrastructure.Extensions
             services.AddScoped<ISalaryAdvanceService, SalaryAdvanceService>();
             services.AddScoped<IReportService, ReportService>();
             services.AddScoped<IReportRepository, ReportRepository>();
+            services.AddScoped<IOfferRepository, OfferRepository>();
             // 4. SERVICES (Business Logic Layer)
             // Đăng ký Service GoalService vào đây
             services.AddScoped<ICandidateService, CandidateService>();

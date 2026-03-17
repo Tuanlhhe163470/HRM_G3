@@ -14,9 +14,18 @@ namespace HRM_Application.DTOs.Recruitment
         public string? Phone { get; set; }
         public string CVUrl { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
-        public string JobTitle { get; set; } = string.Empty; // Hiển thị tên vị trí
+        public string JobTitle { get; set; } = string.Empty; 
         public DateTime CreatedAt { get; set; }
-        public string DepartmentName { get; set; } // Thêm trường này
-        public int? DepartmentID { get; set; }    // Thêm trường này để lọc
+        public string DepartmentName { get; set; } 
+        public int? DepartmentID { get; set; }    
+        public int? Score { get; set; }     
+        public string? Comments { get; set; }
+        public bool IsFailEmailSent { get; set; }
+        public DateTime? InterviewDate { get; set; }
+        public string? InterviewType { get; set; }
+        public string? Location { get; set; }
+        public decimal? OfferedSalary { get; set; } 
+        public DateTime? JoinDate { get; set; }   
+        public string? OfferNote { get; set; }      
     }
 }

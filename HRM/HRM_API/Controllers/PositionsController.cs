@@ -8,7 +8,7 @@ namespace HRM_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "HR, Admin")]
+    [Authorize(Roles = "HR, Admin, Manager")]
     public class PositionsController : ControllerBase
     {
         private readonly IPositionService _positionService;

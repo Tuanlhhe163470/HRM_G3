@@ -11,7 +11,7 @@ namespace HRM_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "HR, Admin")]
+    [Authorize(Roles = "HR, Admin, Manager")]
     public class EmployeesController : ControllerBase
     {
         private readonly IEmployeeService _employeeService;
@@ -112,6 +112,20 @@ namespace HRM_API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Lỗi hệ thống: " + ex.Message });
+            }
+        }
+        [HttpGet("ByDepartment/{departmentId}")]
+        public async Task<IActionResult> GetByDepartment(int departmentId, [FromQuery] PaginationFilter filter)
+        {
+            try
+            {
+                var response = await _employeeService.GetEmployeesByDepartmentAsync(departmentId, filter);
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi hệ thống khi tải nhân sự phòng ban: " + ex.Message });
             }
         }
     }
