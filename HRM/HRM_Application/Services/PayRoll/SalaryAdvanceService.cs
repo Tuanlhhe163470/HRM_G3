@@ -48,9 +48,9 @@ namespace HRM_Application.Services.PayRoll
             return _mapper.Map<IEnumerable<SalaryAdvanceDTO>>(history);
         }
 
-        public async Task<IEnumerable<ManagerAdvanceDTO>> GetPendingRequestsAsync()
+        public async Task<IEnumerable<ManagerAdvanceDTO>> GetPendingRequestsAsync(int userId, string userRole)
         {
-            var pendingList = await _repo.GetPendingAdvancesAsync();
+            var pendingList = await _repo.GetPendingAdvancesAsync(userId, userRole);
 
             return pendingList.Select(sa => new ManagerAdvanceDTO
             {
@@ -65,9 +65,9 @@ namespace HRM_Application.Services.PayRoll
             });
         }
 
-        public async Task<IEnumerable<ManagerAdvanceDTO>> GetAllAdvancesAsync()
+        public async Task<IEnumerable<ManagerAdvanceDTO>> GetAllAdvancesAsync(int userId, string userRole)
         {
-            var allList = await _repo.GetAllAdvancesAsync();
+            var allList = await _repo.GetAllAdvancesAsync(userId, userRole);
 
             return allList.Select(sa => new ManagerAdvanceDTO
             {

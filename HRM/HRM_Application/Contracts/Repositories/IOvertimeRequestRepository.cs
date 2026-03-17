@@ -14,5 +14,6 @@ namespace HRM_Application.Contracts.Repositories
         // Lấy toàn bộ đơn OT đã ĐƯỢC DUYỆT của toàn công ty trong tháng
         Task<List<OvertimeRequest>> GetApprovedOTByMonthAsync(int month, int year);
         Task<IEnumerable<OvertimeRequest>> GetByEmployeeAndMonthAsync(int employeeId, int month, int year);
+        Task<bool> HasPendingOvertimesByShiftAsync(int shiftId);
     }
 }

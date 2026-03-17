@@ -10,6 +10,10 @@ export default function PayrollProcessingPage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // --- ĐÃ THÊM: State quản lý Tháng và Năm ---
+  const [selectedMonth, setSelectedMonth] = useState(2);
+  const [selectedYear, setSelectedYear] = useState(2026);
+
   // State cho Tìm kiếm và Sắp xếp
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('default');
@@ -35,11 +39,11 @@ export default function PayrollProcessingPage() {
     return result;
   }, [data, searchTerm, sortBy]);
 
-  // 1. Tải dữ liệu bảng lương (Mặc định lấy tháng 2/2026)
+  // 1. Tải dữ liệu bảng lương (ĐÃ SỬA: Lấy theo state Tháng/Năm)
   const fetchPayroll = async () => {
     setLoading(true);
     try {
-      const response = await payrollService.getMonthlyPayroll(2, 2026);
+      const response = await payrollService.getMonthlyPayroll(selectedMonth, selectedYear);
       setData(response.data);
     } catch (err) {
       messageApi.error("Không thể tải bảng lương");
@@ -48,9 +52,12 @@ export default function PayrollProcessingPage() {
     }
   };
 
-  useEffect(() => { fetchPayroll(); }, []);
+  // ĐÃ SỬA: Tự động load lại dữ liệu mỗi khi selectedMonth hoặc selectedYear thay đổi
+  useEffect(() => { 
+    fetchPayroll(); 
+  }, [selectedMonth, selectedYear]);
 
-  // 2. Điều hướng sang trang thiết lập lương (Giữ từ file cũ của bạn)
+  // 2. Điều hướng sang trang thiết lập lương
   const handleSetupSalary = (employeeId) => {
     router.push(`/payroll/employee-salary/${employeeId}`);
   };
@@ -74,7 +81,6 @@ export default function PayrollProcessingPage() {
   const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
-    // Lấy thông tin user đăng nhập để lấy role
     const userStr = localStorage.getItem("user");
     if (userStr) {
       try {
@@ -116,14 +122,12 @@ export default function PayrollProcessingPage() {
       key: 'action',
       render: (_, record) => (
         <Space size="small">
-          {/* Nút từ file cũ của bạn */}
           <Button size="small" onClick={() => handleSetupSalary(record.employeeID)}>Cấu hình</Button>
 
           <Button size="small" type="dashed" onClick={() => handleReview(record.employeeID)}>
             ✎ Điều chỉnh
           </Button>
 
-          {/* CHỈ BẬT HIỂN THỊ NÚT CHO MANAGER, ADMIN VÀ STATUS DRAFT */}
           {record.status === 'Draft' && (userRole === 'Manager' || userRole === 'Admin') && (
             <>
               <Button size="small" type="primary" onClick={() => handleApprove(record.payrollID, true)}>Duyệt</Button>
@@ -142,13 +146,37 @@ export default function PayrollProcessingPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <div>
             <h1 style={{ fontSize: '20px', margin: 0 }}>Xử lý & Phê duyệt Lương</h1>
-            <p style={{ color: '#8c8c8c', margin: 0 }}>Tháng 02/2026</p>
+            {/* ĐÃ SỬA: Hiển thị Text động theo tháng/năm đang chọn */}
+            <p style={{ color: '#8c8c8c', margin: 0 }}>
+              Tháng {selectedMonth < 10 ? `0${selectedMonth}` : selectedMonth}/{selectedYear}
+            </p>
           </div>
           <Button type="primary" onClick={fetchPayroll} loading={loading}>Làm mới dữ liệu</Button>
         </div>
 
-        {/* Toolbar Tìm Kiếm và Sắp Xếp */}
-        <div style={{ marginBottom: '20px', padding: '16px', background: '#fafafa', borderRadius: '8px', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+        {/* Toolbar Tìm Kiếm, Sắp Xếp và Chọn Tháng/Năm */}
+        <div style={{ marginBottom: '20px', padding: '16px', background: '#fafafa', borderRadius: '8px', display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+          
+          {/* --- ĐÃ THÊM: Bộ chọn Tháng/Năm --- */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#595959' }}>THỜI GIAN:</span>
+            <Select
+              value={selectedMonth}
+              onChange={setSelectedMonth}
+              style={{ width: 100 }}
+              options={[...Array(12)].map((_, i) => ({ value: i + 1, label: `Tháng ${i + 1}` }))}
+            />
+            <Select
+              value={selectedYear}
+              onChange={setSelectedYear}
+              style={{ width: 100 }}
+              options={[2025, 2026, 2027].map(y => ({ value: y, label: `Năm ${y}` }))}
+            />
+          </div>
+
+          {/* Dải phân cách dọc */}
+          <div style={{ width: '1px', height: '24px', background: '#d9d9d9', margin: '0 8px' }}></div>
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#595959' }}>TÌM KIẾM:</span>
             <Input

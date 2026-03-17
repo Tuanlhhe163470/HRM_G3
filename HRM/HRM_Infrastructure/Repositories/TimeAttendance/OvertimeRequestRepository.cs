@@ -59,6 +59,7 @@ namespace HRM_Infrastructure.Repositories.TimeAttendance
             return await _context.OvertimeRequests
                 .Where(o => o.Date.Month == month
                          && o.Date.Year == year
+                         && o.Date.Date <= DateTime.Today
                          && o.Status == HRM_Domain.Enums.ExplanationStatus.Approved)
                 .ToListAsync();
         }
@@ -71,6 +72,14 @@ namespace HRM_Infrastructure.Repositories.TimeAttendance
                          && o.Date.Year == year
                          && o.Status == HRM_Domain.Enums.ExplanationStatus.Approved)
                 .ToListAsync();
+        }
+
+        public Task<bool> HasPendingOvertimesByShiftAsync(int shiftId)
+        {
+            return _context.OvertimeRequests
+                .AnyAsync(o => o.ShiftId == shiftId
+                            && (o.Status == HRM_Domain.Enums.ExplanationStatus.PendingManager
+                             || o.Status == HRM_Domain.Enums.ExplanationStatus.PendingHR));
         }
     }
 }

@@ -373,36 +373,34 @@ namespace HRM_Application.Services.TimeAttendance
 
         private async Task SyncMissingDataAsync(int employeeId, DateTime fromDate, DateTime toDate)
         {
-            // Lấy Shift mặc định để gán ID (bắt buộc phải có ShiftId mới lưu được log)
             var activeShifts = await _shiftRepo.GetActiveShiftAsync();
             var shift = activeShifts?.FirstOrDefault();
             if (shift == null) return;
 
-            var workDaysList = new List<DayOfWeek>();
-            if (!string.IsNullOrEmpty(shift.WorkDays))
-            {
-                workDaysList = shift.WorkDays.Split(',')
-                    .Select(d => (DayOfWeek)(int.Parse(d)))
-                    .ToList();
-            }
+            var workDaysList = string.IsNullOrEmpty(shift.WorkDays)
+                ? new List<DayOfWeek>()
+                : shift.WorkDays.Split(',').Select(d => (DayOfWeek)(int.Parse(d))).ToList();
+
+            // 1. Lấy tất cả log chấm công trong tháng
+            var existingLogs = await _attendanceRepo.GetByMonthAsync(employeeId, fromDate.Month, fromDate.Year);
+            var existingDates = existingLogs.Select(x => x.WorkDate.Date).ToHashSet();
+
+            // 2. Lấy tất cả ngày lễ trong khoảng thời gian này
+            var holidaysInMonth = await _publicHolidayRepo.GetHolidaysInRangeAsync(fromDate, toDate);
+
+            // 3. Lấy tất cả đơn xin nghỉ có phép trong tháng
+            var leavesInMonth = await _leaveRequestRepo.GetApprovedLeavesInRangeAsync(employeeId, fromDate, toDate);
 
             var logsToAdd = new List<AttendanceLog>();
 
-            // Vòng lặp quét từng ngày
             for (var date = fromDate; date <= toDate; date = date.AddDays(1))
             {
-                // 0. Kiểm tra xem ngày này ĐÃ CÓ record nào trong DB chưa (bất kể status gì)
-                bool hasLog = await _attendanceRepo.HasAttendanceAsync(employeeId, date);
-                if (hasLog)
-                {
-                    // Nếu có rồi thì thôi, không ghi đè (Logic check MissingCheckout đã làm ở bước trước đó rồi)
-                    continue;
-                }
+                if (existingDates.Contains(date.Date)) continue;
 
                 bool isWorkingDay = workDaysList.Contains(date.DayOfWeek);
 
-                // 1. ƯU TIÊN CAO NHẤT: KIỂM TRA NGÀY LỄ
-                var holiday = await _publicHolidayRepo.GetHolidayByDateAsync(date);
+                // 1. KIỂM TRA NGÀY LỄ (Kiểm tra trong list RAM)
+                var holiday = holidaysInMonth.FirstOrDefault(h => date.Date >= h.StartDate.Date && date.Date <= h.EndDate.Date);
                 if (holiday != null)
                 {
                     if (!isWorkingDay) continue;
@@ -411,21 +409,18 @@ namespace HRM_Application.Services.TimeAttendance
                         EmployeeId = employeeId,
                         ShiftId = shift.Id,
                         WorkDate = date,
-                        Status = AttendanceStatus.Holiday, // <--- Status Nghỉ Lễ
+                        Status = AttendanceStatus.Holiday,
                         IsSystemGenerated = true,
                         Note = $"[System: Nghỉ lễ {holiday.HolidayName}]",
-                        WorkingHours = 8 // Thường nghỉ lễ vẫn được tính 8h công hưởng lương
+                        WorkingHours = 8
                     });
-                    continue; // Xong ngày này, nhảy sang ngày tiếp theo ngay
-                }
-
-                // 2. ƯU TIÊN NHÌ: CHECK NGAY LAM VIEC THEO SHIFT CONFIG
-                if (!workDaysList.Contains(date.DayOfWeek))
-                {
                     continue;
                 }
 
-                var approvedLeave = await _leaveRequestRepo.GetApprovedLeaveOnDateAsync(employeeId, date);
+                if (!isWorkingDay) continue;
+
+                // 2. CHECK XIN NGHỈ PHÉP 
+                var approvedLeave = leavesInMonth.FirstOrDefault(l => date.Date >= l.StartDate.Date && date.Date <= l.EndDate.Date);
                 if (approvedLeave != null)
                 {
                     logsToAdd.Add(new AttendanceLog
@@ -433,7 +428,7 @@ namespace HRM_Application.Services.TimeAttendance
                         EmployeeId = employeeId,
                         ShiftId = shift.Id,
                         WorkDate = date,
-                        Status = AttendanceStatus.OnLeave, // Trạng thái 9: Nghỉ có phép
+                        Status = AttendanceStatus.OnLeave,
                         IsSystemGenerated = true,
                         Note = $"[System: Nghỉ có phép] {approvedLeave.LeaveType?.Name}",
                         WorkingHours = 0
@@ -441,24 +436,20 @@ namespace HRM_Application.Services.TimeAttendance
                     continue;
                 }
 
-                // 3. CUỐI CÙNG: KHÔNG LỄ, KHÔNG CUỐI TUẦN, KHÔNG LOG -> VẮNG MẶT
+                // 3. KHÔNG CÓ GÌ CẢ -> VẮNG MẶT
                 logsToAdd.Add(new AttendanceLog
                 {
                     EmployeeId = employeeId,
                     ShiftId = shift.Id,
                     WorkDate = date,
-                    Status = AttendanceStatus.Absent, // <--- Status Vắng
+                    Status = AttendanceStatus.Absent,
                     IsSystemGenerated = true,
                     Note = "[System: Vắng mặt không phép]",
                     WorkingHours = 0
                 });
             }
 
-            // Batch Insert
-            if (logsToAdd.Any())
-            {
-                await _attendanceRepo.AddRangeAsync(logsToAdd);
-            }
+            if (logsToAdd.Any()) await _attendanceRepo.AddRangeAsync(logsToAdd);
         }
 
         // Tính "Ngày công chuẩn" ĐỘNG dựa trên cấu hình Ca làm việc ---

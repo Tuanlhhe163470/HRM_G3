@@ -589,7 +589,7 @@ export default function LaborContractPage() {
             />
           </Form.Item>
 
-          <Divider orientation="left" className="m-0 mt-2">
+          <Divider titlePlacement="left" className="m-0 mt-2">
             <Text type="secondary" className="text-[11px] uppercase font-bold">
               Thông tin thời hạn
             </Text>

@@ -26,8 +26,24 @@ namespace HRM_API.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateShiftRequest request)
         {
-            await _shiftService.CreateShiftAsync(request);
-            return Ok(new { message = "Tạo ca làm việc thành công!" });
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                await _shiftService.CreateShiftAsync(request);
+                return Ok(new { Message = "Tạo ca làm việc thành công!" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Lỗi hệ thống khi tạo ca: " + ex.Message });
+            }
         }
 
         [HttpGet("{id}")]
@@ -46,9 +62,20 @@ namespace HRM_API.Controllers
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
-        {
-            await _shiftService.DeleteShiftAsync(id);
-            return Ok(new { message = "Xóa ca làm việc thành công!" });
+        {     
+            try
+            {
+                await _shiftService.DeleteShiftAsync(id);
+                return Ok(new { message = "Xóa ca làm việc thành công!" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Lỗi hệ thống khi xóa ca: " + ex.Message });
+            }
         }
     }
 }

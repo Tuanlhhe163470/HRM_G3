@@ -18,5 +18,6 @@ namespace HRM_Application.Contracts.Repositories
 
         // Lấy ca làm việc mặc định đang hoạt động
         Task<List<ShiftConfig>> GetActiveShiftAsync();
+        Task<bool> CheckShiftNameExistsAsync(string shiftName);
     }
 }

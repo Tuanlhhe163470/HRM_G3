@@ -35,6 +35,8 @@ using HRM_Application.Interfaces.Services;
 using HRM_Infrastructure.Repositories.HRCore;
 using HRM_Application.Services.HRCore;
 using HRM_Application.Services.Department;
+using HRM_Application.Services.Report;
+using HRM_Infrastructure.Repositories.Report;
 
 namespace HRM_Infrastructure.Extensions
 {
@@ -79,6 +81,8 @@ namespace HRM_Infrastructure.Extensions
             services.AddScoped<ICandidateService, CandidateService>();
             services.AddScoped<ISalaryAdvanceRepository, SalaryAdvanceRepository>();
             services.AddScoped<ISalaryAdvanceService, SalaryAdvanceService>();
+            services.AddScoped<IReportService, ReportService>();
+            services.AddScoped<IReportRepository, ReportRepository>();
             services.AddScoped<IOfferRepository, OfferRepository>();
             // 4. SERVICES (Business Logic Layer)
             // Đăng ký Service GoalService vào đây

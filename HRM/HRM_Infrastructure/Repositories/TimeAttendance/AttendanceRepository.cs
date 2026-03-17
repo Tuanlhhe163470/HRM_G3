@@ -109,5 +109,9 @@ namespace HRM_Infrastructure.Repositories.TimeAttendance
                          && x.WorkDate.Date <= endDate.Date)
                 .ToListAsync();
         }
+        public async Task<bool> HasLogsWithShiftAsync(int shiftId)
+        {
+            return await _context.AttendanceLogs.AnyAsync(log => log.ShiftId == shiftId);
+        }
     }
 }

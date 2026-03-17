@@ -29,19 +29,41 @@ namespace HRM_Infrastructure.Repositories.PayRoll
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<SalaryAdvance>> GetPendingAdvancesAsync()
+        public async Task<IEnumerable<SalaryAdvance>> GetPendingAdvancesAsync(int userId, string userRole)
         {
-            return await _context.SalaryAdvances
+            IQueryable<SalaryAdvance> query = _context.SalaryAdvances
                 .Include(sa => sa.Employee) // Lấy luôn tên nhân viên
-                .Where(sa => sa.Status == "PENDING")
+                .Where(sa => sa.Status == "PENDING");
+
+            if (userRole == "Manager")
+            {
+                var manager = await _context.Employees.FindAsync(userId);
+                if (manager != null)
+                {
+                    query = query.Where(sa => sa.Employee.DepartmentID == manager.DepartmentID);
+                }
+            }
+
+            return await query
                 .OrderBy(sa => sa.RequestDate)
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<SalaryAdvance>> GetAllAdvancesAsync()
+        public async Task<IEnumerable<SalaryAdvance>> GetAllAdvancesAsync(int userId, string userRole)
         {
-            return await _context.SalaryAdvances
-                .Include(sa => sa.Employee) // Lấy luôn tên nhân viên
+            IQueryable<SalaryAdvance> query = _context.SalaryAdvances
+                .Include(sa => sa.Employee); // Lấy luôn tên nhân viên
+
+            if (userRole == "Manager")
+            {
+                var manager = await _context.Employees.FindAsync(userId);
+                if (manager != null)
+                {
+                    query = query.Where(sa => sa.Employee.DepartmentID == manager.DepartmentID);
+                }
+            }
+
+            return await query
                 .OrderByDescending(sa => sa.RequestDate) // Mới nhất lên đầu
                 .ToListAsync();
         }
@@ -55,6 +77,13 @@ namespace HRM_Infrastructure.Repositories.PayRoll
         {
             _context.SalaryAdvances.Update(advance);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<SalaryAdvance>> GetApprovedAdvancesByMonthAsync(int month, int year)
+        {
+            return await _context.SalaryAdvances
+                .Where(sa => sa.Status == "APPROVED" && sa.ApprovalDate.HasValue && sa.ApprovalDate.Value.Month == month && sa.ApprovalDate.Value.Year == year)
+                .ToListAsync();
         }
     }
 }

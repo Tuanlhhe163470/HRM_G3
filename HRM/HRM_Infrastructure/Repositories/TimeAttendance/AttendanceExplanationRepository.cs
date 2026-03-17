@@ -96,5 +96,12 @@ namespace HRM_Infrastructure.Repositories
                     .ThenInclude(al => al.ShiftConfig)
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
+
+        public Task<bool> HasPendingExplanationByShiftAsync(int shiftId)
+        {
+            return _context.AttendanceExplanations.AnyAsync(x =>
+                x.AttendanceLog.ShiftId == shiftId &&
+                (x.Status == ExplanationStatus.PendingManager || x.Status == ExplanationStatus.PendingHR));
+        }
     }
 }
