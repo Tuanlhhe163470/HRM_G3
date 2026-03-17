@@ -150,6 +150,11 @@ export default function SidebarHRM() {
             label: <Link href="/attendance/approvals/leaves">Duyệt nghỉ phép</Link>, 
             icon: <FileSearchOutlined /> 
           },
+          { 
+            key: "/attendance/approvals/overtime", 
+            label: <Link href="/attendance/approvals/overtime">Duyệt OT</Link>, 
+            icon: <FileSearchOutlined /> 
+          },
         ],
       });
     }

@@ -26,6 +26,11 @@ namespace HRM_Infrastructure.Repositories.TimeAttendance
             await _context.SaveChangesAsync();
         }
 
+        public async Task<bool> CheckShiftNameExistsAsync(string shiftName)
+        {
+            return await _context.ShiftConfigs.AnyAsync(s => s.ShiftName.ToLower() == shiftName.ToLower());
+        }
+
         public async Task DeleteShiftAsync(int id)
         {
             var entity = await _context.ShiftConfigs.FindAsync(id);

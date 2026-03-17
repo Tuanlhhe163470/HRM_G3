@@ -33,8 +33,24 @@ namespace HRM_API.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreatePublicHolidayRequest request)
         {
-            await _holidayService.CreateHolidayAsync(request);
-            return Ok(new { message = "Thêm ngày lễ thành công!" });
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                await _holidayService.CreateHolidayAsync(request);
+                return Ok(new { Message = "Thêm ngày lễ thành công!" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Lỗi hệ thống: " + ex.Message });
+            }
         }
 
         [HttpPut("{id}")]
@@ -47,8 +63,23 @@ namespace HRM_API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            await _holidayService.DeleteHolidayAsync(id);
-            return Ok(new { message = "Xóa ngày lễ thành công!" });
+            try
+            {
+                await _holidayService.DeleteHolidayAsync(id);
+                return Ok(new { message = "Xóa ngày lễ thành công!" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi hệ thống: " + ex.Message });
+            }
         }
     }
 }

@@ -23,5 +23,6 @@ namespace HRM_Application.Contracts.Repositories
         Task<List<AttendanceExplanation>> GetPendingExplanationsAsync(string role, int reviewerId);
 
         Task<AttendanceExplanation> GetExplanationWithDetailsAsync(int id);
+        Task<bool> HasPendingExplanationByShiftAsync(int shiftId);
     }
 }

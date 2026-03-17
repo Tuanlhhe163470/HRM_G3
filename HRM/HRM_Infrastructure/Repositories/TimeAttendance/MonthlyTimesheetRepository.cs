@@ -44,5 +44,11 @@ namespace HRM_Infrastructure.Repositories.TimeAttendance
                 .Where(x => x.Month == month && x.Year == year)
                 .ToListAsync();
         }
+
+        public async Task<bool> IsTimesheetLockedAsync(int month, int year)
+        {
+            return await _context.MonthlyTimesheets
+                    .AnyAsync(t => t.Month == month && t.Year == year && t.Status == HRM_Domain.Enums.TimesheetStatus.Locked);
+        }
     }
 }

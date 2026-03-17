@@ -28,5 +28,6 @@ namespace HRM_Application.Contracts.Repositories
         Task<List<AttendanceLog>> GetAllLogsByMonthAsync(int month, int year);
         Task<AttendanceLog?> GetByIdAsync(int attendanceLogId);
         Task<List<AttendanceLog>> GetLogsByDateRangeAsync(int employeeId, DateTime startDate, DateTime endDate);
+        Task<bool> HasLogsWithShiftAsync(int shiftId);
     }
 }
