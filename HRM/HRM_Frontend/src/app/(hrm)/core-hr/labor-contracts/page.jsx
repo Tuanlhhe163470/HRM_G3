@@ -194,13 +194,13 @@ export default function LaborContractPage() {
         await laborContractService.update(selectedContract.contractID, payload);
         notification.success({
           title: "Thành công",
-          message: "Cập nhật thành công",
+          description: "Cập nhật thành công",
         });
       } else {
         await laborContractService.create(payload);
         notification.success({
           title: "Thành công",
-          message: "Tạo hợp đồng thành công",
+          description: "Tạo hợp đồng thành công",
         });
       }
 
@@ -263,7 +263,7 @@ export default function LaborContractPage() {
       setIsDeleteModalOpen(false);
       fetchData();
     } catch (err) {
-      notification.error({ title: "Lỗi", message: "Lỗi khi xóa" });
+      notification.error({ title: "Lỗi", description: "Lỗi khi xóa" });
     }
   };
 

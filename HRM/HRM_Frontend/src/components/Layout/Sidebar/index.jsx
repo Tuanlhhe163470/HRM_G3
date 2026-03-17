@@ -200,11 +200,11 @@ export default function SidebarHRM() {
           label: (
             <Link href="/core-hr/employees">
               <span className="font-bold text-[13px] uppercase tracking-tight">
-                Quản lý nhân viên
+                Nhân sự công ty
               </span>
             </Link>
           ),
-          icon: <UserOutlined />,
+          icon: <TeamOutlined />,
         },
         {
           key: "/core-hr/labor-contracts",
