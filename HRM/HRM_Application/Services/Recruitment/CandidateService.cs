@@ -26,6 +26,7 @@ namespace HRM_Application.Services.Recruitment
         private readonly IOfferRepository _offerRepository;
         private readonly ILogger<CandidateService> _logger;
         private readonly JobPostingService _jobService;
+        private readonly IEmployeeRepository _employeeRepository; 
         public CandidateService(
             ICandidateRepository candidateRepository,
             IJobPostingRepository jobRepo,
@@ -35,7 +36,8 @@ namespace HRM_Application.Services.Recruitment
             IEmailService emailService,
             IOfferRepository offerRepository,
             ILogger<CandidateService> logger,
-            JobPostingService jobService)
+            JobPostingService jobService,
+            IEmployeeRepository employeeRepository)
         {
             _candidateRepository = candidateRepository;
             _jobRepo = jobRepo;
@@ -46,6 +48,7 @@ namespace HRM_Application.Services.Recruitment
             _offerRepository = offerRepository;
             _logger = logger;
             _jobService = jobService;
+            _employeeRepository = employeeRepository;
         }
 
         // --- CÁC PHƯƠNG THỨC HỖ TRỢ CV ---
@@ -547,29 +550,33 @@ namespace HRM_Application.Services.Recruitment
         // --- TRƯỜNG HỢP 1: XÁC NHẬN TRÚNG TUYỂN (HIRED) ---
         public async Task<bool> ConfirmHireAsync(int candidateId)
         {
+            // Lấy candidate kèm JobPosting để có thông tin phòng ban/vị trí
             var candidate = await _candidateRepository.GetByIdAsync(candidateId);
             if (candidate == null) return false;
 
-            // 1. Cập nhật trạng thái ứng viên
+            // 1. Cập nhật trạng thái Candidate
             await _candidateRepository.UpdateStatusAsync(candidateId, "Hired");
 
-            // 2. Cập nhật Offer cuối cùng thành Accepted
+            // 2. Lấy Offer để lấy ngày vào làm (JoinDate)
             var offer = (await _offerRepository.GetOffersByCandidateIdAsync(candidateId))
-                        .OrderByDescending(o => o.OfferedDate)
-                        .FirstOrDefault();
+                        ?.OrderByDescending(o => o.OfferedDate).FirstOrDefault();
 
+            // 3. Tự động chuyển dữ liệu sang Employee bằng AutoMapper
+            var newEmployee = _mapper.Map<Employee>(candidate);
+
+            // Gán các thông tin đặc thù từ Offer
             if (offer != null)
             {
+                newEmployee.JoinDate = offer.JoinDate;
                 offer.OfferStatus = "Accepted";
-                offer.ResponseDate = DateTime.Now;
                 await _offerRepository.UpdateAsync(offer);
             }
 
-            // 3. Cập nhật số lượng đã tuyển trong JobPosting
-            if (candidate.JobID > 0)
-            {
-                await _jobService.UpdateHiredCountAsync(candidate.JobID);
-            }
+            // 4. Lưu nhân viên mới vào DB
+            await _employeeRepository.AddEmployeeAsync(newEmployee);
+
+            // 5. Cập nhật số lượng tin tuyển dụng
+            await _jobService.UpdateHiredCountAsync(candidate.JobID);
 
             return true;
         }

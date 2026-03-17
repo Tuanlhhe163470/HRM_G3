@@ -168,7 +168,7 @@ namespace HRM_API.Controllers
         // 2. API Xác nhận Từ chối Offer
         [HttpPatch("{id}/decline-offer")]
         [Authorize(Roles = "HR")]
-        public async Task<IActionResult> DeclineOffer(int id, [FromQuery] string reason)
+        public async Task<IActionResult> DeclineOffer(int id, [FromBody] string reason)
         {
             var result = await _candidateService.DeclineOfferAsync(id, reason);
             return result ? Ok(new { message = "Đã ghi nhận ứng viên từ chối Offer." }) : BadRequest();

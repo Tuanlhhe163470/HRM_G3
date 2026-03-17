@@ -17,6 +17,7 @@ namespace HRM_Infrastructure.Repositories.HRCore
         {
             _context = context;
         }
+
         public async Task<IEnumerable<Employee>> GetAllEmployeesAsync()
         {
             return await _context.Employees
@@ -53,6 +54,16 @@ namespace HRM_Infrastructure.Repositories.HRCore
                 .FirstOrDefaultAsync(e => e.EmployeeID == id);
         }
 
+     
+        public async Task<Employee?> GetByCandidateIdAsync(int candidateId)
+        {
+            return await _context.Employees
+                .Include(e => e.Department)
+                .Include(e => e.Position)
+                .Include(e => e.Manager)
+                .FirstOrDefaultAsync(e => e.CandidateID == candidateId);
+        }
+
         public async Task AddEmployeeAsync(Employee employee)
         {
             await _context.Employees.AddAsync(employee);
@@ -74,6 +85,7 @@ namespace HRM_Infrastructure.Repositories.HRCore
                 await _context.SaveChangesAsync();
             }
         }
+
         public async Task<bool> HasEmployeesAsync(int employeeId)
         {
             return await _context.Employees.AnyAsync(e => e.ManagerID == employeeId);

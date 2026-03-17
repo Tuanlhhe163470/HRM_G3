@@ -7,6 +7,7 @@ using HRM_Application.DTOs.LaborContract.Responses;
 using HRM_Domain.Entities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace HRM_Application.Services.HRCore
@@ -15,10 +16,14 @@ namespace HRM_Application.Services.HRCore
     {
         private readonly ILaborContractRepository _repository;
         private readonly IMapper _mapper;
-
-        public LaborContractService(ILaborContractRepository repository, IMapper mapper)
+        private readonly IOfferRepository _offerRepository;    
+        private readonly IEmployeeRepository _employeeRepository; 
+        public LaborContractService(ILaborContractRepository repository, IOfferRepository offerRepository,
+            IEmployeeRepository employeeRepository, IMapper mapper)
         {
             _repository = repository;
+            _offerRepository = offerRepository;
+            _employeeRepository = employeeRepository;
             _mapper = mapper;
         }
 
@@ -87,6 +92,36 @@ namespace HRM_Application.Services.HRCore
             var contract = await _repository.GetActiveContractByEmployeeIdAsync(employeeId);
             if (contract == null) return null; // Không ném lỗi, vì nhân viên có thể chưa ký hợp đồng
             return _mapper.Map<LaborContractResponse>(contract);
+        }
+        public async Task<CreateLaborContractRequest> PrepareContractFromOfferAsync(int candidateId)
+        {
+            // 1. Lấy Offer mới nhất của ứng viên này
+            var offers = await _offerRepository.GetOffersByCandidateIdAsync(candidateId);
+            var latestOffer = offers?.OrderByDescending(o => o.OfferedDate).FirstOrDefault();
+
+            if (latestOffer == null)
+            {
+                throw new KeyNotFoundException("Không tìm thấy thông tin Offer cho ứng viên này để tạo hợp đồng.");
+            }
+
+            // 2. Tìm nhân viên đã được tạo từ Candidate này (Cần hàm GetByCandidateId trong EmployeeRepo)
+            var employee = await _employeeRepository.GetByCandidateIdAsync(candidateId);
+
+            if (employee == null)
+            {
+                throw new InvalidOperationException("Ứng viên này chưa được chuyển thành nhân viên. Vui lòng xác nhận trúng tuyển trước.");
+            }
+
+            // 3. Map dữ liệu từ Offer sang Request Hợp đồng
+            return new CreateLaborContractRequest
+            {
+                EmployeeID = employee.EmployeeID,
+                BaseSalary = latestOffer.OfferedSalary, // Lấy lương từ Offer
+                StartDate = latestOffer.JoinDate,       // Lấy ngày bắt đầu từ Offer
+                ContractType = "Hợp đồng thử việc",     // Gợi ý mặc định
+                SignedDate = DateTime.Now,
+                IsActive = true
+            };
         }
     }
 }

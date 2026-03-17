@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using HRM_Application.DTOs.Commons;
 using HRM_Application.DTOs.Department.Requests;
 using HRM_Application.DTOs.Department.Responses;
@@ -139,6 +139,19 @@ namespace HRM_Application.Mappings
             CreateMap<Employee, BaseReferenceResponse>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.EmployeeID))
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.FullName));
+            // Map từ Candidate sang Employee khi HR nhấn "Confirm Hire"
+            CreateMap<Candidate, Employee>()
+                .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.FullName))
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
+                .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.Phone))
+                // Cực kỳ quan trọng: Gán CandidateID để link dữ liệu sau này làm hợp đồng
+                .ForMember(dest => dest.CandidateID, opt => opt.MapFrom(src => src.CandidateID))
+                // Mặc định trạng thái khi mới tuyển vào
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => "Working"))
+                // Lấy thông tin phòng ban và vị trí từ tin tuyển dụng
+                .ForMember(dest => dest.DepartmentID, opt => opt.MapFrom(src => src.JobPosting.DepartmentID))
+                .ForMember(dest => dest.PositionID, opt => opt.MapFrom(src => src.JobPosting.PositionID))
+                .ForMember(dest => dest.JoinDate, opt => opt.Ignore()); // Sẽ gán từ ngày trong Offer
 
             // ================= CONTRACT =================
             CreateMap<CreateLaborContractRequest, LaborContract>();

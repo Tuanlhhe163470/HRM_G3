@@ -9,7 +9,7 @@ namespace HRM_Application.Contracts.Repositories
     {
         Task<PagedResponse<Employee>> GetAllEmployeesAsync(PaginationFilter filter);
         Task<Employee?> GetEmployeeByIdAsync(int id);
-
+        Task<Employee?> GetByCandidateIdAsync(int candidateId);
         Task<bool> IsEmployeeNameExistAsync(string name);
 
         Task AddEmployeeAsync(Employee employee);
@@ -20,5 +20,6 @@ namespace HRM_Application.Contracts.Repositories
 
         Task<bool> HasEmployeesAsync(int employeeId);
         Task<IEnumerable<Employee>> GetAllEmployeesAsync();
+
     }
 }

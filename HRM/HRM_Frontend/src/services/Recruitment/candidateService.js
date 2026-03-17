@@ -61,10 +61,8 @@ const candidateService = {
   declineOffer: async (id, reason) => {
     return await axiosClient.patch(
       `/Candidates/${id}/decline-offer`,
-      JSON.stringify(reason),
-      {
-        headers: { "Content-Type": "application/json" },
-      },
+      JSON.stringify(reason), 
+      { headers: { "Content-Type": "application/json" } },
     );
   },
 };

@@ -14,7 +14,6 @@ import {
   Tooltip,
   Select,
   Descriptions,
-  Divider,
   Spin,
 } from "antd";
 import {
@@ -29,6 +28,7 @@ import {
   EyeOutlined,
   CalendarOutlined,
   DollarOutlined,
+  FilterOutlined,
 } from "@ant-design/icons";
 import candidateService from "@/services/Recruitment/candidateService";
 import axiosClient from "@/lib/axiosClient";
@@ -44,16 +44,15 @@ export default function OfferListPage() {
   const [filteredCandidates, setFilteredCandidates] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Search & Filter
+  // Search & Filter States
   const [searchText, setSearchText] = useState("");
   const [filterDept, setFilterDept] = useState(null);
+  const [filterStatus, setFilterStatus] = useState("ALL"); 
 
-  // Modal Từ chối
+  // Modal States
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const [rejectReason, setRejectReason] = useState("");
-
-  // Modal Xem lại Offer
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
 
@@ -68,11 +67,13 @@ export default function OfferListPage() {
       ]);
 
       const offerRelated = candidateRes.filter((c) => {
-        const isOfferedOrHired = ["Offered", "Hired"].includes(c.status);
+        const targetStatuses = ["Offered", "Hired", "Declined"];
+        const isTargetStatus = targetStatuses.includes(c.status);
+        
         const isRejectedAfterOffer =
           c.status === "Rejected" && (c.offeredSalary > 0 || c.joinDate);
 
-        return isOfferedOrHired || isRejectedAfterOffer;
+        return isTargetStatus || isRejectedAfterOffer;
       });
 
       setCandidates(offerRelated);
@@ -92,16 +93,17 @@ export default function OfferListPage() {
     fetchData();
   }, []);
 
+  // CẬP NHẬT LOGIC LỌC TỔNG HỢP
   useEffect(() => {
     const filtered = candidates.filter((c) => {
-      const matchName = c.fullName
-        ?.toLowerCase()
-        .includes(searchText.toLowerCase());
+      const matchName = c.fullName?.toLowerCase().includes(searchText.toLowerCase());
       const matchDept = filterDept ? c.departmentName === filterDept : true;
-      return matchName && matchDept;
+      const matchStatus = filterStatus === "ALL" ? true : c.status === filterStatus;
+      
+      return matchName && matchDept && matchStatus;
     });
     setFilteredCandidates(filtered);
-  }, [searchText, filterDept, candidates]);
+  }, [searchText, filterDept, filterStatus, candidates]);
 
   const handleHire = async (id) => {
     setLoading(true);
@@ -109,14 +111,11 @@ export default function OfferListPage() {
       await axiosClient.patch(`/Candidates/${id}/hire`);
       notification.success({
         title: "Thành công",
-        description: "Ứng viên đã trúng tuyển và Job đã được cập nhật.",
+        description: "Ứng viên đã trúng tuyển và hồ sơ nhân viên đã được khởi tạo.",
       });
       fetchData();
     } catch (error) {
-      notification.error({
-        title: "Lỗi",
-        description: "Xác nhận tuyển dụng thất bại.",
-      });
+      notification.error({ title: "Lỗi", description: "Xác nhận tuyển dụng thất bại." });
     } finally {
       setLoading(false);
     }
@@ -124,19 +123,12 @@ export default function OfferListPage() {
 
   const handleDecline = async () => {
     if (!rejectReason.trim()) {
-      notification.warning({
-        title: "Chú ý",
-        description: "Vui lòng nhập lý do từ chối.",
-      });
+      notification.warning({ title: "Chú ý", description: "Vui lòng nhập lý do từ chối." });
       return;
     }
     setLoading(true);
     try {
-      await axiosClient.patch(
-        `/Candidates/${selectedId}/decline-offer`,
-        JSON.stringify(rejectReason),
-        { headers: { "Content-Type": "application/json" } },
-      );
+      await candidateService.declineOffer(selectedId, rejectReason);
 
       notification.success({
         title: "Đã cập nhật",
@@ -152,19 +144,14 @@ export default function OfferListPage() {
     }
   };
 
-  // HÀM XEM CHI TIẾT OFFER
   const handleViewOffer = async (record) => {
     setLoading(true);
     try {
-      // Lấy lại chi tiết ứng viên để đảm bảo có thông tin Offer mới nhất
       const detail = await candidateService.getById(record.candidateID);
       setSelectedCandidate(detail);
       setIsPreviewModalOpen(true);
     } catch (error) {
-      notification.error({
-        title: "Lỗi",
-        description: "Không thể lấy thông tin chi tiết.",
-      });
+      notification.error({ title: "Lỗi", description: "Không thể lấy thông tin chi tiết." });
     } finally {
       setLoading(false);
     }
@@ -172,100 +159,54 @@ export default function OfferListPage() {
 
   const columns = [
     {
-      title: <div className="text-center w-full">Ứng viên</div>,
+      title: "Ứng viên",
       key: "info",
-      width: 260,
+      width: 250,
       render: (_, record) => (
-        <Space>
-          <Avatar
-            className="bg-blue-100 text-blue-600"
-            icon={<UserOutlined />}
-          />
-          <div className="flex flex-col text-left">
-            <Text strong className="block">
-              {record.fullName}
-            </Text>
-            <Text
-              type="secondary"
-              className="text-[11px] flex items-center gap-1"
-            >
-              <MailOutlined /> {record.email}
-            </Text>
-            <Text
-              type="secondary"
-              className="text-[11px] flex items-center gap-1"
-            >
-              <PhoneOutlined /> {record.phone || "N/A"}
-            </Text>
+        <div className="flex items-center gap-3 text-left">
+          <Avatar className="bg-blue-100 text-blue-600" icon={<UserOutlined />} />
+          <div className="flex flex-col">
+            <Text strong>{record.fullName}</Text>
+            <Text type="secondary" className="text-[11px]"><MailOutlined /> {record.email}</Text>
           </div>
-        </Space>
-      ),
-    },
-    {
-      title: <div className="text-center w-full">Phòng ban</div>,
-      dataIndex: "departmentName",
-      width: 220,
-      render: (dept) => (
-        <div className="text-left">
-          <Tag
-            color="blue"
-            className="px-3 py-0.5 rounded-md border-none bg-blue-50 text-blue-600 font-medium"
-          >
-            {dept || "N/A"}
-          </Tag>
         </div>
       ),
     },
     {
-      title: <div className="text-center w-full">Vị trí ứng tuyển</div>,
-      dataIndex: "jobTitle",
-      ellipsis: true,
-      render: (title) => (
-        <Tooltip title={title} placement="topLeft">
-          <span className="text-gray-600 text-left block">{title}</span>
-        </Tooltip>
-      ),
+      title: "Vị trí & Phòng ban",
+      key: "job",
+      width: 250,
+      render: (_, record) => (
+        <div className="text-left">
+          <Text strong className="block text-[13px]">{record.jobTitle}</Text>
+          <Tag color="blue" className="mt-1 border-none bg-blue-50 text-blue-600">{record.departmentName}</Tag>
+        </div>
+      )
     },
     {
       title: "Trạng thái",
       dataIndex: "status",
       align: "center",
-      width: 120,
+      width: 150,
       render: (status) => {
         let color = "orange";
-        let label = "Offer";
-        if (status === "Hired") {
-          color = "green";
-          label = "Đã tuyển";
-        }
-        if (status === "Rejected") {
-          color = "red";
-          label = "Từ chối";
-        }
+        let label = "Đã gửi offer";
+        if (status === "Hired") { color = "green"; label = "Đã tuyển"; }
+        if (status === "Rejected") { color = "red"; label = "Loại"; }
+        if (status === "Declined") { color = "volcano"; label = "Từ chối"; }
 
-        return (
-          <Tag
-            color={color}
-            className="font-bold text-[9px] uppercase rounded-full"
-          >
-            {label}
-          </Tag>
-        );
+        return <Tag color={color} className="font-bold text-[10px] uppercase rounded-full px-3">{label}</Tag>;
       },
     },
     {
       title: "Thao tác",
       key: "action",
       align: "center",
-      width: 280,
+      width: 220,
       render: (_, record) => (
         <Space>
-          <Tooltip title="Xem nội dung thư mời">
-            <Button
-              size="small"
-              icon={<EyeOutlined />}
-              onClick={() => handleViewOffer(record)}
-            />
+          <Tooltip title="Xem chi tiết Offer">
+            <Button size="small" icon={<EyeOutlined />} onClick={() => handleViewOffer(record)} />
           </Tooltip>
 
           {record.status === "Offered" && (
@@ -274,22 +215,21 @@ export default function OfferListPage() {
                 type="primary"
                 size="small"
                 icon={<CheckCircleOutlined />}
-                className="bg-green-600 hover:bg-green-700 border-none rounded-md"
+                className="bg-green-600 border-none"
                 onClick={() => handleHire(record.candidateID)}
               >
-                Tuyển dụng
+                Tuyển
               </Button>
               <Button
                 danger
                 size="small"
                 icon={<CloseCircleOutlined />}
-                className="rounded-md"
                 onClick={() => {
                   setSelectedId(record.candidateID);
                   setIsRejectModalOpen(true);
                 }}
               >
-                Từ chối
+                UV Từ chối
               </Button>
             </>
           )}
@@ -306,43 +246,48 @@ export default function OfferListPage() {
             <div className="bg-[#154398] p-2 rounded-xl text-white shadow-md">
               <FileSearchOutlined style={{ fontSize: "24px" }} />
             </div>
-            <h1 className="text-2xl font-black text-[#154398] uppercase m-0">
-              Quản lý kết quả Offer
-            </h1>
+            <h1 className="text-2xl font-black text-[#154398] uppercase m-0">Quản lý kết quả Offer</h1>
           </div>
 
-          <Space size="middle">
+          <Space wrap>
             <Input
               placeholder="Tìm tên ứng viên..."
               prefix={<SearchOutlined className="text-gray-400" />}
-              className="w-64 h-10 rounded-xl border-none shadow-sm"
+              className="w-60 h-10 rounded-xl"
               allowClear
               onChange={(e) => setSearchText(e.target.value)}
             />
             <Select
-              placeholder="Lọc phòng ban"
+              placeholder="Phòng ban"
               allowClear
-              className="w-56 h-10 shadow-sm"
+              className="w-48 h-10"
               onChange={(val) => setFilterDept(val)}
-              options={allDepartments.map((d) => ({
-                label: d.departmentName,
-                value: d.departmentName,
-              }))}
+              options={allDepartments.map((d) => ({ label: d.departmentName, value: d.departmentName }))}
+            />
+
+            <Select
+              value={filterStatus}
+              className="w-40 h-10"
+              onChange={(val) => setFilterStatus(val)}
+              suffixIcon={<FilterOutlined />}
+              options={[
+                { value: "ALL", label: "Tất cả trạng thái" },
+                { value: "Offered", label: "Đã gửi Offer" },
+                { value: "Hired", label: "Đã tuyển dụng" },
+                { value: "Declined", label: "Ứng viên từ chối" },
+                { value: "Rejected", label: "Đã loại" },
+              ]}
             />
           </Space>
         </div>
 
-        <Card className="rounded-2xl border-none shadow-sm overflow-hidden p-0">
+        <Card className="rounded-2xl border-none shadow-sm overflow-hidden">
           <Table
             dataSource={filteredCandidates}
             columns={columns}
             loading={loading}
             rowKey="candidateID"
-            pagination={{
-              pageSize: 10,
-              showTotal: (t) => `Tổng cộng ${t} hồ sơ`,
-            }}
-            locale={{ emptyText: "Không có dữ liệu offer phù hợp" }}
+            pagination={{ pageSize: 10, showTotal: (t) => `Tổng cộng ${t} hồ sơ` }}
           />
         </Card>
       </div>
@@ -350,119 +295,66 @@ export default function OfferListPage() {
       {/* MODAL TỪ CHỐI */}
       <CustomModal
         open={isRejectModalOpen}
-        title={
-          <span className="text-red-600 font-bold">
-            <InfoCircleOutlined /> XÁC NHẬN TỪ CHỐI OFFER
-          </span>
-        }
-        onCancel={() => {
-          setIsRejectModalOpen(false);
-          setRejectReason("");
-        }}
-        onOk={handleDecline}
-        okText="Xác nhận"
+        title={<span className="text-red-600 font-bold"><InfoCircleOutlined /> XÁC NHẬN ỨNG VIÊN TỪ CHỐI OFFER</span>}
+        onCancel={() => { setIsRejectModalOpen(false); setRejectReason(""); }}
+        footer={[
+          <Button key="back" onClick={() => setIsRejectModalOpen(false)}>Hủy</Button>,
+          <Button key="submit" type="primary" danger loading={loading} onClick={handleDecline}>Xác nhận từ chối</Button>,
+        ]}
         zIndex={2000}
-        okButtonProps={{ danger: true, loading: loading }}
       >
-        <div className="py-2">
-          <Text className="block mb-2 font-medium">
-            Lý do ứng viên từ chối:
-          </Text>
+        <div className="py-2 text-left">
+          <Text className="block mb-2 font-medium">Lý do ứng viên từ chối:</Text>
           <Input.TextArea
             rows={4}
-            placeholder="Ví dụ: Đã nhận việc nơi khác..."
+            placeholder="Nhập lý do UV từ chối Offer (ví dụ: Thay đổi định hướng, lương không phù hợp...)"
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
-            className="rounded-lg"
           />
         </div>
       </CustomModal>
 
-      {/* MODAL XEM LẠI THƯ MỜI (OFFER PREVIEW) */}
+      {/* MODAL XEM LẠI THƯ MỜI */}
       <CustomModal
         open={isPreviewModalOpen}
-        title={
-          <span className="text-[#154398] font-black uppercase">
-            Chi tiết thư mời làm việc
-          </span>
-        }
+        title={<span className="text-[#154398] font-black uppercase">Chi tiết thư mời làm việc</span>}
         onCancel={() => setIsPreviewModalOpen(false)}
-        footer={[
-          <Button key="close" onClick={() => setIsPreviewModalOpen(false)}>
-            Đóng
-          </Button>,
-        ]}
-        width={800}
+        footer={[<Button key="close" onClick={() => setIsPreviewModalOpen(false)}>Đóng</Button>]}
+        width={750}
         zIndex={2000}
       >
         {selectedCandidate ? (
-          <div className="py-4">
+          <div className="py-4 text-left">
             <div className="flex items-center gap-4 mb-6 bg-slate-50 p-4 rounded-xl">
-              <Avatar
-                size={64}
-                icon={<UserOutlined />}
-                className="bg-blue-600"
-              />
+              <Avatar size={64} icon={<UserOutlined />} className="bg-blue-600" />
               <div>
-                <Title level={4} style={{ margin: 0 }}>
-                  {selectedCandidate.fullName}
-                </Title>
+                <Title level={4} style={{ margin: 0 }}>{selectedCandidate.fullName}</Title>
                 <Text type="secondary">{selectedCandidate.jobTitle}</Text>
               </div>
-              <div className="ml-auto">
-                <Tag
-                  color={
-                    selectedCandidate.status === "Hired" ? "green" : "orange"
-                  }
-                >
-                  {selectedCandidate.status}
-                </Tag>
-              </div>
+              <Tag color={selectedCandidate.status === "Hired" ? "green" : "orange"} className="ml-auto">
+                {selectedCandidate.status}
+              </Tag>
             </div>
 
             <Descriptions column={2} bordered size="small" layout="vertical">
-              <Descriptions.Item
-                label={
-                  <span>
-                    <DollarOutlined /> Lương cơ bản
-                  </span>
-                }
-              >
-                <Text strong className="text-blue-600">
-                  {selectedCandidate.offeredSalary?.toLocaleString()} VNĐ
-                </Text>
-                <div className="text-[11px] text-gray-400 italic">
-                  ({docSoVietNam(selectedCandidate.offeredSalary || 0)})
-                </div>
+              <Descriptions.Item label={<span><DollarOutlined /> Lương cơ bản</span>}>
+                <Text strong className="text-blue-600">{selectedCandidate.offeredSalary?.toLocaleString()} VNĐ</Text>
+                <div className="text-[11px] text-gray-400 italic">({docSoVietNam(selectedCandidate.offeredSalary || 0)})</div>
               </Descriptions.Item>
-              <Descriptions.Item
-                label={
-                  <span>
-                    <CalendarOutlined /> Ngày nhận việc
-                  </span>
-                }
-              >
-                <Text strong>
-                  {dayjs(selectedCandidate.joinDate).format("DD/MM/YYYY")}
-                </Text>
+              <Descriptions.Item label={<span><CalendarOutlined /> Ngày nhận việc</span>}>
+                <Text strong>{dayjs(selectedCandidate.joinDate).format("DD/MM/YYYY")}</Text>
               </Descriptions.Item>
-              {selectedCandidate.comments && (
-                <Descriptions.Item label="Nhận xét từ Manager" span={2}>
-                  <Text italic>{selectedCandidate.comments}</Text>
-                </Descriptions.Item>
-              )}
             </Descriptions>
 
-            {selectedCandidate.status === "Rejected" && (
-              <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-lg border border-red-100">
-                <Text strong>Lý do từ chối: </Text>
-                <Text>{selectedCandidate.rejectReason || "N/A"}</Text>
+            {/* HIỂN THỊ LÝ DO NẾU LÀ TRẠNG THÁI TỪ CHỐI */}
+            {selectedCandidate.status === "Declined" && (
+              <div className="mt-4 p-3 bg-volcano-50 text-volcano-700 rounded-lg border border-volcano-100">
+            
+                <Text>{selectedCandidate.offerNote}</Text>
               </div>
             )}
           </div>
-        ) : (
-          <Spin />
-        )}
+        ) : <Spin className="w-full py-10" />}
       </CustomModal>
     </div>
   );
