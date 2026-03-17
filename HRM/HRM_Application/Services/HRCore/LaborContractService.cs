@@ -123,5 +123,24 @@ namespace HRM_Application.Services.HRCore
                 IsActive = true
             };
         }
+        public async Task<IEnumerable<HRM_Application.DTOs.Employee.EmployeeResponse>> GetEmployeesWithoutContractAsync()
+        {
+            // 1. Lấy tất cả nhân viên
+            var allEmployees = await _employeeRepository.GetAllEmployeesAsync();
+
+            // 2. Lọc ra những người chưa có hợp đồng nào đang ở trạng thái IsActive = true
+            var employeesWithoutContract = new List<Employee>();
+
+            foreach (var emp in allEmployees)
+            {
+                var activeContract = await _repository.GetActiveContractByEmployeeIdAsync(emp.EmployeeID);
+                if (activeContract == null)
+                {
+                    employeesWithoutContract.Add(emp);
+                }
+            }
+
+            return _mapper.Map<IEnumerable<HRM_Application.DTOs.Employee.EmployeeResponse>>(employeesWithoutContract);
+        }
     }
 }

@@ -159,7 +159,7 @@ export default function OfferListPage() {
 
   const columns = [
     {
-      title: "Ứng viên",
+      title: <div className="text-center w-full">Ứng viên</div>,
       key: "info",
       width: 250,
       render: (_, record) => (
@@ -173,7 +173,7 @@ export default function OfferListPage() {
       ),
     },
     {
-      title: "Vị trí & Phòng ban",
+      title: <div className="text-center w-full">Vị trí & Phòng ban</div>,
       key: "job",
       width: 250,
       render: (_, record) => (
@@ -229,7 +229,7 @@ export default function OfferListPage() {
                   setIsRejectModalOpen(true);
                 }}
               >
-                UV Từ chối
+                Từ chối
               </Button>
             </>
           )}

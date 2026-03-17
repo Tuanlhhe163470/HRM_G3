@@ -158,7 +158,9 @@ namespace HRM_Application.Mappings
             CreateMap<UpdateLaborContractRequest, LaborContract>();
 
             CreateMap<LaborContract, DTOs.LaborContract.Responses.LaborContractResponse>()
-                .ForMember(dest => dest.Employee, opt => opt.MapFrom(src => src.Employee));
+                .ForMember(dest => dest.Employee, opt => opt.MapFrom(src => src.Employee))
+                .ForMember(dest => dest.DepartmentName, opt => opt.MapFrom(src => src.Employee.Department.DepartmentName));
+
 
             // ================= LEAVE =================
             CreateMap<LeaveType, BaseReferenceResponse>()
