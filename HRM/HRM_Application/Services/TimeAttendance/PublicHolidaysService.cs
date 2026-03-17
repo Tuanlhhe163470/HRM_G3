@@ -18,12 +18,16 @@ namespace HRM_Application.Services.TimeAttendance
     public class PublicHolidaysService : IPublicHolidayService
     {
         private readonly IPublicHolidayRepository _repository;
+        private readonly IMonthlyTimesheetRepository _monthlyTimesheetRepository;
         private readonly IMapper _mapper;
-        public PublicHolidaysService(IPublicHolidayRepository repository, IMapper mapper)
+
+        public PublicHolidaysService(IPublicHolidayRepository repository, IMonthlyTimesheetRepository monthlyTimesheetRepository, IMapper mapper)
         {
             _repository = repository;
+            _monthlyTimesheetRepository = monthlyTimesheetRepository;
             _mapper = mapper;
         }
+
         public async Task CreateHolidayAsync(CreatePublicHolidayRequest request)
         {
             bool isOverlapping = await _repository.CheckOverlapAsync(request.StartDate, request.EndDate);
@@ -42,9 +46,31 @@ namespace HRM_Application.Services.TimeAttendance
             if (publicHoliday == null)
             {
                 throw new KeyNotFoundException($"Không tìm thấy ngày lễ với ID: {id}");
-            } else {
-                await _repository.DeletePublicHolidayAsync(id);
             }
+
+            int startMonth = publicHoliday.StartDate.Month;
+            int startYear = publicHoliday.StartDate.Year;
+
+            int endMonth = publicHoliday.EndDate.Month;
+            int endYear = publicHoliday.EndDate.Year;
+
+            // 1. Kiểm tra tháng của Ngày bắt đầu
+            bool isStartMonthLocked = await _monthlyTimesheetRepository.IsTimesheetLockedAsync(startMonth, startYear);
+
+            // 2. Kiểm tra tháng của Ngày kết thúc (Nếu ngày lễ vắt ngang 2 tháng khác nhau)
+            bool isEndMonthLocked = false;
+            if (startMonth != endMonth || startYear != endYear)
+            {
+                isEndMonthLocked = await _monthlyTimesheetRepository.IsTimesheetLockedAsync(endMonth, endYear);
+            }
+
+            // 3. Nếu 1 trong 2 tháng đã bị khóa -> Ném lỗi ra cho Frontend
+            if (isStartMonthLocked || isEndMonthLocked)
+            {
+                throw new InvalidOperationException("Không thể xóa ngày lễ thuộc về kỳ chốt công đã khóa.");
+            }
+
+            await _repository.DeletePublicHolidayAsync(id);
         }
 
         public async Task<PagedResponse<PublicHolidayResponse>> GetAllHolidaysAsync(PaginationFilter filter)

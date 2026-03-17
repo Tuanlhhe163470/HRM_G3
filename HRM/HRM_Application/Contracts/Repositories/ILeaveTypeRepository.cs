@@ -15,5 +15,6 @@ namespace HRM_Application.Interfaces.Repositories
         Task<LeaveRequest> GetByIdAsync(int id);
         Task UpdateAsync(LeaveRequest request);
         Task<LeaveRequest?> GetApprovedLeaveOnDateAsync(int employeeId, DateTime targetDate);
+        Task<List<LeaveRequest>> GetApprovedLeavesInRangeAsync(int employeeId, DateTime fromDate, DateTime toDate);
     }
 }

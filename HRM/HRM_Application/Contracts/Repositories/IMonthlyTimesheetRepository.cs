@@ -19,5 +19,6 @@ namespace HRM_Application.Contracts.Repositories
         Task UpdateRangeAsync(IEnumerable<MonthlyTimesheet> timesheets);
 
         Task<List<MonthlyTimesheet>> GetAllByMonthAsync(int month, int year);
+        Task<bool> IsTimesheetLockedAsync(int month, int year);
     }
 }

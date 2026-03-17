@@ -320,11 +320,23 @@ export default function ShiftConfigPage() {
         isSuccess: true
       });
     } catch (error) {
-      notice({
-        msg: "Lỗi lưu ngày lễ",
-        desc: error.message || "Có lỗi xảy ra, vui lòng thử lại.",
-        isSuccess: false
-      });
+      const responseData = error.response?.data;
+      const backendMsg = responseData?.message || responseData?.Message;
+
+      if (backendMsg) {
+        // Trải nghiệm giống hệt bên Shift: Bắn thẳng câu chửi của Backend lên tiêu đề
+        notice({
+          msg: backendMsg, 
+          isSuccess: false
+        });
+      } else {
+        // Fallback nếu lỗi sập server (500) hoặc mất mạng
+        notice({
+          msg: "Lỗi lưu ngày lễ",
+          desc: "Có lỗi xảy ra, vui lòng thử lại.",
+          isSuccess: false
+        });
+      }
     }
   };
 
@@ -344,10 +356,13 @@ export default function ShiftConfigPage() {
             desc: "Ngày lễ đã được xóa khỏi cấu hình.",
             isSuccess: true
           });
-        } catch (e) {
+        } catch (error) { 
+          const responseData = error.response?.data;
+          const backendMsg = responseData?.message || responseData?.Message;
+
           notice({
-            msg: "Lỗi xóa dữ liệu",
-            desc: e.message || "Không thể xóa ngày lễ lúc này.",
+            msg: "Không thể xóa", 
+            desc: backendMsg || "Lỗi hệ thống, không thể xóa ngày lễ lúc này.", 
             isSuccess: false
           });
         }
