@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { payrollService } from '@/services/Payroll/payrollService';
+import { Select } from 'antd'; // Import thêm Select từ antd
 
 // ─── Các role được phép vào trang này ──────────────────────────────────────
 const ALLOWED_ROLES = ['HR', 'Manager', 'Admin'];
@@ -9,7 +10,7 @@ const ALLOWED_ROLES = ['HR', 'Manager', 'Admin'];
 // ─── Hiển thị badge trạng thái ─────────────────────────────────────────────
 const StatusBadge = ({ status }) => {
     const map = {
-        Draft:    { label: 'Nháp',      cls: 'bg-blue-100 text-blue-700 border-blue-200' },
+        Draft:    { label: 'Nháp',    cls: 'bg-blue-100 text-blue-700 border-blue-200' },
         Approved: { label: 'Đã duyệt',  cls: 'bg-green-100 text-green-700 border-green-200' },
         Rejected: { label: 'Từ chối',   cls: 'bg-red-100 text-red-700 border-red-200' },
         Paid:     { label: 'Đã trả',    cls: 'bg-purple-100 text-purple-700 border-purple-200' },
@@ -33,14 +34,15 @@ export default function PayrollAdjustmentPage() {
     const [userRole, setUserRole] = useState(null);
 
     // ── State form điều chỉnh ────────────────────────────────────────────────
-    const [adjustAmount, setAdjustAmount] = useState('');
+    const [bonusAmount, setBonusAmount] = useState('');
+    const [penaltyAmount, setPenaltyAmount] = useState('');
     const [adjustReason, setAdjustReason] = useState('');
     const [saving, setSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
 
-    // ── Đọc tháng/năm (hiện tại hardcode 2/2026, có thể mở rộng) ───────────
-    const [month] = useState(2);
-    const [year] = useState(2026);
+    // ── Đã sửa: State cho Tháng/Năm có thể thay đổi được ───────────────────
+    const [month, setMonth] = useState(2);
+    const [year, setYear] = useState(2026);
 
     // ── Lấy role từ localStorage ─────────────────────────────────────────────
     useEffect(() => {
@@ -59,6 +61,12 @@ export default function PayrollAdjustmentPage() {
         try {
             const res = await payrollService.getMonthlyPayroll(month, year);
             setPayrolls(res.data || []);
+            // Xóa record đang chọn nếu người dùng đổi tháng để tránh hiển thị sai dữ liệu
+            setSelectedRecord(null); 
+            setBonusAmount('');
+            setPenaltyAmount('');
+            setAdjustReason('');
+            setSaveSuccess(false);
         } catch (err) {
             console.error('Lỗi tải bảng lương:', err);
         } finally {
@@ -66,12 +74,28 @@ export default function PayrollAdjustmentPage() {
         }
     };
 
-    useEffect(() => { fetchPayrolls(); }, []);
+    // Gọi lại API mỗi khi month hoặc year thay đổi
+    useEffect(() => { 
+        fetchPayrolls(); 
+    }, [month, year]);
 
     // ── Chọn nhân viên từ sidebar ─────────────────────────────────────────────
     const handleSelect = (record) => {
         setSelectedRecord(record);
-        setAdjustAmount(record.adjustmentAmount || '');
+        
+        // Bóc tách tiền thưởng và phạt từ số tiền điều chỉnh hiện tại
+        const existingAmt = record.adjustmentAmount || 0;
+        if (existingAmt > 0) {
+            setBonusAmount(existingAmt);
+            setPenaltyAmount('');
+        } else if (existingAmt < 0) {
+            setBonusAmount('');
+            setPenaltyAmount(Math.abs(existingAmt)); // Lấy số tuyệt đối hiển thị ở ô phạt
+        } else {
+            setBonusAmount('');
+            setPenaltyAmount('');
+        }
+
         setAdjustReason(record.adjustmentReason || '');
         setSaveSuccess(false);
     };
@@ -85,16 +109,19 @@ export default function PayrollAdjustmentPage() {
         }
         setSaving(true);
         try {
+            // Tự động tính toán: Tổng = Thưởng - Phạt
+            const finalAdjustAmount = (Number(bonusAmount) || 0) - (Number(penaltyAmount) || 0);
+
             await payrollService.adjustPayroll(
                 selectedRecord.payrollID,
-                Number(adjustAmount),
+                finalAdjustAmount,
                 adjustReason
             );
             setSaveSuccess(true);
             await fetchPayrolls();
             // Cập nhật lại record đang chọn
             const updated = payrolls.find(p => p.payrollID === selectedRecord.payrollID);
-            if (updated) setSelectedRecord({ ...updated, adjustmentAmount: Number(adjustAmount), adjustmentReason: adjustReason });
+            if (updated) setSelectedRecord({ ...updated, adjustmentAmount: finalAdjustAmount, adjustmentReason: adjustReason });
         } catch (err) {
             alert('Lỗi khi lưu điều chỉnh: ' + (err.response?.data?.message || err.message));
         } finally {
@@ -109,7 +136,7 @@ export default function PayrollAdjustmentPage() {
     );
 
     // ── Tính toán preview điều chỉnh ─────────────────────────────────────────
-    const amt = Number(adjustAmount) || 0;
+    const amt = (Number(bonusAmount) || 0) - (Number(penaltyAmount) || 0);
     const isBonus = amt > 0;
     const isPenalty = amt < 0;
 
@@ -141,7 +168,7 @@ export default function PayrollAdjustmentPage() {
                     </button>
                     <div>
                         <h1 className="text-lg font-black text-gray-800 tracking-tight">Điều Chỉnh Lương Thủ Công</h1>
-                        <p className="text-xs text-gray-400">Thưởng / Phạt • Tháng {month}/{year}</p>
+                        <p className="text-xs text-gray-400">Tháng {month < 10 ? `0${month}` : month}/{year}</p>
                     </div>
                 </div>
                 <button
@@ -164,21 +191,38 @@ export default function PayrollAdjustmentPage() {
                 ═══════════════════════════════════════════════════════ */}
                 <div className="w-80 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
 
-                    {/* Search trong sidebar */}
+                    {/* Vùng Tìm kiếm và Chọn Tháng/Năm */}
                     <div className="p-4 border-b border-gray-100">
+                        {/* Dropdown Chọn Tháng Năm */}
+                        <div className="flex items-center gap-2 mb-3">
+                            <Select
+                                value={month}
+                                onChange={setMonth}
+                                style={{ width: '50%' }}
+                                options={[...Array(12)].map((_, i) => ({ value: i + 1, label: `Tháng ${i + 1}` }))}
+                            />
+                            <Select
+                                value={year}
+                                onChange={setYear}
+                                style={{ width: '50%' }}
+                                options={[2025, 2026, 2027].map(y => ({ value: y, label: `Năm ${y}` }))}
+                            />
+                        </div>
+
+                        {/* Ô Input Tìm Kiếm */}
                         <div className="relative">
                             <svg className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                             <input
                                 type="text"
-                                placeholder="Tìm nhân viên..."
+                                placeholder="Tìm theo tên hoặc ID..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50"
                             />
                         </div>
-                        <p className="text-xs text-gray-400 mt-2">{filteredPayrolls.length} nhân viên</p>
+                        <p className="text-xs text-gray-400 mt-2">{filteredPayrolls.length} nhân viên trong kỳ</p>
                     </div>
 
                     {/* Danh sách nhân viên */}
@@ -283,44 +327,58 @@ export default function PayrollAdjustmentPage() {
                                     Điều chỉnh thưởng / phạt
                                 </h3>
 
-                                {/* Input số tiền */}
-                                <div className="mb-5">
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">
-                                        Số tiền điều chỉnh (đ)
-                                        <span className="ml-2 text-xs font-normal text-gray-400">— Dương (+) là Thưởng, Âm (−) là Phạt</span>
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            type="number"
-                                            value={adjustAmount}
-                                            onChange={(e) => { setAdjustAmount(e.target.value); setSaveSuccess(false); }}
-                                            placeholder="VD: 500000 hoặc -200000"
-                                            className={`w-full px-4 py-3 text-lg font-mono border-2 rounded-xl outline-none transition-colors ${
-                                                isBonus ? 'border-green-400 bg-green-50 text-green-700' :
-                                                isPenalty ? 'border-red-400 bg-red-50 text-red-700' :
-                                                'border-gray-200 focus:border-blue-400'
-                                            }`}
-                                        />
-                                        {isBonus && (
+                                {/* Giao diện 2 Input: Thưởng và Phạt riêng biệt */}
+                                <div className="mb-2 grid grid-cols-2 gap-4">
+                                    {/* Cột Thưởng */}
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                                            Tiền Thưởng (đ)
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={bonusAmount}
+                                                onChange={(e) => { setBonusAmount(e.target.value); setSaveSuccess(false); }}
+                                                placeholder="VD: 500000"
+                                                className="w-full px-4 py-3 text-lg font-mono border-2 rounded-xl outline-none transition-colors border-gray-200 focus:border-green-400 bg-white"
+                                            />
                                             <span className="absolute right-3 top-3 text-xs bg-green-100 text-green-700 font-bold px-2 py-1 rounded-lg">
-                                                🎁 Thưởng
+                                                🎁 Thưởng (+)
                                             </span>
-                                        )}
-                                        {isPenalty && (
-                                            <span className="absolute right-3 top-3 text-xs bg-red-100 text-red-700 font-bold px-2 py-1 rounded-lg">
-                                                ⚠️ Phạt
-                                            </span>
-                                        )}
+                                        </div>
                                     </div>
-                                    {amt !== 0 && (
-                                        <p className={`text-sm mt-1.5 font-medium ${isBonus ? 'text-green-600' : 'text-red-600'}`}>
-                                            {isBonus ? '+ ' : ''}{amt.toLocaleString()}đ
-                                        </p>
-                                    )}
+
+                                    {/* Cột Phạt */}
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                                            Tiền Phạt (đ)
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={penaltyAmount}
+                                                onChange={(e) => { setPenaltyAmount(e.target.value); setSaveSuccess(false); }}
+                                                placeholder="VD: 200000"
+                                                className="w-full px-4 py-3 text-lg font-mono border-2 rounded-xl outline-none transition-colors border-gray-200 focus:border-red-400 bg-white"
+                                            />
+                                            <span className="absolute right-3 top-3 text-xs bg-red-100 text-red-700 font-bold px-2 py-1 rounded-lg">
+                                                ⚠️ Phạt (−)
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
 
+                                {/* Hiển thị tổng tiền tính toán từ 2 ô */}
+                                {amt !== 0 && (
+                                    <p className={`text-sm mt-2 mb-5 font-medium ${isBonus ? 'text-green-600' : 'text-red-600'}`}>
+                                        Tổng điều chỉnh: {isBonus ? '+ ' : ''}{amt.toLocaleString()}đ
+                                    </p>
+                                )}
+
                                 {/* Input lý do */}
-                                <div className="mb-6">
+                                <div className="mb-6 mt-3">
                                     <label className="block text-sm font-bold text-gray-700 mb-2">
                                         Lý do điều chỉnh <span className="text-red-500">*</span>
                                     </label>
@@ -362,7 +420,7 @@ export default function PayrollAdjustmentPage() {
                                 {/* Buttons */}
                                 <div className="flex gap-3">
                                     <button
-                                        onClick={() => { setSelectedRecord(null); setAdjustAmount(''); setAdjustReason(''); setSaveSuccess(false); }}
+                                        onClick={() => { setSelectedRecord(null); setBonusAmount(''); setPenaltyAmount(''); setAdjustReason(''); setSaveSuccess(false); }}
                                         className="flex-1 py-3 text-sm font-bold text-gray-600 border-2 border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
                                     >
                                         Huỷ / Chọn lại

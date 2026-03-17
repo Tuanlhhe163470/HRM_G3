@@ -59,13 +59,16 @@ export default function EmployeeSalarySetupPage() {
       setConfigs(Array.isArray(configData) ? configData : []);
 
       // 2. Gọi API lấy thông tin nhân viên để lôi cái Tên ra
-      const employeesData = await employeeService.getAll();
-      const currentEmployee = employeesData.find(emp => emp.employeeID === employeeId);
-
-      if (currentEmployee) {
-        setEmployeeName(currentEmployee.fullName);
-      } else {
-        setEmployeeName(`Nhân viên #${employeeId}`); // Fallback nếu không tìm thấy
+      try {
+        const currentEmployee = await employeeService.getById(employeeId);
+        if (currentEmployee) {
+          setEmployeeName(currentEmployee.fullName);
+        } else {
+          setEmployeeName(`Nhân viên #${employeeId}`); // Fallback nếu không tìm thấy
+        }
+      } catch (err) {
+        console.error("Không thể lấy tên nhân viên:", err);
+        setEmployeeName(`Nhân viên #${employeeId}`); // Bỏ qua lỗi 403 vẫn cho hiển thị lương
       }
 
     } catch (error) {

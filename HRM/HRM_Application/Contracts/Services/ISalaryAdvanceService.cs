@@ -15,8 +15,8 @@ namespace HRM_Application.Contracts.Services
         // UC: Nhân viên xem lịch sử ứng lương của mình
         Task<IEnumerable<SalaryAdvanceDTO>> GetMyAdvanceHistoryAsync(int employeeId);
 
-        Task<IEnumerable<ManagerAdvanceDTO>> GetPendingRequestsAsync();
-        Task<IEnumerable<ManagerAdvanceDTO>> GetAllAdvancesAsync(); // Manager xem toàn bộ lịch sử
+        Task<IEnumerable<ManagerAdvanceDTO>> GetPendingRequestsAsync(int userId, string userRole);
+        Task<IEnumerable<ManagerAdvanceDTO>> GetAllAdvancesAsync(int userId, string userRole); // Manager xem toàn bộ lịch sử  
         Task<bool> ProcessAdvanceRequestAsync(int advanceId, ProcessAdvanceRequestDTO request, int managerId);
     }
 }

@@ -58,7 +58,12 @@ export default function PayrollCalculationPage() {
             message.success("Hệ thống đã hoàn tất tính lương!");
             fetchData();
         } catch (err) {
-            message.error("Tính lương thất bại, vui lòng kiểm tra Backend");
+            console.error("Lỗi khi tính lương:", err);
+            if (err.response && err.response.data && err.response.data.message) {
+                message.error(err.response.data.message);
+            } else {
+                message.error("Tính lương thất bại, vui lòng kiểm tra Backend");
+            }
         } finally {
             setCalculating(false);
         }
