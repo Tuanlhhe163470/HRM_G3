@@ -112,8 +112,8 @@ export default function Header() {
               <FileSearchOutlined /> Tuyển dụng
             </Link>
             <Link
-              href="/core-hr"
-              className={`menu-item font-medium text-[13px] uppercase tracking-tighter ${pathname.startsWith("/core-hr") ? "text-[#00aeef] font-bold" : ""}`}
+              href="/core-hr/employees"
+              className={`menu-item font-medium text-[13px] uppercase tracking-tighter ${pathname.startsWith("/core-hr/employees") ? "text-[#00aeef] font-bold" : ""}`}
             >
               <TeamOutlined /> Nhân sự
             </Link>
@@ -164,8 +164,8 @@ export default function Header() {
               <FileSearchOutlined /> Tuyển dụng
             </Link>
             <Link
-              href="/core-hr"
-              className={`menu-item font-medium text-[13px] uppercase tracking-tighter ${pathname.startsWith("/core-hr") ? "text-[#00aeef] font-bold" : ""}`}
+              href="/core-hr/manager-list"
+              className={`menu-item font-medium text-[13px] uppercase tracking-tighter ${pathname.startsWith("/core-hr/manager-list") ? "text-[#00aeef] font-bold" : ""}`}
             >
               <TeamOutlined /> Nhân sự của tôi
             </Link>

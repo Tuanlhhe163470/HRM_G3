@@ -20,6 +20,6 @@ namespace HRM_Application.Contracts.Repositories
 
         Task<bool> HasEmployeesAsync(int employeeId);
         Task<IEnumerable<Employee>> GetAllEmployeesAsync();
-
+        Task<PagedResponse<Employee>> GetEmployeesByDepartmentAsync(int departmentId, PaginationFilter filter);
     }
 }

@@ -218,6 +218,21 @@ export default function SidebarHRM() {
           icon: <FormOutlined />,
         },
       ];
+
+    if (role === "Manager")
+     return [
+        {
+          key: "/core-hr/manager-list",
+          label: (
+            <Link href="/core-hr/manager-list">
+              <span className="font-bold text-[13px] uppercase tracking-tight">
+                Nhân sự của tôi
+              </span>
+            </Link>
+          ),
+          icon: <TeamOutlined />,
+        },
+      ]
   };
 
   // --- MODULE CHẤM CÔNG ---

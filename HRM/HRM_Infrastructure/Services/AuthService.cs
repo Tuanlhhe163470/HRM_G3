@@ -77,6 +77,7 @@ namespace HRM_Infrastructure.Services
                     Gender = user.Employee?.Gender,
                     Phone = user.Employee?.Phone,
                     AvatarURL = user.Employee?.AvatarURL,
+                    DepartmentID = user.Employee?.DepartmentID,
                     DepartmentName = user.Employee?.Department?.DepartmentName,
                     PositionName = user.Employee?.Position?.PositionName,
                     Status = user.Employee?.Status ?? "Active"

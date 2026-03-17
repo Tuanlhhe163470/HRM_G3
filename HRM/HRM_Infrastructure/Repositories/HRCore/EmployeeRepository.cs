@@ -95,5 +95,23 @@ namespace HRM_Infrastructure.Repositories.HRCore
         {
             return await _context.Employees.AnyAsync(e => e.FullName.ToLower() == name.ToLower());
         }
+        public async Task<PagedResponse<Employee>> GetEmployeesByDepartmentAsync(int departmentId, PaginationFilter filter)
+        {
+            var query = _context.Employees
+                .Include(e => e.Department)
+                .Include(e => e.Position)
+                .Include(e => e.Manager)
+                .Where(e => e.DepartmentID == departmentId) // Lọc theo phòng ban
+                .AsQueryable();
+
+            var totalRecords = await query.CountAsync();
+
+            var data = await query
+                .Skip((filter.PageNumber - 1) * filter.PageSize)
+                .Take(filter.PageSize)
+                .ToListAsync();
+
+            return new PagedResponse<Employee>(data, filter.PageNumber, filter.PageSize, totalRecords);
+        }
     }
 }

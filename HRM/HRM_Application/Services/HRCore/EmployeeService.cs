@@ -94,5 +94,19 @@ namespace HRM_Application.Services.HRCore
 
             await _repository.DeleteEmployeeAsync(id);
         }
+        public async Task<PagedResponse<EmployeeResponse>> GetEmployeesByDepartmentAsync(int departmentId, PaginationFilter filter)
+        {
+            // Gọi repository để lấy dữ liệu đã lọc
+            var pagedEntities = await _repository.GetEmployeesByDepartmentAsync(departmentId, filter);
+
+            // Ánh xạ danh sách Entity sang DTO
+            var dtoList = _mapper.Map<List<EmployeeResponse>>(pagedEntities.Data);
+
+            return new PagedResponse<EmployeeResponse>(
+                dtoList,
+                pagedEntities.PageNumber,
+                pagedEntities.PageSize,
+                pagedEntities.TotalRecords);
+        }
     }
 }
