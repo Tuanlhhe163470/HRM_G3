@@ -17,5 +17,6 @@ namespace HRM_Application.Contracts.Repositories
         Task UpdatePublicHolidayAsync(PublicHoliday publicHoliday);
         Task DeletePublicHolidayAsync(int id);
         Task<PublicHoliday?> GetHolidayByDateAsync(DateTime date);
+        Task<bool> CheckOverlapAsync(DateTime startDate, DateTime endDate);
     }
 }

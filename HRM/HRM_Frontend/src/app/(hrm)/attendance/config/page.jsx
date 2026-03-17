@@ -1,20 +1,20 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Modal } from 'antd'; 
-import shiftService from '@/services/TimeAndAttendance/shiftService'; 
+import { Modal } from 'antd';
+import shiftService from '@/services/TimeAndAttendance/shiftService';
 import publicHolidayService from '@/services/TimeAndAttendance/publicHolidayService';
 import useNotice from '@/components/Notice';
 
 // Constant đưa ra ngoài component để tránh bị re-create mỗi lần render
 const DAYS_OF_WEEK = [
-  { value: 1, label: 'Thứ 2'},
-  { value: 2, label: 'Thứ 3'},
-  { value: 3, label: 'Thứ 4'},
-  { value: 4, label: 'Thứ 5'},
-  { value: 5, label: 'Thứ 6'},
-  { value: 6, label: 'Thứ 7'},
-  { value: 0, label: 'Chủ Nhật'},
+  { value: 1, label: 'Thứ 2' },
+  { value: 2, label: 'Thứ 3' },
+  { value: 3, label: 'Thứ 4' },
+  { value: 4, label: 'Thứ 5' },
+  { value: 5, label: 'Thứ 6' },
+  { value: 6, label: 'Thứ 7' },
+  { value: 0, label: 'Chủ Nhật' },
 ];
 
 export default function ShiftConfigPage() {
@@ -26,12 +26,13 @@ export default function ShiftConfigPage() {
    * ==========================================
    */
   const [loading, setLoading] = useState(true);
-  
+
   // --- States: Ca làm việc (Shifts) ---
   const [shifts, setShifts] = useState([]);
   const [isShiftModalOpen, setIsShiftModalOpen] = useState(false);
   const [isEditingShift, setIsEditingShift] = useState(false);
-  
+  const [shiftErrors, setShiftErrors] = useState({});
+
   // Ghi chú: Đã xóa state `selectedDays` thừa vì bạn đã lưu nó trong `shiftForm.workDays`
   const [shiftForm, setShiftForm] = useState({
     id: 0,
@@ -43,16 +44,17 @@ export default function ShiftConfigPage() {
     allowedLateMinutes: 15,
     allowedEarlyLeaveMinutes: 15,
     isActive: true,
-    workDays: [1, 2, 3, 4, 5] 
+    workDays: [1, 2, 3, 4, 5]
   });
+
 
   // --- States: Ngày lễ (Holidays) ---
   const [holidays, setHolidays] = useState([]);
   const [isHolidayModalOpen, setIsHolidayModalOpen] = useState(false);
   const [isEditingHoliday, setIsEditingHoliday] = useState(false);
   const [holidayForm, setHolidayForm] = useState({
-    id: 0,           
-    holidayName: '',    
+    id: 0,
+    holidayName: '',
     startDate: '',
     endDate: '',
     isRecurring: false
@@ -107,14 +109,15 @@ export default function ShiftConfigPage() {
 
   const handleOpenAddShift = () => {
     setIsEditingShift(false);
-    setShiftForm({ 
-      id: 0, 
-      shiftName: '', 
-      startTime: '08:00', 
-      endTime: '17:30', 
-      breakStartTime: '12:00', 
-      breakEndTime: '13:30', 
-      allowedLateMinutes: 15, 
+    setShiftErrors({});
+    setShiftForm({
+      id: 0,
+      shiftName: '',
+      startTime: '08:00',
+      endTime: '17:30',
+      breakStartTime: '12:00',
+      breakEndTime: '13:30',
+      allowedLateMinutes: 15,
       allowedEarlyLeaveMinutes: 15,
       isActive: true,
       workDays: [1, 2, 3, 4, 5]
@@ -124,6 +127,7 @@ export default function ShiftConfigPage() {
 
   const handleOpenEditShift = (shift) => {
     setIsEditingShift(true);
+    setShiftErrors({});
     setShiftForm({
       ...shift,
       // Đảm bảo parse đúng format thời gian HH:mm để nhét vào input type="time"
@@ -139,6 +143,21 @@ export default function ShiftConfigPage() {
 
   const handleSaveShift = async (e) => {
     e.preventDefault();
+    const errors = {};
+    if (!shiftForm.shiftName || !shiftForm.shiftName.trim()) {
+      errors.shiftName = 'Tên ca làm việc là bắt buộc.';
+    }
+    // Bạn có thể thêm validate cho giờ bắt đầu/kết thúc nếu muốn:
+    if (!shiftForm.startTime) errors.startTime = 'Giờ bắt đầu là bắt buộc.';
+    if (!shiftForm.endTime) errors.endTime = 'Giờ kết thúc là bắt buộc.';
+
+    // Nếu có lỗi thì set state và dừng lại (không gọi API)
+    if (Object.keys(errors).length > 0) {
+      setShiftErrors(errors);
+      return;
+    }
+
+    setShiftErrors({});
     try {
       if (isEditingShift) {
         await shiftService.update(shiftForm.id, shiftForm);
@@ -146,7 +165,7 @@ export default function ShiftConfigPage() {
         const { id, ...dataToSend } = shiftForm;
         await shiftService.create(dataToSend);
       }
-      
+
       setIsShiftModalOpen(false);
       fetchData();
       notice({
@@ -155,16 +174,56 @@ export default function ShiftConfigPage() {
         isSuccess: true
       });
     } catch (error) {
-      notice({
-        msg: "Lỗi lưu ca làm việc",
-        desc: error.message || "Có lỗi xảy ra, vui lòng thử lại.",
-        isSuccess: false
-      });
+      // 🌟 XỬ LÝ LỖI TRẢ VỀ TỪ BACKEND
+      const responseData = error.response?.data;
+
+      // 1. Nếu là lỗi Validation từ DTO (HTTP 400 - có object 'errors')
+      if (error.response?.status === 400 && responseData?.errors) {
+        const backendErrors = responseData.errors;
+        const formattedErrors = {};
+
+        // Convert Key từ PascalCase (Backend) sang camelCase (Frontend)
+        // Ví dụ: "BreakStartTime" -> "breakStartTime"
+        Object.keys(backendErrors).forEach(key => {
+          const camelKey = key.charAt(0).toLowerCase() + key.slice(1);
+          // Backend trả về mảng lỗi (có thể nhiều lỗi cho 1 trường), ta lấy lỗi đầu tiên [0]
+          formattedErrors[camelKey] = backendErrors[key][0];
+        });
+
+        setShiftErrors(formattedErrors); // Đập vào state để UI hiện màu đỏ
+        notice({
+          msg: "Dữ liệu không hợp lệ",
+          desc: "Vui lòng kiểm tra lại các trường báo đỏ trên form.",
+          isSuccess: false
+        });
+      }
+      // 2. Lỗi Nghiệp vụ từ Service (Trùng tên ca...)
+      else if (responseData?.message || responseData?.Message) {
+        const errorMsg = responseData.message || responseData.Message;
+
+        // 🌟 SỬA Ở ĐÂY: Đập thẳng errorMsg vào tham số `msg`
+        notice({
+          msg: errorMsg, // Chữ sẽ hiện to và rõ ràng trên Popup
+          isSuccess: false
+        });
+
+        // (Tùy chọn UX) Tô đỏ ô nhập Tên ca
+        if (errorMsg.toLowerCase().includes("tồn tại")) {
+          setShiftErrors(prev => ({ ...prev, shiftName: errorMsg }));
+        }
+      }
+      // 3. Lỗi Server 500 hoặc mất mạng
+      else {
+        notice({
+          msg: "Lỗi hệ thống",
+          desc: "Không thể lưu ca làm việc lúc này.",
+          isSuccess: false
+        });
+      }
     }
   };
 
   const handleDeleteShift = (id) => {
-    // Sử dụng Modal.confirm của Antd thay cho window.confirm xấu xí
     Modal.confirm({
       title: 'Xác nhận xóa',
       content: 'Bạn có chắc chắn muốn xóa ca làm việc này? Dữ liệu không thể khôi phục.',
@@ -181,9 +240,11 @@ export default function ShiftConfigPage() {
             isSuccess: true
           });
         } catch (error) {
+          const backendMsg = error.response?.data?.message || error.response?.data?.Message;
+          
           notice({
-            msg: "Lỗi xóa dữ liệu",
-            desc: error.message || "Không thể xóa ca làm việc lúc này.",
+            msg: "Không thể xóa",
+            desc: backendMsg || "Có lỗi xảy ra, không thể xóa ca làm việc này.", // Ưu tiên hiện message của Backend
             isSuccess: false
           });
         }
@@ -210,7 +271,7 @@ export default function ShiftConfigPage() {
   const handleOpenEditHoliday = (holiday) => {
     setIsEditingHoliday(true);
     setHolidayForm({
-      id: holiday.id, 
+      id: holiday.id,
       holidayName: holiday.holidayName,
       startDate: formatDateInput(holiday.startDate),
       endDate: formatDateInput(holiday.endDate),
@@ -233,7 +294,7 @@ export default function ShiftConfigPage() {
 
   const handleSaveHoliday = async (e) => {
     e.preventDefault();
-    
+
     // Business Validation: Ngày kết thúc không được nhỏ hơn ngày bắt đầu
     if (new Date(holidayForm.endDate) < new Date(holidayForm.startDate)) {
       return notice({
@@ -250,7 +311,7 @@ export default function ShiftConfigPage() {
         const { id, ...dataToSend } = holidayForm;
         await publicHolidayService.create(dataToSend);
       }
-      
+
       setIsHolidayModalOpen(false);
       fetchData();
       notice({
@@ -275,15 +336,15 @@ export default function ShiftConfigPage() {
       okType: 'danger',
       cancelText: 'Hủy',
       onOk: async () => {
-        try { 
-          await publicHolidayService.delete(id); 
-          fetchData(); 
+        try {
+          await publicHolidayService.delete(id);
+          fetchData();
           notice({
             msg: "Xóa thành công",
             desc: "Ngày lễ đã được xóa khỏi cấu hình.",
             isSuccess: true
           });
-        } catch (e) { 
+        } catch (e) {
           notice({
             msg: "Lỗi xóa dữ liệu",
             desc: e.message || "Không thể xóa ngày lễ lúc này.",
@@ -301,8 +362,8 @@ export default function ShiftConfigPage() {
    */
   const formatDateRange = (start, end) => {
     if (!start) return '';
-    const s = new Date(start).toLocaleDateString('vi-VN', {day: '2-digit', month: '2-digit', year: 'numeric'});
-    const e = new Date(end).toLocaleDateString('vi-VN', {day: '2-digit', month: '2-digit', year: 'numeric'});
+    const s = new Date(start).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const e = new Date(end).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
     return s === e ? s : `${s} - ${e}`;
   };
 
@@ -310,7 +371,7 @@ export default function ShiftConfigPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 pb-10">
-      
+
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
@@ -354,10 +415,10 @@ export default function ShiftConfigPage() {
                   <span>Giờ làm: <span className="font-semibold">{formatTime(shift.startTime)} - {formatTime(shift.endTime)}</span></span>
                 </div>
                 {shift.breakStartTime && (
-                    <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
+                  <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
                     <span className="material-symbols-outlined text-lg text-slate-400">restaurant</span>
                     <span>Nghỉ ngơi: {formatTime(shift.breakStartTime)} - {formatTime(shift.breakEndTime)}</span>
-                    </div>
+                  </div>
                 )}
                 <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
                   <span className="material-symbols-outlined text-lg text-slate-400">warning</span>
@@ -406,14 +467,14 @@ export default function ShiftConfigPage() {
                       {holiday.isRecurring ? <span className="text-green-600">Có</span> : <span className="text-gray-400">Không</span>}
                     </td>
                     <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2">
-                          <button onClick={() => handleOpenEditHoliday(holiday)} className="text-slate-400 hover:text-blue-600">
-                            <span className="material-symbols-outlined">edit</span>
-                          </button>
-                          <button onClick={() => handleDeleteHoliday(holiday.id)} className="text-slate-400 hover:text-red-600">
-                            <span className="material-symbols-outlined">delete</span>
-                          </button>
-                        </div>
+                      <div className="flex justify-end gap-2">
+                        <button onClick={() => handleOpenEditHoliday(holiday)} className="text-slate-400 hover:text-blue-600">
+                          <span className="material-symbols-outlined">edit</span>
+                        </button>
+                        <button onClick={() => handleDeleteHoliday(holiday.id)} className="text-slate-400 hover:text-red-600">
+                          <span className="material-symbols-outlined">delete</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -431,71 +492,116 @@ export default function ShiftConfigPage() {
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl dark:bg-slate-800">
             <h3 className="mb-4 text-xl font-bold text-slate-900 dark:text-white">{isEditingShift ? 'Cập Nhật Ca Làm Việc' : 'Thêm Ca Làm Việc'}</h3>
             <form onSubmit={handleSaveShift} className="space-y-4">
-               <div>
-                  <label className="block text-sm mb-1 font-medium">Tên ca làm việc</label>
-                  <input required className="w-full border rounded p-2 dark:bg-slate-700 dark:border-gray-600" value={shiftForm.shiftName} onChange={e=>setShiftForm({...shiftForm, shiftName:e.target.value})}/>
-               </div>
-               
-               <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs mb-1 text-slate-500">Giờ bắt đầu</label>
-                    <input type="time" required className="w-full border rounded p-2 dark:bg-slate-700 dark:border-gray-600" value={shiftForm.startTime} onChange={e=>setShiftForm({...shiftForm, startTime:e.target.value})}/>
-                  </div>
-                  <div>
-                    <label className="block text-xs mb-1 text-slate-500">Giờ kết thúc</label>
-                    <input type="time" required className="w-full border rounded p-2 dark:bg-slate-700 dark:border-gray-600" value={shiftForm.endTime} onChange={e=>setShiftForm({...shiftForm, endTime:e.target.value})}/>
-                  </div>
-               </div>
+              {/* SỬA LẠI KHỐI TÊN CA LÀM VIỆC NHƯ SAU */}
+              <div>
+                <label className="block text-sm mb-1 font-medium">
+                  Tên ca làm việc <span className="text-red-500">*</span>
+                </label>
+                <input
+                  className={`w-full border rounded p-2 outline-none transition-colors 
+                      ${shiftErrors.shiftName ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500' : 'focus:border-blue-500 dark:bg-slate-700 dark:border-gray-600'}
+                    `}
+                  value={shiftForm.shiftName}
+                  onChange={e => {
+                    setShiftForm({ ...shiftForm, shiftName: e.target.value });
+                    // Trải nghiệm người dùng: Xóa dòng lỗi màu đỏ ngay khi user bắt đầu gõ
+                    if (e.target.value.trim()) {
+                      setShiftErrors({ ...shiftErrors, shiftName: null });
+                    }
+                  }}
+                />
+                {/* HIỂN THỊ DÒNG LỖI MÀU ĐỎ DƯỚI INPUT */}
+                {shiftErrors.shiftName && (
+                  <p className="mt-1 text-xs font-semibold text-red-500 animate-[fadeIn_0.2s_ease-out]">
+                    {shiftErrors.shiftName}
+                  </p>
+                )}
+              </div>
 
-               <div className="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg dark:bg-slate-700/30">
-                  <div>
-                    <label className="block text-xs mb-1 text-slate-500">Bắt đầu nghỉ (Tùy chọn)</label>
-                    <input type="time" className="w-full border rounded p-2 dark:bg-slate-700 dark:border-gray-600" value={shiftForm.breakStartTime} onChange={e=>setShiftForm({...shiftForm, breakStartTime:e.target.value})}/>
-                  </div>
-                  <div>
-                    <label className="block text-xs mb-1 text-slate-500">Kết thúc nghỉ</label>
-                    <input type="time" className="w-full border rounded p-2 dark:bg-slate-700 dark:border-gray-600" value={shiftForm.breakEndTime} onChange={e=>setShiftForm({...shiftForm, breakEndTime:e.target.value})}/>
-                  </div>
-               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs mb-1 text-slate-500">Giờ bắt đầu</label>
+                  <input type="time" required className="w-full border rounded p-2 dark:bg-slate-700 dark:border-gray-600" value={shiftForm.startTime} onChange={e => setShiftForm({ ...shiftForm, startTime: e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-xs mb-1 text-slate-500">Giờ kết thúc</label>
+                  <input type="time" required className="w-full border rounded p-2 dark:bg-slate-700 dark:border-gray-600" value={shiftForm.endTime} onChange={e => setShiftForm({ ...shiftForm, endTime: e.target.value })} />
+                </div>
+              </div>
 
-               <div className="mt-4">
-                  <label className="block text-sm mb-2 font-medium">Ngày làm việc trong tuần</label>
-                  <div className="flex flex-wrap gap-2">
-                    {DAYS_OF_WEEK.map((day) => {
-                      const isSelected = shiftForm.workDays?.includes(day.value);
-                      return (
-                        <button
-                          key={day.value}
-                          type="button"
-                          onClick={() => toggleDay(day.value)}
-                          className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all border ${
-                            isSelected 
-                              ? 'bg-blue-600 text-white border-blue-600' 
-                              : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50 dark:bg-slate-700 dark:border-gray-600 dark:text-gray-200'
+              <div className="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg dark:bg-slate-700/30">
+                <div>
+                  <label className="block text-xs mb-1 text-slate-500">Bắt đầu nghỉ (Tùy chọn)</label>
+                  <input
+                    type="time"
+                    className={`w-full border rounded p-2 outline-none transition-colors 
+                        ${shiftErrors.breakStartTime ? 'border-red-500 focus:border-red-500 ring-1 ring-red-500' : 'dark:bg-slate-700 dark:border-gray-600'}
+                      `}
+                    value={shiftForm.breakStartTime}
+                    onChange={e => {
+                      setShiftForm({ ...shiftForm, breakStartTime: e.target.value });
+                      if (shiftErrors.breakStartTime) setShiftErrors({ ...shiftErrors, breakStartTime: null }); // Tắt lỗi khi user gõ lại
+                    }}
+                  />
+                  {/* 🌟 Hiện lỗi trả về từ Backend */}
+                  {shiftErrors.breakStartTime && <p className="mt-1 text-[10px] font-semibold text-red-500">{shiftErrors.breakStartTime}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-xs mb-1 text-slate-500">Kết thúc nghỉ</label>
+                  <input
+                    type="time"
+                    className={`w-full border rounded p-2 outline-none transition-colors 
+                        ${shiftErrors.breakEndTime ? 'border-red-500 focus:border-red-500 ring-1 ring-red-500' : 'dark:bg-slate-700 dark:border-gray-600'}
+                      `}
+                    value={shiftForm.breakEndTime}
+                    onChange={e => {
+                      setShiftForm({ ...shiftForm, breakEndTime: e.target.value });
+                      if (shiftErrors.breakEndTime) setShiftErrors({ ...shiftErrors, breakEndTime: null });
+                    }}
+                  />
+                  {/* 🌟 Hiện lỗi trả về từ Backend */}
+                  {shiftErrors.breakEndTime && <p className="mt-1 text-[10px] font-semibold text-red-500">{shiftErrors.breakEndTime}</p>}
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="block text-sm mb-2 font-medium">Ngày làm việc trong tuần</label>
+                <div className="flex flex-wrap gap-2">
+                  {DAYS_OF_WEEK.map((day) => {
+                    const isSelected = shiftForm.workDays?.includes(day.value);
+                    return (
+                      <button
+                        key={day.value}
+                        type="button"
+                        onClick={() => toggleDay(day.value)}
+                        className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all border ${isSelected
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50 dark:bg-slate-700 dark:border-gray-600 dark:text-gray-200'
                           }`}
-                        >
-                          {day.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-               </div>
+                      >
+                        {day.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-               <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs mb-1 text-slate-500">Đi muộn cho phép (Phút)</label>
-                    <input type="number" min="0" className="w-full border rounded p-2 dark:bg-slate-700 dark:border-gray-600" value={shiftForm.allowedLateMinutes} onChange={e=>setShiftForm({...shiftForm, allowedLateMinutes:e.target.value})}/>
-                  </div>
-                  <div>
-                    <label className="block text-xs mb-1 text-slate-500">Về sớm cho phép (Phút)</label>
-                    <input type="number" min="0" className="w-full border rounded p-2 dark:bg-slate-700 dark:border-gray-600" value={shiftForm.allowedEarlyLeaveMinutes} onChange={e=>setShiftForm({...shiftForm, allowedEarlyLeaveMinutes:e.target.value})}/>
-                  </div>
-               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs mb-1 text-slate-500">Đi muộn cho phép (Phút)</label>
+                  <input type="number" min="0" className="w-full border rounded p-2 dark:bg-slate-700 dark:border-gray-600" value={shiftForm.allowedLateMinutes} onChange={e => setShiftForm({ ...shiftForm, allowedLateMinutes: e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-xs mb-1 text-slate-500">Về sớm cho phép (Phút)</label>
+                  <input type="number" min="0" className="w-full border rounded p-2 dark:bg-slate-700 dark:border-gray-600" value={shiftForm.allowedEarlyLeaveMinutes} onChange={e => setShiftForm({ ...shiftForm, allowedEarlyLeaveMinutes: e.target.value })} />
+                </div>
+              </div>
 
-               <div className="flex justify-end gap-2 mt-4 pt-4 border-t dark:border-gray-700">
-                  <button type="button" onClick={()=>setIsShiftModalOpen(false)} className="px-4 py-2 bg-gray-200 rounded text-slate-700 hover:bg-gray-300 dark:bg-slate-700 dark:text-white">Hủy</button>
-                  <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Lưu thay đổi</button>
-               </div>
+              <div className="flex justify-end gap-2 mt-4 pt-4 border-t dark:border-gray-700">
+                <button type="button" onClick={() => setIsShiftModalOpen(false)} className="px-4 py-2 bg-gray-200 rounded text-slate-700 hover:bg-gray-300 dark:bg-slate-700 dark:text-white">Hủy</button>
+                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Lưu thay đổi</button>
+              </div>
             </form>
           </div>
         </div>
@@ -508,7 +614,7 @@ export default function ShiftConfigPage() {
             <h3 className="mb-4 text-xl font-bold text-slate-900 dark:text-white">
               {isEditingHoliday ? 'Cập Nhật Ngày Lễ' : 'Thêm Ngày Lễ'}
             </h3>
-            
+
             <form onSubmit={handleSaveHoliday} className="space-y-4">
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Tên ngày lễ</label>
@@ -516,7 +622,7 @@ export default function ShiftConfigPage() {
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 dark:border-gray-600 dark:bg-slate-700 dark:text-white"
                   placeholder="VD: Tết Nguyên Đán"
                   value={holidayForm.holidayName}
-                  onChange={(e) => setHolidayForm({...holidayForm, holidayName: e.target.value})}
+                  onChange={(e) => setHolidayForm({ ...holidayForm, holidayName: e.target.value })}
                 />
               </div>
 
@@ -534,17 +640,17 @@ export default function ShiftConfigPage() {
                   <input type="date" required name="endDate"
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-slate-700 dark:text-white"
                     value={holidayForm.endDate}
-                    onChange={(e) => setHolidayForm({...holidayForm, endDate: e.target.value})}
+                    onChange={(e) => setHolidayForm({ ...holidayForm, endDate: e.target.value })}
                   />
                 </div>
               </div>
 
               <div className="flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-700 dark:bg-slate-700/50">
-                 <input type="checkbox" id="isRecurring" className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                   checked={holidayForm.isRecurring}
-                   onChange={(e) => setHolidayForm({...holidayForm, isRecurring: e.target.checked})}
-                 />
-                 <label htmlFor="isRecurring" className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer">Lặp lại hàng năm?</label>
+                <input type="checkbox" id="isRecurring" className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  checked={holidayForm.isRecurring}
+                  onChange={(e) => setHolidayForm({ ...holidayForm, isRecurring: e.target.checked })}
+                />
+                <label htmlFor="isRecurring" className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer">Lặp lại hàng năm?</label>
               </div>
 
               <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">

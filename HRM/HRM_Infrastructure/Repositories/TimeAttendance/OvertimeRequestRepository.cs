@@ -73,5 +73,13 @@ namespace HRM_Infrastructure.Repositories.TimeAttendance
                          && o.Status == HRM_Domain.Enums.ExplanationStatus.Approved)
                 .ToListAsync();
         }
+
+        public Task<bool> HasPendingOvertimesByShiftAsync(int shiftId)
+        {
+            return _context.OvertimeRequests
+                .AnyAsync(o => o.ShiftId == shiftId
+                            && (o.Status == HRM_Domain.Enums.ExplanationStatus.PendingManager
+                             || o.Status == HRM_Domain.Enums.ExplanationStatus.PendingHR));
+        }
     }
 }

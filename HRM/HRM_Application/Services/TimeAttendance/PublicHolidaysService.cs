@@ -26,6 +26,12 @@ namespace HRM_Application.Services.TimeAttendance
         }
         public async Task CreateHolidayAsync(CreatePublicHolidayRequest request)
         {
+            bool isOverlapping = await _repository.CheckOverlapAsync(request.StartDate, request.EndDate);
+
+            if (isOverlapping)
+            {
+                throw new InvalidOperationException("Khoảng thời gian này bị trùng lặp với một ngày lễ đã tồn tại.");
+            }
             var shiftEntity = _mapper.Map<PublicHoliday>(request);
             await _repository.AddPublicHolidayAsync(shiftEntity);
         }

@@ -17,14 +17,26 @@ namespace HRM_Application.Services.TimeAttendance
     public class ShiftService : IShiftService
     {
         private readonly IShiftRepository _repository;
+        private readonly IAttendanceRepository _attendanceRepo;
+        private readonly IAttendanceExplanationRepository _explanationRepo;
+        private readonly IOvertimeRequestRepository _overtimeRepo;
         private readonly IMapper _mapper;
-        public ShiftService(IShiftRepository repository, IMapper mapper)
+
+        public ShiftService(IShiftRepository repository, IAttendanceRepository attendanceRepo, IAttendanceExplanationRepository explanationRepo, IOvertimeRequestRepository overtimeRepo, IMapper mapper)
         {
             _repository = repository;
+            _attendanceRepo = attendanceRepo;
+            _explanationRepo = explanationRepo;
+            _overtimeRepo = overtimeRepo;
             _mapper = mapper;
         }
         public async Task CreateShiftAsync(CreateShiftRequest request)
         {
+            bool isDuplicate = await _repository.CheckShiftNameExistsAsync(request.ShiftName);
+            if (isDuplicate)
+            {
+                throw new InvalidOperationException("Tên ca này đã tồn tại, vui lòng chọn tên khác.");
+            }
             var shiftEntity = _mapper.Map<ShiftConfig>(request);
             await _repository.AddShiftAsync(shiftEntity);
         }
@@ -36,10 +48,15 @@ namespace HRM_Application.Services.TimeAttendance
             {
                 throw new KeyNotFoundException($"Không tìm thấy Ca làm việc với ID: {id}");
             }
-            else
+
+            bool isUsedInLogs = await _attendanceRepo.HasLogsWithShiftAsync(id);
+
+            if (isUsedInLogs)
             {
-                await _repository.DeleteShiftAsync(id);
+                throw new InvalidOperationException("Không thể xóa ca đã có dữ liệu chấm công. Vui lòng chuyển trạng thái sang Ngưng hoạt động (Inactive).");
             }
+
+            await _repository.DeleteShiftAsync(id);
         }
 
         public async Task<PagedResponse<ShiftResponse>> GetAllShiftsAsync(PaginationFilter filter)
@@ -70,6 +87,20 @@ namespace HRM_Application.Services.TimeAttendance
             if (shiftEntity == null)
             {
                 throw new KeyNotFoundException($"Không tìm thấy ngày Ca làm việc với ID: {id}");
+            }
+
+            bool isTimeChanged = shiftEntity.StartTime.ToString(@"hh\:mm") != request.StartTime
+                      || shiftEntity.EndTime.ToString(@"hh\:mm") != request.EndTime;
+
+            if (isTimeChanged && !request.IsForceUpdate)
+            {
+                // Kiểm tra xem có đơn giải trình nào đang Pending thuộc Ca này không?
+                bool hasPendingExplanations = await _explanationRepo.HasPendingExplanationByShiftAsync(id);
+                bool hasPendingOvertimes = await _overtimeRepo.HasPendingOvertimesByShiftAsync(id);
+                if (hasPendingExplanations || hasPendingOvertimes)
+                {
+                    throw new InvalidOperationException("WARNING_PENDING:Ca này đang có đơn giải trình chờ duyệt. Đổi giờ có thể làm sai lệch dữ liệu. Bạn có chắc chắn muốn lưu?");
+                }
             }
 
             _mapper.Map(request, shiftEntity);

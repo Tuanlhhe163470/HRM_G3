@@ -1,4 +1,5 @@
-﻿using HRM_Application.Commons.Pagination;
+﻿using Azure.Core;
+using HRM_Application.Commons.Pagination;
 using HRM_Application.Contracts.Repositories;
 using HRM_Domain.Entities;
 using HRM_Infrastructure.Data;
@@ -25,6 +26,11 @@ namespace HRM_Infrastructure.Repositories.TimeAttendance
         {
             await _context.PublicHolidays.AddAsync(publicHoliday);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<bool> CheckOverlapAsync(DateTime startDate, DateTime endDate)
+        {
+            return await _context.PublicHolidays.AnyAsync(h => startDate <= h.EndDate && endDate >= h.StartDate);
         }
 
         public async Task DeletePublicHolidayAsync(int id)

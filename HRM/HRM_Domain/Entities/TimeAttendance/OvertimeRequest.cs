@@ -13,6 +13,9 @@ namespace HRM_Domain.Entities.TimeAttendance
         public int EmployeeId { get; set; }
         [ForeignKey("EmployeeId")]
         public virtual Employee? Employee { get; set; }
+        public int? ShiftId { get; set; }
+        [ForeignKey("ShiftId")]
+        public virtual ShiftConfig? Shift { get; set; }
 
         public DateTime Date { get; set; } // Xin OT cho ngày nào
         public TimeSpan StartTime { get; set; } // Bắt đầu OT từ mấy giờ (VD: 17:30)
