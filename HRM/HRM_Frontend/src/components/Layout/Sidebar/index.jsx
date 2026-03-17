@@ -23,6 +23,8 @@ import {
   AuditOutlined,
   CheckOutlined,
   AccountBookOutlined,
+  ApartmentOutlined,
+  BankOutlined,
 } from "@ant-design/icons";
 
 export default function SidebarHRM() {
@@ -233,6 +235,43 @@ export default function SidebarHRM() {
           icon: <TeamOutlined />,
         },
       ]
+
+    if (role === "Admin")
+      return [
+        {
+          key: "/admin/manage-account",
+          label: (
+            <Link href="/admin/manage-account">
+              <span className="font-bold text-[13px] uppercase tracking-tight">
+                Quản lý tài khoản
+              </span>
+            </Link>
+          ),
+          icon: <UserOutlined />,
+        },
+        {
+          key: "/admin/manage-department",
+          label: (
+            <Link href="/admin/manage-department">
+              <span className="font-bold text-[13px] uppercase tracking-tight">
+                Quản lý phòng ban
+              </span>
+            </Link>
+          ),
+          icon: <BankOutlined />,
+        },
+          {
+          key: "/admin/manage-position",
+          label: (
+            <Link href="/admin/manage-position">
+              <span className="font-bold text-[13px] uppercase tracking-tight">
+                Quản lý vị trí
+              </span>
+            </Link>
+          ),
+          icon: <ApartmentOutlined />,
+        },
+      ];
   };
 
   // --- MODULE CHẤM CÔNG ---
@@ -495,8 +534,8 @@ export default function SidebarHRM() {
         selectedKeys={[pathname]}
         // PHẦN ĐÃ SỬA: Đã thêm các mục Lương để nó tự động mở ra khi vào trang
         defaultOpenKeys={[
-          "sub-request",
-          "sub-job",
+          "job-posting",
+          "offer",
           "sub-candidate",
           "sub-my-attendance",
           "sub-my-payroll",

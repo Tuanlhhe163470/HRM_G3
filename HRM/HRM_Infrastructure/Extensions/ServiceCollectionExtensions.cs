@@ -57,6 +57,9 @@ namespace HRM_Infrastructure.Extensions
 
             // 3. REPOSITORIES (Data Access Layer)
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IAccountService, AccountService>();
+            services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IPerformanceGoalRepository, PerformanceGoalRepository>();
             services.AddScoped<IJobPostingRepository, JobPostingRepository>();
             services.AddScoped<JobPostingService>();

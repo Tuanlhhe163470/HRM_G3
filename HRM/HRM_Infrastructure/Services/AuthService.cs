@@ -35,10 +35,15 @@ namespace HRM_Infrastructure.Services
                     .ThenInclude(e => e.Department)
                 .Include(u => u.Employee)
                     .ThenInclude(e => e.Position)
-                .FirstOrDefaultAsync(u => u.Username == username && u.IsActive);
+                .FirstOrDefaultAsync(u => u.Username == username);
 
             // Kiểm tra mật khẩu
             if (user == null || user.PasswordHash != password) return null;
+
+            if (!user.IsActive)
+            {
+                throw new Exception("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin hoặc Manager!");
+            }
 
             // 2. Logic tạo JWT Token
             var tokenHandler = new JwtSecurityTokenHandler();

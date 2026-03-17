@@ -139,20 +139,33 @@ export default function Header() {
         );
       case "Admin":
         return (
-          <nav className="hidden md:flex items-center gap-8">
+             <nav className="hidden md:flex items-center gap-4 lg:gap-6">
             <Link
-              href="/dashboard"
-              className="menu-item font-bold text-[#00aeef]"
+              href="/admin/manage-account"
+              className={`menu-item font-medium text-[13px] uppercase tracking-tighter ${pathname.startsWith("/recruitment") ? "text-[#00aeef] font-bold" : ""}`}
             >
-              TỔNG QUAN
+              <FileSearchOutlined /> QUẢN LÝ HỆ THỐNG
             </Link>
-            <Link href="/accounts" className="menu-item font-medium text-sm">
-              TÀI KHOẢN
+            <Link
+              href="/attendance/checkin"
+              className={`menu-item font-medium text-[13px] uppercase tracking-tighter ${pathname.startsWith("/attendance") ? "text-[#00aeef] font-bold" : ""}`}
+            >
+              <DashboardOutlined /> Chấm công
             </Link>
-            <Link href="/settings" className="menu-item font-medium text-sm">
-              HỆ THỐNG
+            <Link href="/leave" className="menu-item font-medium text-sm">
+              NGHỈ PHÉP
+            </Link>
+            <Link href="/my-payroll" className="menu-item font-medium text-sm">
+              PHIẾU LƯƠNG
+            </Link>
+            <Link
+              href="/evaluation"
+              className={`menu-item font-medium text-[13px] uppercase tracking-tighter ${pathname.startsWith("/training") ? "text-[#00aeef] font-bold" : ""}`}
+            >
+              <SettingOutlined /> Đào tạo
             </Link>
           </nav>
+          
         );
       case "Manager":
         return (

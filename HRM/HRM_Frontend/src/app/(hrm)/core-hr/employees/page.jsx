@@ -285,7 +285,7 @@ export default function EmployeeListPage() {
   return (
     <div className="bg-[#f8fafc] min-h-screen p-6 text-left">
       <div className="max-w-[1400px] mx-auto flex flex-col gap-6 text-left">
-        {/* HEADER SECTION - Giống hệt LaborContract */}
+        {/* HEADER SECTION */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="bg-[#154398] p-2 rounded-xl text-white shadow-md">
