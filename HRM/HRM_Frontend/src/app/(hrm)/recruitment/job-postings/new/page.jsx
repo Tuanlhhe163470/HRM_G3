@@ -139,7 +139,9 @@ export default function CreateJobRequisition() {
             <Form.Item
               name="description"
               label={<b>Nội dung mô tả (JD)</b>}
-              rules={[{ required: true, message: "Vui lòng nhập nội dung mô tả!" }]}
+              rules={[
+                { required: true, message: "Vui lòng nhập nội dung mô tả!" },
+              ]}
             >
               <ReactQuill
                 theme="snow"
@@ -159,11 +161,15 @@ export default function CreateJobRequisition() {
               >
                 <Select placeholder="Chọn phòng ban" size="large">
                   {/* Thêm kiểm tra mảng trước khi map để an toàn tuyệt đối */}
-                  {Array.isArray(departments) && departments.map((d) => (
-                    <Select.Option key={d.departmentID} value={d.departmentID}>
-                      {d.departmentName}
-                    </Select.Option>
-                  ))}
+                  {Array.isArray(departments) &&
+                    departments.map((d) => (
+                      <Select.Option
+                        key={d.departmentID}
+                        value={d.departmentID}
+                      >
+                        {d.departmentName}
+                      </Select.Option>
+                    ))}
                 </Select>
               </Form.Item>
 
@@ -173,11 +179,12 @@ export default function CreateJobRequisition() {
                 rules={[{ required: true, message: "Vui lòng chọn vị trí" }]}
               >
                 <Select placeholder="Chọn vị trí" size="large">
-                  {Array.isArray(positions) && positions.map((p) => (
-                    <Select.Option key={p.positionID} value={p.positionID}>
-                      {p.positionName}
-                    </Select.Option>
-                  ))}
+                  {Array.isArray(positions) &&
+                    positions.map((p) => (
+                      <Select.Option key={p.positionID} value={p.positionID}>
+                        {p.positionName}
+                      </Select.Option>
+                    ))}
                 </Select>
               </Form.Item>
 
@@ -201,8 +208,12 @@ export default function CreateJobRequisition() {
                       size="large"
                       className="w-full"
                       style={{ width: "100%", height: "40px" }}
-                      onKeyPress={(event) => { if (!/[0-9]/.test(event.key)) event.preventDefault(); }}
-                      formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                      onKeyPress={(event) => {
+                        if (!/[0-9]/.test(event.key)) event.preventDefault();
+                      }}
+                      formatter={(value) =>
+                        `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      }
                       parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
                       placeholder="Nhập mức lương tối thiểu"
                     />
@@ -226,8 +237,12 @@ export default function CreateJobRequisition() {
                       size="large"
                       className="w-full"
                       style={{ width: "100%", height: "40px" }}
-                      onKeyPress={(event) => { if (!/[0-9]/.test(event.key)) event.preventDefault(); }}
-                      formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                      onKeyPress={(event) => {
+                        if (!/[0-9]/.test(event.key)) event.preventDefault();
+                      }}
+                      formatter={(value) =>
+                        `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      }
                       parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
                       placeholder="Nhập mức lương tối đa"
                     />
@@ -237,15 +252,33 @@ export default function CreateJobRequisition() {
 
               <Row gutter={12}>
                 <Col span={12}>
-                  <Form.Item name="vacancies" label="Số lượng" rules={[{ required: true }]} initialValue={1}>
-                    <InputNumber min={1} className="w-full" size="large" />
+                  <Form.Item
+                    name="vacancies"
+                    label="Số lượng"
+                    rules={[{ required: true }]}
+                    initialValue={1}
+                  >
+                    <InputNumber
+                      onKeyPress={(event) => {
+                        if (!/[0-9]/.test(event.key)) event.preventDefault();
+                      }}
+                      min={1}
+                      className="w-full"
+                      size="large"
+                    />
                   </Form.Item>
                 </Col>
                 <Col span={12}>
-                  <Form.Item name="expiryDate" label="Hạn cuối" rules={[{ required: true }]}>
+                  <Form.Item
+                    name="expiryDate"
+                    label="Hạn cuối"
+                    rules={[{ required: true }]}
+                  >
                     <DatePicker
                       showTime
-                      disabledDate={(current) => current && current < dayjs().startOf("day")}
+                      disabledDate={(current) =>
+                        current && current < dayjs().startOf("day")
+                      }
                       className="w-full"
                       size="large"
                     />
@@ -256,7 +289,9 @@ export default function CreateJobRequisition() {
               <div className={styles.infoAlert}>
                 <Space align="start">
                   <InfoCircleOutlined style={{ color: "#00aeef" }} />
-                  <Text italic>Thông tin sau khi tạo sẽ được gửi tới cấp quản lý phê duyệt.</Text>
+                  <Text italic>
+                    Thông tin sau khi tạo sẽ được gửi tới cấp quản lý phê duyệt.
+                  </Text>
                 </Space>
               </div>
 

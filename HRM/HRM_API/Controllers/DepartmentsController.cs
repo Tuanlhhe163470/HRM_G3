@@ -52,5 +52,18 @@ namespace HRM_API.Controllers
             await _departmentService.DeleteDepartmentAsync(id);
             return Ok(new { message = "Xóa phòng ban thành công" });
         }
+        [HttpGet("{id}/employees")]
+        public async Task<IActionResult> GetEmployeesByDept(int id)
+        {
+            try
+            {
+                var response = await _departmentService.GetEmployeesByDepartmentAsync(id);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

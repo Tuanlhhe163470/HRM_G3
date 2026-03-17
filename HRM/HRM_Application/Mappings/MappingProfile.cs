@@ -119,13 +119,21 @@ namespace HRM_Application.Mappings
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.PositionName));
 
             // ================= DEPARTMENT =================
+            // 1. Map cho Department (Dùng khi hiển thị thông tin phòng ban)
             CreateMap<Department, DepartmentResponse>();
             CreateMap<CreateDepartmentRequest, Department>();
             CreateMap<UpdateDepartmentRequest, Department>();
 
+            // 2. Map từ Department sang BaseReferenceResponse (Nếu cần lấy ID/Tên phòng ban)
             CreateMap<Department, BaseReferenceResponse>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.DepartmentID))
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.DepartmentName));
+
+            // 3. Map từ Employee sang BaseReferenceResponse (ĐÂY LÀ PHẦN BẠN ĐANG THIẾU)
+            // Dùng để đổ danh sách nhân viên vào Select Manager ở Frontend
+            CreateMap<HRM_Domain.Entities.Employee, BaseReferenceResponse>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.EmployeeID))
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.FullName));
 
             // ================= EMPLOYEE =================
             CreateMap<CreateEmployeeRequest, Employee>();

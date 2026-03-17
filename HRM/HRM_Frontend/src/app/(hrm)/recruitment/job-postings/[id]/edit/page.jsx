@@ -20,7 +20,7 @@ import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { docSoVietNam } from "@/lib/stringsUtils";
-import axiosClient from "@/lib/axiosClient"; 
+import axiosClient from "@/lib/axiosClient";
 import "react-quill-new/dist/quill.snow.css";
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
@@ -43,17 +43,19 @@ export default function EditJobPage() {
     const loadInitialData = async () => {
       setLoading(true);
       try {
-        // 1. Lấy danh sách phòng ban và vị trí để hiển thị ô Select
-        const [deptData, posData, allJobs] = await Promise.all([
+        const [deptRes, posRes, allJobsRes] = await Promise.all([
           axiosClient.get("/Departments"),
           axiosClient.get("/Positions"),
           jobPostingService.getAll(),
         ]);
 
-        setDepartments(deptData);
-        setPositions(posData);
+        const deptList = deptRes?.data || deptRes || [];
+        const posList = posRes?.data || posRes || [];
+        const allJobs = allJobsRes?.data || allJobsRes || [];
 
-        // 2. Tìm tin tuyển dụng cụ thể
+        setDepartments(Array.isArray(deptList) ? deptList : []);
+        setPositions(Array.isArray(posList) ? posList : []);
+
         const job = allJobs.find((item) => item.jobID === parseInt(id));
         if (job) {
           if (job.status === "Rejected") {
@@ -64,21 +66,11 @@ export default function EditJobPage() {
             return;
           }
 
-          // CHỈNH SỬA TẠI ĐÂY: Kiểm tra ngày hợp lệ trước khi gán
-          const formattedExpiryDate = job.expiryDate
-            ? dayjs(job.expiryDate)
-            : null;
-
           form.setFieldsValue({
             ...job,
-            // Đảm bảo truyền vào một đối tượng Dayjs hợp lệ hoặc null
-            expiryDate:
-              formattedExpiryDate && formattedExpiryDate.isValid()
-                ? formattedExpiryDate
-                : null,
+            expiryDate: job.expiryDate ? dayjs(job.expiryDate) : null,
           });
-
-          setContent(job.description);
+          setContent(job.description || "");
         }
       } catch (err) {
         notification.error({
@@ -91,7 +83,6 @@ export default function EditJobPage() {
     };
     loadInitialData();
   }, [id, form]);
-
   const onFinish = async (values) => {
     try {
       // Gửi toàn bộ values (bao gồm Title, DeptID, PosID, Salary, ExpiryDate)
@@ -190,9 +181,11 @@ export default function EditJobPage() {
               <Form.Item
                 name="vacancies"
                 label={<b>Số lượng tuyển</b>}
-                rules={[{ required: true }]}
+                rules={[{ required: true, message:"Vui lòng nhập số lượng cần tuyển" }]}
               >
-                <InputNumber min={1} className="w-full" size="large" />
+                <InputNumber  onKeyPress={(event) => {
+                    if (!/[0-9]/.test(event.key)) event.preventDefault();
+                  }} min={1} className="w-full" size="large" />
               </Form.Item>
             </Col>
           </Row>
