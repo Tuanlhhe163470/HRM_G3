@@ -34,7 +34,8 @@ namespace HRM_Application.Services.Recruitment
             IWebHostEnvironment webHostEnvironment,
             IEmailService emailService,
             IOfferRepository offerRepository,
-            ILogger<CandidateService> logger)
+            ILogger<CandidateService> logger,
+            JobPostingService jobService)
         {
             _candidateRepository = candidateRepository;
             _jobRepo = jobRepo;
@@ -44,6 +45,7 @@ namespace HRM_Application.Services.Recruitment
             _emailService = emailService;
             _offerRepository = offerRepository;
             _logger = logger;
+            _jobService = jobService;
         }
 
         // --- CÁC PHƯƠNG THỨC HỖ TRỢ CV ---
@@ -129,7 +131,23 @@ namespace HRM_Application.Services.Recruitment
         public async Task<CandidateDto> GetCandidateByIdAsync(int id)
         {
             var candidate = await _candidateRepository.GetByIdAsync(id);
-            return _mapper.Map<CandidateDto>(candidate);
+            if (candidate == null) return null;
+
+            var dto = _mapper.Map<CandidateDto>(candidate);
+
+            // Lấy Offer cuối cùng để hiển thị lương trên Modal Frontend
+            var latestOffer = (await _offerRepository.GetOffersByCandidateIdAsync(id))
+                                ?.OrderByDescending(o => o.OfferedDate)
+                                .FirstOrDefault();
+
+            if (latestOffer != null)
+            {
+                dto.OfferedSalary = latestOffer.OfferedSalary;
+                dto.JoinDate = latestOffer.JoinDate;
+                dto.OfferNote = latestOffer.Note;
+            }
+
+            return dto;
         }
         public async Task<IEnumerable<CandidateDto>> GetCandidatesForAdminAsync(string role, int? departmentId)
         {
@@ -277,8 +295,8 @@ namespace HRM_Application.Services.Recruitment
     </div>
     
     <div style='background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 12px; color: #888;'>
-        <p style='margin: 5px 0;'>Đây là email tự động từ hệ thống quản trị nhân sự HRM.</p>
-        <p style='margin: 5px 0;'>Vui lòng không phản hồi trực tiếp vào email này.</p>
+        <p style='margin: 5px 0;'>Vui lòng phản hồi sớm nhất có thể để chúng tôi có thể sắp xếp một buổi phỏng vấn với bạn.</p>
+        <p style='margin: 5px 0;'>Chúc bạn sẽ có kết quả tốt nhất trong buổi phỏng vấn sắp tới.</p>
     </div>
 </div>";
 
@@ -315,14 +333,27 @@ namespace HRM_Application.Services.Recruitment
 
         public async Task<bool> SendFailEmailAsync(int candidateId)
         {
-            var candidate = await _candidateRepository.GetByIdAsync(candidateId);
-            if (candidate == null || candidate.Status != "Fail" || candidate.IsFailEmailSent)
-                return false;
+            // 1. Lấy ứng viên kèm theo thông tin Job để có Title gửi Email
+            var candidates = await _candidateRepository.GetAllWithJobAsync();
+            var candidate = candidates.FirstOrDefault(c => c.CandidateID == candidateId);
 
+            // 2. Kiểm tra điều kiện gửi:
+            // - Candidate phải tồn tại
+            // - Trạng thái phải là "Fail" (So sánh không phân biệt hoa thường và xóa khoảng trắng thừa)
+            // - Email này chưa được gửi trước đó
+            if (candidate == null ||
+                !candidate.Status.Trim().Equals("Fail", StringComparison.OrdinalIgnoreCase) ||
+                candidate.IsFailEmailSent)
+            {
+                _logger.LogWarning($"Yêu cầu gửi email thất bại: CandidateID {candidateId} không đủ điều kiện (Status: {candidate?.Status}, Sent: {candidate?.IsFailEmailSent})");
+                return false;
+            }
+
+            // 3. Chuẩn bị nội dung Email
             string jobTitle = candidate.JobPosting?.Title ?? "vị trí đã ứng tuyển";
             string subject = $"[HRM System] Thông báo kết quả phỏng vấn - Vị trí {jobTitle}";
 
-            // Giao diện Email chuyên nghiệp đồng bộ với thư mời phỏng vấn
+            // Giao diện Email chuyên nghiệp
             string emailBody = $@"
 <div style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #f0f0f0; border-radius: 8px; overflow: hidden;'>
     
@@ -365,16 +396,20 @@ namespace HRM_Application.Services.Recruitment
 
             try
             {
+                // 4. Thực hiện gửi Email qua Service
                 await _emailService.SendEmailAsync(candidate.Email, subject, emailBody);
 
-                // Cập nhật trạng thái để Frontend biết đã gửi email
+                // 5. Cập nhật trạng thái vào Database để tránh gửi lặp lại
                 candidate.IsFailEmailSent = true;
+                candidate.UpdatedAt = DateTime.Now;
                 await _candidateRepository.UpdateAsync(candidate);
+
+                _logger.LogInformation($"Đã gửi email thông báo trượt cho ứng viên ID: {candidateId} thành công.");
                 return true;
             }
             catch (Exception ex)
             {
-                // Log lỗi nếu cần thiết
+                _logger.LogError(ex, $"Lỗi nghiêm trọng khi gửi email cho ứng viên ID: {candidateId}");
                 return false;
             }
         }

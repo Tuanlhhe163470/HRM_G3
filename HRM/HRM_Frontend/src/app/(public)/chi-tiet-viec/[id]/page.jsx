@@ -59,7 +59,7 @@ export default function JobDetailsPage() {
   });
   const [fileList, setFileList] = useState([]);
 
-  // FIX: Bỏ notification khỏi dependency array để tránh lỗi "useEffect changed size"
+  
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -169,14 +169,11 @@ export default function JobDetailsPage() {
     },
     beforeUpload: (file) => {
       const isAllowed =
-        file.type === "application/pdf" ||
-        file.type === "application/msword" ||
-        file.type ===
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        file.type === "application/pdf" && file.name.toLowerCase().endsWith(".pdf");
       if (!isAllowed) {
         notification.error({
           title: "Sai định dạng",
-          description: "Hệ thống chỉ chấp nhận file PDF hoặc Word.",
+          description: "Hệ thống chỉ chấp nhận file PDF",
         });
         return false;
       }
@@ -204,6 +201,7 @@ export default function JobDetailsPage() {
       </div>
     );
 
+  const remainingVacancies = job.vacancies - job.hiredCount;
   return (
     <div className="bg-[#f8fafc] min-h-screen font-sans pb-20">
       <style jsx global>{`
@@ -272,7 +270,7 @@ export default function JobDetailsPage() {
                     Số lượng
                   </p>
                   <p className="text-xl font-black text-[#154398] m-0">
-                    {job.vacancies} Nhân sự
+                    {remainingVacancies} Nhân sự
                   </p>
                 </div>
                 <div className="bg-[#fff1f0] p-5 rounded-2xl border border-red-100">

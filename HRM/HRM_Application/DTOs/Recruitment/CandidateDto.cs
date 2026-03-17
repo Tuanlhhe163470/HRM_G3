@@ -24,5 +24,8 @@ namespace HRM_Application.DTOs.Recruitment
         public DateTime? InterviewDate { get; set; }
         public string? InterviewType { get; set; }
         public string? Location { get; set; }
+        public decimal? OfferedSalary { get; set; } 
+        public DateTime? JoinDate { get; set; }   
+        public string? OfferNote { get; set; }      
     }
 }

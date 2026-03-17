@@ -20,6 +20,15 @@ using HRM_Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
+using HRM_Application.Services;
+using HRM_Infrastructure.Repositories.TimeAttendance;
+using HRM_Application.Contracts.Services;
+using HRM_Application.Services.TimeAttendance;
+using HRM_Application.Services.PayRoll;
+using HRM_Infrastructure.Repositories.Payroll;
+using HRM_Infrastructure.Repositories.PayRoll;
+using HRM_Infrastructure.PayRoll.Repositories;
 using HRM_Infrastructure.Repositories;
 using HRM_Application.Interfaces.Repositories;
 using HRM_Application.Interfaces.Services;
@@ -65,9 +74,9 @@ namespace HRM_Infrastructure.Extensions
             services.AddScoped<IMonthlyTimesheetRepository, MonthlyTimesheetRepository>();
             services.AddScoped<ICandidateRepository, CandidateRepository>();
             services.AddScoped<ICandidateService, CandidateService>();
-            services.AddScoped<IOfferRepository, OfferRepository>();
             services.AddScoped<ISalaryAdvanceRepository, SalaryAdvanceRepository>();
             services.AddScoped<ISalaryAdvanceService, SalaryAdvanceService>();
+            services.AddScoped<IOfferRepository, OfferRepository>();
             // 4. SERVICES (Business Logic Layer)
             // Đăng ký Service GoalService vào đây
             services.AddScoped<ICandidateService, CandidateService>();

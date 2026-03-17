@@ -55,7 +55,7 @@ export default function CreateOfferPage() {
 
   // States cho danh sách
   const [passedCandidates, setPassedCandidates] = useState([]);
-  const [allDepartments, setAllDepartments] = useState([]); // State lưu TẤT CẢ phòng ban
+  const [allDepartments, setAllDepartments] = useState([]); 
 
   // States bộ lọc
   const [searchText, setSearchText] = useState("");
@@ -100,13 +100,13 @@ export default function CreateOfferPage() {
           // TRƯỜNG HỢP DANH SÁCH CHỜ
           const [allCandidates, deptRes] = await Promise.all([
             candidateService.getAdminList(),
-            axiosClient.get("/Departments"), // Lấy tất cả phòng ban từ hệ thống
+            axiosClient.get("/Departments"), 
           ]);
 
           setPassedCandidates(
             allCandidates.filter((c) => c.status === "Passed"),
           );
-          setAllDepartments(deptRes.data || deptRes); // Lưu danh sách phòng ban đầy đủ
+          setAllDepartments(deptRes.data || deptRes); 
         }
       } catch (error) {
         notification.error({
@@ -161,7 +161,7 @@ export default function CreateOfferPage() {
   if (!candidateId) {
     const columns = [
       {
-        title: "Ứng viên",
+        title: <div className="text-center w-full">Ứng viên</div>,
         key: "info",
         width: 280,
         render: (_, record) => (
@@ -182,9 +182,9 @@ export default function CreateOfferPage() {
         ),
       },
       {
-        title: "Phòng ban",
+        title: <div className="text-center w-full">Phòng ban</div>,
         dataIndex: "departmentName",
-        width: 180,
+        width: 250,
         render: (dept) => (
           <Tag color="blue" className="rounded-md border-none px-2">
             {dept || "N/A"}
@@ -192,7 +192,7 @@ export default function CreateOfferPage() {
         ),
       },
       {
-        title: "Vị trí ứng tuyển",
+        title: <div className="text-center w-full">Vị trí ứng tuyển</div>,
         dataIndex: "jobTitle",
         ellipsis: true,
         render: (title) => (

@@ -51,6 +51,22 @@ const candidateService = {
   createOffer: async (data) => {
     return await axiosClient.post("/Candidates/create-offer", data);
   },
+
+  // 9. Xác nhận ứng viên trúng tuyển
+  confirmHire: async (id) => {
+    return await axiosClient.patch(`/Candidates/${id}/hire`);
+  },
+
+  // 10. Xác nhận từ chối (Truyền reason qua Body)
+  declineOffer: async (id, reason) => {
+    return await axiosClient.patch(
+      `/Candidates/${id}/decline-offer`,
+      JSON.stringify(reason),
+      {
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  },
 };
 
 export default candidateService;
