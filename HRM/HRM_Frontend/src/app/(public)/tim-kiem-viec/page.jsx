@@ -9,7 +9,7 @@ import {
   DollarCircleOutlined,
   FilterOutlined,
   SearchOutlined,
-  TagOutlined
+  TagOutlined,
 } from "@ant-design/icons";
 import {
   Breadcrumb,
@@ -23,7 +23,7 @@ import {
   Pagination,
   Row,
   Select,
-  Spin
+  Spin,
 } from "antd";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
@@ -53,15 +53,21 @@ export default function JobListingsPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [jobsData, deptsData] = await Promise.all([
+      const [jobsData, deptsRes] = await Promise.all([
         jobPostingService.getPublished(),
         axiosClient.get("/Departments"),
       ]);
+
       setJobs(jobsData);
       setDisplayJobs(jobsData);
-      setDepartments(deptsData);
+
+      const deptsArray = Array.isArray(deptsRes)
+        ? deptsRes
+        : deptsRes?.data || [];
+      setDepartments(deptsArray);
     } catch (error) {
       console.error("Lỗi tải dữ liệu:", error);
+      setDepartments([]);
     } finally {
       setLoading(false);
     }
@@ -82,8 +88,11 @@ export default function JobListingsPage() {
     }
 
     if (selectedDepts.length > 0) {
-      filtered = filtered.filter((j) => selectedDepts.includes(j.departmentID));
-    }
+    filtered = filtered.filter((j) => {
+      const jobDeptID = j.departmentID;
+      return selectedDepts.includes(jobDeptID);
+    });
+  }
 
     if (salaryFilter.min) {
       filtered = filtered.filter((j) => (j.salaryMin || 0) >= salaryFilter.min);
@@ -156,8 +165,8 @@ export default function JobListingsPage() {
         />
 
         <Row className="mt-8" gutter={[32, 32]}>
-          <Col xs={24} lg={6}>
-            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm sticky top-24">
+          <Col xs={24} lg={6} style={{ position: "relative" }}>
+            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm sticky top-6 h-fit max-h-[calc(100vh-48px)] overflow-y-auto custom-scrollbar">
               <div className="flex items-center gap-2 mb-6 border-b pb-4">
                 <FilterOutlined className="text-[#00aeef]" />
                 <h3 className="text-lg font-bold text-gray-800 m-0 uppercase tracking-tight">
