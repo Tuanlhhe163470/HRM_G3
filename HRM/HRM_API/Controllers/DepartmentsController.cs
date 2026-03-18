@@ -8,7 +8,7 @@ namespace HRM_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "HR, Admin")]
+    [Authorize(Roles = "HR, Admin, Manager")]
     public class DepartmentsController : ControllerBase
     {
         private readonly IDepartmentService _departmentService;
@@ -51,6 +51,19 @@ namespace HRM_API.Controllers
         {
             await _departmentService.DeleteDepartmentAsync(id);
             return Ok(new { message = "Xóa phòng ban thành công" });
+        }
+        [HttpGet("{id}/employees")]
+        public async Task<IActionResult> GetEmployeesByDept(int id)
+        {
+            try
+            {
+                var response = await _departmentService.GetEmployeesByDepartmentAsync(id);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }

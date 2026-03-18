@@ -11,5 +11,6 @@ namespace HRM_Application.Contracts.Services
         Task CreateEmployeeAsync(CreateEmployeeRequest request);
         Task UpdateEmployeeAsync(int id, UpdateEmployeeRequest request);
         Task DeleteEmployeeAsync(int id);
+        Task<PagedResponse<EmployeeResponse>> GetEmployeesByDepartmentAsync(int departmentId, PaginationFilter filter);
     }
 }

@@ -76,5 +76,12 @@ namespace HRM_Infrastructure.Repositories
             return await _context.Employees
                 .AnyAsync(e => e.DepartmentID == departmentId);
         }
+        public async Task<IEnumerable<HRM_Domain.Entities.Employee>> GetEmployeesByDepartmentIdAsync(int departmentId)
+        {
+            // Truy vấn danh sách nhân viên lọc theo DepartmentID
+            return await _context.Employees
+                .Where(e => e.DepartmentID == departmentId)
+                .ToListAsync();
+        }
     }
 }

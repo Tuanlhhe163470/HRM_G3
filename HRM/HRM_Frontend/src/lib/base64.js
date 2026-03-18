@@ -51,3 +51,24 @@ export const downloadPDF = (data, name) => {
   downloadLink.download = fileName
   downloadLink.click()
 }
+
+// Hàm giải mã JWT hỗ trợ Tiếng Việt (Unicode)
+export const decodeJWT = (token) => {
+  try {
+    const base64Url = token.split(".")[1]; // Lấy phần Payload của Token
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    
+    // Giải mã kết hợp decodeURIComponent để xử lý ký tự UTF-8
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error("Lỗi giải mã Token Unicode:", error);
+    return null;
+  }
+};

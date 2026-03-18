@@ -21,5 +21,6 @@ namespace HRM_Application.Contracts.Repositories
         Task DeleteDepartmentAsync(int id);
 
         Task<bool> HasEmployeesAsync(int departmentId);
+        Task<IEnumerable<HRM_Domain.Entities.Employee>> GetEmployeesByDepartmentIdAsync(int departmentId);
     }
 }

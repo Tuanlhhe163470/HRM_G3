@@ -155,48 +155,69 @@ export function formatUserName(fullName, userName, deptName) {
 
 export const docSoVietNam = (number) => {
   if (number === null || number === undefined || number === "" || isNaN(number)) return "";
+
+  const sNumber = number.toString().replace(/\D/g, "");
+  if (sNumber === "") return "";
   
-  const sNumber = number.toString().replace(/,/g, "");
-  let n = parseInt(sNumber);
-  
-  if (n === 0) return "Không đồng";
+  let n = BigInt(sNumber);
+  if (n === 0n) return "Không đồng";
 
   const readDigit = ["không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"];
 
-  const readGroup = (group) => {
-    let [hundred, ten, unit] = group.padStart(3, "0").split("").map(Number);
+  const readGroup = (groupStr, isFirstGroup) => {
+    let fullGroup = groupStr;
+    while (fullGroup.length < 3) fullGroup = "0" + fullGroup;
+    
+    let digits = fullGroup.split("").map(Number);
+    let h = digits[0];
+    let t = digits[1];
+    let u = digits[2];
+    
     let res = "";
-    if (hundred > 0) res += readDigit[hundred] + " trăm ";
-    if (ten === 0 && unit > 0 && hundred > 0) res += "lẻ ";
-    if (ten === 1) res += "mười ";
-    else if (ten > 1) res += readDigit[ten] + " mươi ";
-    if (unit === 1 && ten > 1) res += "mốt ";
-    else if (unit === 5 && ten > 0) res += "lăm ";
-    else if (unit > 0) res += readDigit[unit];
+
+    // 1. Đọc hàng trăm: Chỉ đọc nếu không phải nhóm đầu tiên HOẶC hàng trăm > 0
+    if (!isFirstGroup || h > 0) {
+        res += readDigit[h] + " trăm ";
+    }
+    
+    // 2. Đọc hàng chục và đơn vị
+    if (t === 0 && u > 0) {
+        if (!isFirstGroup || h > 0) res += "lẻ ";
+    } else if (t === 1) {
+        res += "mười ";
+    } else if (t > 1) {
+        res += readDigit[t] + " mươi ";
+    }
+
+    if (u === 1 && t > 1) res += "mốt";
+    else if (u === 5 && t > 0) res += "lăm";
+    else if (u > 0) res += readDigit[u];
+
     return res.trim();
   };
 
   const groups = [];
-  let tempNumber = sNumber;
-  while (tempNumber.length > 0) {
-    groups.unshift(tempNumber.slice(-3));
-    tempNumber = tempNumber.slice(0, -3);
+  let tempStr = sNumber;
+  while (tempStr.length > 0) {
+    groups.unshift(tempStr.slice(-3));
+    tempStr = tempStr.slice(0, -3);
   }
 
   const units = ["", " nghìn", " triệu", " tỷ", " nghìn tỷ", " triệu tỷ"];
   let result = "";
 
   for (let i = 0; i < groups.length; i++) {
-    let groupRes = readGroup(groups[i]);
-    if (groupRes !== "") {
+    let groupVal = parseInt(groups[i]); // Chuyển về số để check xem nhóm có > 0 không
+    
+    // QUAN TRỌNG: Chỉ đọc nhóm nếu giá trị nhóm > 0
+    if (groupVal > 0) {
+      let groupRes = readGroup(groups[i], i === 0);
       result += groupRes + units[groups.length - 1 - i] + " ";
     }
   }
 
   result = result.trim();
-  if (result.startsWith("Không trăm")) {
-    result = result.replace("Không trăm", "").trim();
-  }
-
+  
+  // Viết hoa chữ cái đầu và thêm "đồng"
   return result.charAt(0).toUpperCase() + result.slice(1) + " đồng";
 };

@@ -13,6 +13,8 @@ export default function EmployeeDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isMounted, setIsMounted] = useState(false);
   const [user, setUser] = useState({ name: "Đang tải..." });
+  const [currentLocation, setCurrentLocation] = useState(null);
+  const [isLocating, setIsLocating] = useState(true);
   
   // 1. Khởi tạo custom hook notification
   const notice = useNotice();
@@ -42,6 +44,28 @@ export default function EmployeeDashboard() {
 
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  //tải GPS sẵn
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCurrentLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+          setIsLocating(false); // Dò xong
+        },
+        (error) => {
+          console.warn("Không lấy được GPS:", error.message);
+          setIsLocating(false);
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    } else {
+      setIsLocating(false);
+    }
   }, []);
 
   /**
@@ -88,10 +112,19 @@ export default function EmployeeDashboard() {
    * HANDLERS: Xử lý sự kiện Check-in / Check-out
    */
   const handleAttendanceClick = async () => {
+    if (isLocating) {
+      notice({ msg: "Đang định vị", desc: "Vui lòng chờ 1-2 giây để hệ thống xác định vị trí của bạn.", isSuccess: false });
+      return;
+    }
     setLoading(true);
     try {
       let locationData = {};
-      // Tọa độ GPS có thể được mở rộng tại đây nếu cần
+      if (currentLocation) {
+          locationData = {
+              latitude: currentLocation.latitude,
+              longitude: currentLocation.longitude
+          };
+      }
 
       if (attendanceStatus === 'NOT_CHECKED_IN') {
         await attendanceService.checkIn({ 
@@ -146,6 +179,33 @@ export default function EmployeeDashboard() {
    */
   const formattedDate = currentTime.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
   const formattedTime = currentTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  const renderLocationStatus = () => {
+    if (isLocating) {
+      return (
+        <span className="flex items-center gap-1.5 text-sm font-medium text-slate-500 animate-pulse">
+          <span className="material-symbols-outlined text-[18px]">location_searching</span>
+          Đang dò tìm vị trí...
+        </span>
+      );
+    }
+    
+    if (currentLocation) {
+      return (
+        <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-600">
+          <span className="material-symbols-outlined text-[18px]">location_on</span>
+          Đã xác định vị trí
+        </span>
+      );
+    }
+
+    return (
+      <span className="flex items-center gap-1.5 text-sm font-medium text-red-500">
+        <span className="material-symbols-outlined text-[18px]">location_off</span>
+        Không có vị trí GPS
+      </span>
+    );
+  };
 
   const renderAttendanceButton = () => {
     if (loading && attendanceStatus === 'LOADING') {
@@ -203,7 +263,8 @@ export default function EmployeeDashboard() {
             </p>
           </div>
           
-          <div className="mt-6 flex items-center gap-4 md:mt-0">
+          <div className="mt-6 flex flex-col items-start gap-3 md:mt-0 md:items-end">
+             {renderLocationStatus()}
              {renderAttendanceButton()}
           </div>
         </div>

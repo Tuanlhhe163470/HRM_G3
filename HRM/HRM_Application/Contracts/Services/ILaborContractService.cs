@@ -12,7 +12,8 @@ namespace HRM_Application.Contracts.Services
         Task CreateContractAsync(CreateLaborContractRequest request);
         Task UpdateContractAsync(int id, UpdateLaborContractRequest request);
         Task DeleteContractAsync(int id);
-
         Task<LaborContractResponse?> GetActiveContractByEmployeeIdAsync(int employeeId);
+        Task<CreateLaborContractRequest> PrepareContractFromOfferAsync(int candidateId);
+        Task<IEnumerable<HRM_Application.DTOs.Employee.EmployeeResponse>> GetEmployeesWithoutContractAsync();
     }
 }

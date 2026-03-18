@@ -1,6 +1,8 @@
 ﻿using HRM_Application.Commons.Pagination;
 using HRM_Application.Contracts.Services;
+using HRM_Application.DTOs.Employee;
 using HRM_Application.DTOs.LaborContract;
+using HRM_Application.Services.HRCore;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -14,10 +16,12 @@ namespace HRM_API.Controllers
     public class LaborContractsController : ControllerBase
     {
         private readonly ILaborContractService _service;
+        private readonly IEmployeeService _employeeService;
 
-        public LaborContractsController(ILaborContractService service)
+        public LaborContractsController(ILaborContractService service, IEmployeeService employeeService)
         {
             _service = service;
+            _employeeService = employeeService;
         }
 
         [HttpGet]
@@ -75,5 +79,24 @@ namespace HRM_API.Controllers
             }
             catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
         }
+        [HttpGet("prepare-from-offer/{candidateId}")]
+        public async Task<IActionResult> PrepareFromOffer(int candidateId)
+        {
+            try
+            {
+                var result = await _service.PrepareContractFromOfferAsync(candidateId);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+        }
+
+        [HttpGet("employees-without-contract")]
+        public async Task<IActionResult> GetEmployeesWithoutContract()
+        {
+            var result = await _service.GetEmployeesWithoutContractAsync();
+            return Ok(result);
+        }
+
     }
 }

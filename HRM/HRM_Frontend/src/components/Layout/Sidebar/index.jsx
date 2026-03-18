@@ -21,7 +21,13 @@ import {
   SnippetsOutlined,
   FormOutlined,
   AuditOutlined,
-  AccountBookOutlined
+  CheckOutlined,
+  AccountBookOutlined,
+  ApartmentOutlined,
+  BankOutlined,
+  PieChartOutlined,
+  LineChartOutlined,
+  FileExcelOutlined
 } from "@ant-design/icons";
 
 export default function SidebarHRM() {
@@ -45,7 +51,10 @@ export default function SidebarHRM() {
     setIsMounted(true);
   }, []);
 
-  if (!isMounted) return <div className="h-full bg-white border-r border-gray-100 shadow-sm" />;
+  if (!isMounted)
+    return (
+      <div className="h-full bg-white border-r border-gray-100 shadow-sm" />
+    );
 
   const role = user?.roleName || "Employee";
 
@@ -53,61 +62,219 @@ export default function SidebarHRM() {
   const getRecruitmentItems = () => {
     if (role === "Employee") return [];
 
-    if (role === "HR") return [
-      {
-        key: "sub-jobposting",
-        label: <span className="font-bold text-[13px] uppercase tracking-tight">Quản lý tin tuyển dụng</span>,
-        icon: <FileSearchOutlined />,
-        children: [
-          { key: "/recruitment/job-postings/new", label: <Link href="/recruitment/job-postings/new">Tạo yêu cầu tuyển dụng</Link>, icon: <PlusCircleOutlined /> },
-          { key: "/recruitment/job-postings/list", label: <Link href="/recruitment/job-postings/list">Danh sách yêu cầu</Link>, icon: <UnorderedListOutlined /> },
-        ],
-      },
-      {
-        key: "sub-candidate-tracking",
-        label: <span className="font-bold text-[13px] uppercase tracking-tight">Theo dõi ứng viên</span>,
-        icon: <UserOutlined />,
-        children: [
-          { key: "/recruitment/candidates/list", label: <Link href="/recruitment/candidates/list">Danh sách ứng viên</Link>, icon: <UnorderedListOutlined /> },
-          { key: "/recruitment/candidates/shorted-list", label: <Link href="/recruitment/candidates/shorted-list">Danh sách rút gọn</Link>, icon: <SnippetsOutlined /> },
-        ],
-      },
-    ];
+    if (role === "HR")
+      return [
+        {
+          key: "job-posting",
+          label: (
+            <span className="font-bold text-[13px] uppercase tracking-tight">
+              Quản lý tin tuyển dụng
+            </span>
+          ),
+          icon: <FileSearchOutlined />,
+          children: [
+            {
+              key: "/recruitment/job-postings/new",
+              label: (
+                <Link href="/recruitment/job-postings/new">
+                  Tạo yêu cầu tuyển dụng
+                </Link>
+              ),
+              icon: <PlusCircleOutlined />,
+            },
+            {
+              key: "/recruitment/job-postings/list",
+              label: (
+                <Link href="/recruitment/job-postings/list">
+                  Danh sách yêu cầu
+                </Link>
+              ),
+              icon: <UnorderedListOutlined />,
+            },
+          ],
+        },
+        {
+          key: "/recruitment/candidates/list",
+          label: (
+            <Link href="/recruitment/candidates/list">
+              <span className="font-bold text-[13px] uppercase tracking-tight">
+                Theo dõi ứng viên
+              </span>
+            </Link>
+          ),
+          icon: <UserOutlined />,
+        },
+        {
+          key: "/recruitment/interview/hr-schedule",
+          label: (
+            <Link href="/recruitment/interview/hr-schedule">
+              <span className="font-bold text-[13px] uppercase tracking-tight">
+                Hẹn lịch phỏng vấn
+              </span>
+            </Link>
+          ),
+          icon: <CalendarOutlined />,
+        },
+        {
+          key: "offer",
+          label: (
+            <span className="font-bold text-[13px] uppercase tracking-tight">
+              Thư mời làm việc
+            </span>
+          ),
+          icon: <SnippetsOutlined />,
+          children: [
+            {
+              key: "/recruitment/offer/create",
+              label: <Link href="/recruitment/offer/create">Tạo thư mời</Link>,
+              icon: <PlusCircleOutlined />,
+            },
+            {
+              key: "/recruitment/offer/list",
+              label: (
+                <Link href="/recruitment/offer/list">Danh sách thư mời</Link>
+              ),
+              icon: <OrderedListOutlined />,
+            },
+          ],
+        },
+      ];
 
-    if (role === "Manager") return [
-      {
-        key: "/recruitment/job-postings/approval",
-        label: <Link href="/recruitment/job-postings/approval"><span className="font-bold text-[13px] uppercase tracking-tight">Phê duyệt tin tuyển dụng</span></Link>,
-        icon: <FileSearchOutlined />,
-      },
-      {
-        key: "sub-candidate-tracking",
-        label: <span className="font-bold text-[13px] uppercase tracking-tight">Theo dõi ứng viên</span>,
-        icon: <UserOutlined />,
-        children: [
-          { key: "/recruitment/candidates/manager-review", label: <Link href="/recruitment/candidates/manager-review">Phê duyệt ứng viên</Link>, icon: <FormOutlined /> },
-          { key: "/recruitment/interviews", label: <Link href="/recruitment/interviews">Lịch phỏng vấn</Link>, icon: <CalendarOutlined /> },
-        ],
-      },
-    ];
+    if (role === "Manager")
+      return [
+        {
+          key: "/recruitment/job-postings/approval",
+          label: (
+            <Link href="/recruitment/job-postings/approval">
+              <span className="font-bold text-[13px] uppercase tracking-tight">
+                Phê duyệt tin tuyển dụng
+              </span>
+            </Link>
+          ),
+          icon: <FileSearchOutlined />,
+        },
+        {
+          key: "sub-candidate-tracking",
+          label: (
+            <span className="font-bold text-[13px] uppercase tracking-tight">
+              Theo dõi ứng viên
+            </span>
+          ),
+          icon: <UserOutlined />,
+          children: [
+            {
+              key: "/recruitment/candidates/manager-review",
+              label: (
+                <Link href="/recruitment/candidates/manager-review">
+                  Phê duyệt ứng viên
+                </Link>
+              ),
+              icon: <FormOutlined />,
+            },
+            {
+              key: "/recruitment/interview/manager-schedule",
+              label: (
+                <Link href="/recruitment/interview/manager-schedule">
+                  Lịch phỏng vấn của tôi
+                </Link>
+              ),
+              icon: <CalendarOutlined />,
+            },
+            {
+              key: "/recruitment/interview/manager-list-result",
+              label: (
+                <Link href="/recruitment/interview/manager-list-result">
+                  Kết quả phỏng vấn
+                </Link>
+              ),
+              icon: <CheckOutlined />,
+            },
+          ],
+        },
+      ];
   };
 
   // --- MODULE NHÂN SỰ ---
   const getCoreHRItems = () => {
     if (role === "Employee") return [];
 
-    return [
-      {
-        key: "/core-hr/employees",
-        label: <Link href="/core-hr/employees"><span className="font-bold text-[13px] uppercase tracking-tight">Quản lý nhân viên</span></Link>,
-        icon: <UserOutlined />,
-      },
-      {
-        key: "/core-hr/departments",
-        label: <Link href="/core-hr/departments"><span className="font-bold text-[13px] uppercase tracking-tight">Phòng ban</span></Link>,
-        icon: <TeamOutlined />,
-      },
-    ];
+    if (role === "HR")
+      return [
+        {
+          key: "/core-hr/employees",
+          label: (
+            <Link href="/core-hr/employees">
+              <span className="font-bold text-[13px] uppercase tracking-tight">
+                Nhân sự công ty
+              </span>
+            </Link>
+          ),
+          icon: <TeamOutlined />,
+        },
+        {
+          key: "/core-hr/labor-contracts",
+          label: (
+            <Link href="/core-hr/labor-contracts">
+              <span className="font-bold text-[13px] uppercase tracking-tight">
+                Quản lý hợp đồng
+              </span>
+            </Link>
+          ),
+          icon: <FormOutlined />,
+        },
+      ];
+
+    if (role === "Manager")
+     return [
+        {
+          key: "/core-hr/manager-list",
+          label: (
+            <Link href="/core-hr/manager-list">
+              <span className="font-bold text-[13px] uppercase tracking-tight">
+                Nhân sự của tôi
+              </span>
+            </Link>
+          ),
+          icon: <TeamOutlined />,
+        },
+      ]
+
+    if (role === "Admin")
+      return [
+        {
+          key: "/admin/manage-account",
+          label: (
+            <Link href="/admin/manage-account">
+              <span className="font-bold text-[13px] uppercase tracking-tight">
+                Quản lý tài khoản
+              </span>
+            </Link>
+          ),
+          icon: <UserOutlined />,
+        },
+        {
+          key: "/admin/manage-department",
+          label: (
+            <Link href="/admin/manage-department">
+              <span className="font-bold text-[13px] uppercase tracking-tight">
+                Quản lý phòng ban
+              </span>
+            </Link>
+          ),
+          icon: <BankOutlined />,
+        },
+          {
+          key: "/admin/manage-position",
+          label: (
+            <Link href="/admin/manage-position">
+              <span className="font-bold text-[13px] uppercase tracking-tight">
+                Quản lý vị trí
+              </span>
+            </Link>
+          ),
+          icon: <ApartmentOutlined />,
+        },
+      ];
   };
 
   // --- MODULE CHẤM CÔNG ---
@@ -117,17 +284,28 @@ export default function SidebarHRM() {
     // 1. Chấm công (Dành cho mọi nhân viên)
     items.push({
       key: "/attendance/checkin",
-      label: <Link href="/attendance/checkin"><span className="font-bold text-[13px] uppercase tracking-tight">Chấm công</span></Link>,
+      label: (
+        <Link href="/attendance/checkin">
+          <span className="font-bold text-[13px] uppercase tracking-tight">
+            Chấm công
+          </span>
+        </Link>
+      ),
       icon: <FileAddOutlined />,
     });
 
     // 2. Quản lý cá nhân (Dành cho mọi nhân viên)
     items.push({
       key: "sub-my-attendance",
-      label: <span className="font-bold text-[13px] uppercase tracking-tight">Quản lý cá nhân</span>,
+      label: (
+        <span className="font-bold text-[13px] uppercase tracking-tight">
+          Quản lý cá nhân
+        </span>
+      ),
       icon: <UserOutlined />,
       children: [
         { key: "/attendance/my-timesheet", label: <Link href="/attendance/my-timesheet">Bảng chấm công</Link>, icon: <CalendarOutlined /> },
+        { key: "/attendance/explanation", label: <Link href="/attendance/explanation">Giải trình chấm công</Link>, icon: <AuditOutlined /> },
         { key: "/attendance/overtime", label: <Link href="/attendance/overtime">Đăng ký OT</Link>, icon: <ClockCircleOutlined /> },
         { key: "/attendance/leave-request", label: <Link href="/attendance/leave-request">Nghỉ phép</Link>, icon: <AuditOutlined /> },
       ],
@@ -137,18 +315,28 @@ export default function SidebarHRM() {
     if (role === "Manager" || role === "HR" || role === "Admin") {
       items.push({
         key: "sub-approval-center",
-        label: <span className="font-bold text-[13px] uppercase tracking-tight">Trung tâm phê duyệt</span>,
+        label: (
+          <span className="font-bold text-[13px] uppercase tracking-tight">
+            Trung tâm phê duyệt
+          </span>
+        ),
         icon: <AuditOutlined />,
         children: [
           {
             key: "/attendance/approvals/explanations",
-            label: <Link href="/attendance/approvals/explanations">Duyệt giải trình</Link>,
-            icon: <FileSearchOutlined />
+            label: (
+              <Link href="/attendance/approvals/explanations">
+                Duyệt giải trình
+              </Link>
+            ),
+            icon: <FileSearchOutlined />,
           },
           {
             key: "/attendance/approvals/leaves",
-            label: <Link href="/attendance/approvals/leaves">Duyệt nghỉ phép</Link>,
-            icon: <FileSearchOutlined />
+            label: (
+              <Link href="/attendance/approvals/leaves">Duyệt nghỉ phép</Link>
+            ),
+            icon: <FileSearchOutlined />,
           },
           {
             key: "/attendance/approvals/overtime",
@@ -163,14 +351,21 @@ export default function SidebarHRM() {
     if (role === "Admin" || role === "HR") {
       items.push({
         key: "sub-company-attendance",
-        label: <span className="font-bold text-[13px] uppercase tracking-tight">Quản lý toàn công ty</span>,
+        label: (
+          <span className="font-bold text-[13px] uppercase tracking-tight">
+            Quản lý toàn công ty
+          </span>
+        ),
         icon: <TeamOutlined />,
         children: [
-          // Menu 1: Bảng công tổng hợp (Object thứ nhất)
           {
             key: "/attendance/company-timesheet",
-            label: <Link href="/attendance/company-timesheet">Bảng công tổng hợp</Link>,
-            icon: <TableOutlined />
+            label: (
+              <Link href="/attendance/company-timesheet">
+                Bảng công tổng hợp
+              </Link>
+            ),
+            icon: <TableOutlined />,
           },
           // Menu 2: Quản lý quỹ nghỉ phép (Object thứ hai)
           {
@@ -184,7 +379,13 @@ export default function SidebarHRM() {
 
       items.push({
         key: "/attendance/config",
-        label: <Link href="/attendance/config"><span className="font-bold text-[13px] uppercase tracking-tight">Cấu hình chấm công</span></Link>,
+        label: (
+          <Link href="/attendance/config">
+            <span className="font-bold text-[13px] uppercase tracking-tight">
+              Cấu hình chấm công
+            </span>
+          </Link>
+        ),
         icon: <SettingOutlined />,
       });
     }
@@ -192,21 +393,50 @@ export default function SidebarHRM() {
     return items;
   };
 
-  // --- MODULE LƯƠNG ---
+// --- MODULE LƯƠNG ---
   const getPayrollItems = () => {
     const items = [];
 
     // 1. SIDEBAR QUẢN LÝ (CHỈ DÀNH CHO MANAGER, HR, ADMIN)
     // Nhân viên (Employee) bình thường sẽ KHÔNG BAO GIỜ nhìn thấy mục này
     if (role !== "Employee") {
+      const manageChildren = [
+        {
+          key: "/payroll/payroll-processing",
+          label: <Link href="/payroll/payroll-processing">Xử lý bảng lương</Link>,
+          icon: <FileSearchOutlined />,
+        },
+        {
+          key: "/payroll/calculation",
+          label: <Link href="/payroll/calculation">Tính lương tự động</Link>,
+          icon: <CalculatorFilled />,
+        },
+        {
+          key: "/payroll", 
+          label: <Link href="/payroll">Cấu hình lương</Link>,
+          icon: <SettingOutlined />,
+        },
+        {
+          key: "/advance-approvals",
+          label: <Link href="/advance-approvals">Duyệt ứng lương</Link>,
+          icon: <AuditOutlined />,
+        },
+      ];
+
       items.push({
         key: "sub-manage-payroll",
-        label: <span className="font-bold text-[13px] uppercase tracking-tight">Quản lý Hệ thống</span>,
+        label: (
+          <span className="font-bold text-[13px] uppercase tracking-tight">
+            Quản lý Hệ thống
+          </span>
+        ),
         icon: <SettingOutlined />,
         children: [
           {
             key: "/payroll/payroll-processing",
-            label: <Link href="/payroll/payroll-processing">Xử lý bảng lương</Link>,
+            label: (
+              <Link href="/payroll/payroll-processing">Xử lý bảng lương</Link>
+            ),
             icon: <FileSearchOutlined />,
           },
           {
@@ -224,49 +454,97 @@ export default function SidebarHRM() {
             label: <Link href="/advance-approvals">Duyệt ứng lương</Link>,
             icon: <AuditOutlined />,
           },
-        ]
+        ],
+        children: manageChildren
       });
     }
 
     // 2. SIDEBAR CÁ NHÂN (AI ĐĂNG NHẬP VÀO CŨNG SẼ THẤY PHẦN NÀY)
-    // Cả Manager và Employee đều cần xem Phiếu lương và Ứng lương của chính mình
     items.push({
       key: "sub-my-payroll",
-      label: <span className="font-bold text-[13px] uppercase tracking-tight">Lương & Tạm ứng</span>,
+      label: (
+        <span className="font-bold text-[13px] uppercase tracking-tight">
+          Lương & Tạm ứng
+        </span>
+      ),
       icon: <DollarOutlined />,
       children: [
         {
           key: "/my-payroll",
           label: <Link href="/my-payroll">Phiếu lương của tôi</Link>,
-          icon: <SnippetsOutlined />
+          icon: <SnippetsOutlined />,
         },
         {
           key: "/my-advance",
           label: <Link href="/my-advance">Xin ứng lương</Link>,
-          icon: <FormOutlined />
+          icon: <FormOutlined />,
         },
         {
           key: "/my-advance-history",
           label: <Link href="/my-advance-history">Lịch sử ứng lương</Link>,
-          icon: <AccountBookOutlined />
+          icon: <AccountBookOutlined />,
         },
       ],
     });
 
+    // 👉 THỐNG KÊ THU NHẬP CÁ NHÂN (Ngay dưới Lương & Tạm ứng, ngang hàng)
+    items.push({
+      key: "/my-payroll/analytics",
+      label: (
+        <Link href="/my-payroll/analytics">
+          <span className="font-bold text-[13px] uppercase tracking-tight">Thống kê thu nhập</span>
+        </Link>
+      ),
+      icon: <LineChartOutlined />,
+    });
+
+    // 3. MỤC PHÂN TÍCH (CHỈ DÀNH CHO MANAGER VÀ ADMIN) - NGANG HÀNG
+    if (role === "Manager" || role === "Admin") {
+      items.push({
+        key: "/payroll/analytics",
+        label: (
+          <Link href="/payroll/analytics">
+            <span className="font-bold text-[13px] uppercase tracking-tight">Phân tích chi phí</span>
+          </Link>
+        ),
+        icon: <PieChartOutlined />,
+      });
+    }
+
+
+    // BÁO CÁO THUẾ & BH (CHỈ ADMIN VÀ HR MỚI NHÌN THẤY) - NGANG HÀNG
+      if (role === "Admin" || role === "HR") {
+        items.push({
+          key: "/reports/tax-insurance",
+          label: <Link href="/reports/tax-insurance"><span className="font-bold text-[13px] uppercase tracking-tight">Báo cáo Thuế & BH</span></Link>,
+          icon: <FileExcelOutlined />,
+        });
+      }
     return items;
   };
-
   // --- MODULE ĐÀO TẠO & ĐÁNH GIÁ ---
   const getEvaluationItems = () => {
     return [
       {
         key: "/evaluation/training",
-        label: <Link href="/evaluation/training"><span className="font-bold text-[13px] uppercase tracking-tight">Đào tạo</span></Link>,
+        label: (
+          <Link href="/evaluation/training">
+            <span className="font-bold text-[13px] uppercase tracking-tight">
+              Đào tạo
+            </span>
+          </Link>
+        ),
         icon: <SettingOutlined />,
       },
       {
         key: "/evaluation/performance",
-        label: <Link href="/evaluation/performance"><span className="font-bold text-[13px] uppercase tracking-tight">Đánh giá hiệu suất</span></Link>,
+        label: (
+          <Link href="/evaluation/performance">
+            <span className="font-bold text-[13px] uppercase tracking-tight">
+              Đánh giá hiệu suất
+            </span>
+          </Link>
+        ),
         icon: <FileSearchOutlined />,
       },
     ];
@@ -276,9 +554,25 @@ export default function SidebarHRM() {
   const getMenuItems = () => {
     const path = (pathname || "").toLowerCase();
 
-    if (path.includes("recruitment") || path.includes("candidate") || path.includes("job-postings")) return getRecruitmentItems();
-    if (path.includes("core-hr") || path.includes("employee") || path.includes("department")) return getCoreHRItems();
-    if (path.includes("attendance") || path.includes("checkin") || path.includes("timesheet") || path.includes("leave")) return getAttendanceItems();
+    if (
+      path.includes("recruitment") ||
+      path.includes("candidate") ||
+      path.includes("job-postings")
+    )
+      return getRecruitmentItems();
+    if (
+      path.includes("core-hr") ||
+      path.includes("employee") ||
+      path.includes("department")
+    )
+      return getCoreHRItems();
+    if (
+      path.includes("attendance") ||
+      path.includes("checkin") ||
+      path.includes("timesheet") ||
+      path.includes("leave")
+    )
+      return getAttendanceItems();
 
     // Nếu URL có chứa chữ "payroll" HOẶC "advance" -> Load menu Lương
     if (path.includes("payroll") || path.includes("advance")) {
@@ -298,7 +592,14 @@ export default function SidebarHRM() {
         mode="inline"
         selectedKeys={[pathname]}
         // PHẦN ĐÃ SỬA: Đã thêm các mục Lương để nó tự động mở ra khi vào trang
-        defaultOpenKeys={["sub-request", "sub-job", "sub-candidate", "sub-my-attendance", "sub-my-payroll", "sub-manage-payroll"]}
+        defaultOpenKeys={[
+          "job-posting",
+          "offer",
+          "sub-candidate",
+          "sub-my-attendance",
+          "sub-my-payroll",
+          "sub-manage-payroll",
+        ]}
         items={getMenuItems()}
         className="custom-sidebar-menu"
       />

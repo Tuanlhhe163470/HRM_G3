@@ -35,10 +35,15 @@ namespace HRM_Infrastructure.Services
                     .ThenInclude(e => e.Department)
                 .Include(u => u.Employee)
                     .ThenInclude(e => e.Position)
-                .FirstOrDefaultAsync(u => u.Username == username && u.IsActive);
+                .FirstOrDefaultAsync(u => u.Username == username);
 
             // Kiểm tra mật khẩu
             if (user == null || user.PasswordHash != password) return null;
+
+            if (!user.IsActive)
+            {
+                throw new Exception("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin hoặc Manager!");
+            }
 
             // 2. Logic tạo JWT Token
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -49,9 +54,11 @@ namespace HRM_Infrastructure.Services
                 Subject = new ClaimsIdentity(new[]
                 {
                     new Claim(ClaimTypes.Name, user.Username),
+                    new Claim(ClaimTypes.NameIdentifier, user.AccountID.ToString()),
                     new Claim(ClaimTypes.Role, user.Role?.RoleName ?? "Employee"),
                     new Claim("EmployeeID", user.EmployeeID?.ToString() ?? ""),
                     new Claim("DepartmentId", user.Employee?.DepartmentID.ToString() ?? "0"),
+                    new Claim("DepartmentName", user.Employee?.Department?.DepartmentName ?? "N/A"),
                 }),
                 Expires = DateTime.UtcNow.AddMinutes(double.Parse(_config["Jwt:DurationInMinutes"]!)),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
@@ -75,6 +82,7 @@ namespace HRM_Infrastructure.Services
                     Gender = user.Employee?.Gender,
                     Phone = user.Employee?.Phone,
                     AvatarURL = user.Employee?.AvatarURL,
+                    DepartmentID = user.Employee?.DepartmentID,
                     DepartmentName = user.Employee?.Department?.DepartmentName,
                     PositionName = user.Employee?.Position?.PositionName,
                     Status = user.Employee?.Status ?? "Active"

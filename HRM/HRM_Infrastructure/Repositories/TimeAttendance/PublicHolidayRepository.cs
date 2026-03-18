@@ -66,5 +66,11 @@ namespace HRM_Infrastructure.Repositories.TimeAttendance
             _context.PublicHolidays.Update(publicHoliday);
             await _context.SaveChangesAsync();
         }
+        public async Task<List<PublicHoliday>> GetHolidaysInRangeAsync(DateTime fromDate, DateTime toDate)
+        {
+            return await _context.PublicHolidays
+                .Where(h => h.StartDate.Date <= toDate.Date && h.EndDate.Date >= fromDate.Date)
+                .ToListAsync();
+        }
     }
 }

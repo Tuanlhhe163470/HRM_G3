@@ -16,9 +16,19 @@ namespace HRM_API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest model)
         {
-            var token = await _authService.AuthenticateAsync(model.Username, model.Password);
-            if (token == null) return Unauthorized(new { message = "Sai tài khoản hoặc mật khẩu" });
-            return Ok(new { Token = token });
+            try
+            {
+                var response = await _authService.AuthenticateAsync(model.Username, model.Password);
+
+                if (response == null)
+                    return Unauthorized(new { message = "Tài khoản hoặc mật khẩu không chính xác" });
+
+                return Ok(new { Token = response });
+            }
+            catch (Exception ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
         }
     }
 }

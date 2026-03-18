@@ -39,12 +39,14 @@ namespace HRM_Domain.Entities
         public string? Note { get; set; }
 
         public DateTime? UpdatedAt { get; set; }
+        public bool IsFailEmailSent { get; set; } = false;
 
         // --- BỔ SUNG ĐỂ LỌC THEO PHÒNG BAN ---
         public int JobID { get; set; }
 
         [ForeignKey("JobID")]
         public virtual JobPosting JobPosting { get; set; } = null!;
+        public virtual ICollection<Interview> Interviews { get; set; } = new List<Interview>();
     }
     /// <summary>
     /// Luồng: Applied -> Screening -> Manager_Review -> Interview -> Passed -> Offered -> Hired

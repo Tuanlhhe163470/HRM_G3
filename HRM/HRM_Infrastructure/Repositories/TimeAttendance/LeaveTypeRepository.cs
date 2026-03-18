@@ -66,5 +66,14 @@ namespace HRM_Infrastructure.Repositories
                     && targetDate.Date >= x.StartDate.Date
                     && targetDate.Date <= x.EndDate.Date);
         }
+        public async Task<List<LeaveRequest>> GetApprovedLeavesInRangeAsync(int employeeId, DateTime fromDate, DateTime toDate)
+        {
+            return await _context.LeaveRequests
+                .Where(l => l.EmployeeId == employeeId
+                         && l.Status == ExplanationStatus.Approved
+                         && l.StartDate.Date <= toDate.Date
+                         && l.EndDate.Date >= fromDate.Date)
+                .ToListAsync();
+        }
     }
 }

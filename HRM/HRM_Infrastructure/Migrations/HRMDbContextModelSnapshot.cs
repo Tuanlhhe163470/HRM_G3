@@ -184,6 +184,9 @@ namespace HRM_Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<bool>("IsFailEmailSent")
+                        .HasColumnType("bit");
+
                     b.Property<int>("JobID")
                         .HasColumnType("int");
 
@@ -340,6 +343,9 @@ namespace HRM_Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<int?>("CandidateID")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("DateOfBirth")
                         .HasColumnType("datetime2");
 
@@ -428,8 +434,11 @@ namespace HRM_Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InterviewID"));
 
-                    b.Property<int>("ApplicationID")
+                    b.Property<int>("CandidateID")
                         .HasColumnType("int");
+
+                    b.Property<string>("Comments")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("InterviewDate")
                         .HasColumnType("datetime2");
@@ -441,13 +450,19 @@ namespace HRM_Infrastructure.Migrations
                     b.Property<int?>("InterviewerID")
                         .HasColumnType("int");
 
+                    b.Property<string>("Location")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Result")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<int?>("Score")
+                        .HasColumnType("int");
+
                     b.HasKey("InterviewID");
 
-                    b.HasIndex("ApplicationID");
+                    b.HasIndex("CandidateID");
 
                     b.HasIndex("InterviewerID");
 
@@ -923,8 +938,14 @@ namespace HRM_Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OfferID"));
 
-                    b.Property<int>("ApplicationID")
+                    b.Property<int>("CandidateID")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("JoinDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("OfferStatus")
                         .IsRequired()
@@ -942,9 +963,32 @@ namespace HRM_Infrastructure.Migrations
 
                     b.HasKey("OfferID");
 
-                    b.HasIndex("ApplicationID");
+                    b.HasIndex("CandidateID");
 
                     b.ToTable("Offers");
+                });
+
+            modelBuilder.Entity("HRM_Domain.Entities.OfferAllowance", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ComponentID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OfferID")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ComponentID");
+
+                    b.HasIndex("OfferID");
+
+                    b.ToTable("OfferAllowance");
                 });
 
             modelBuilder.Entity("HRM_Domain.Entities.Payroll", b =>
@@ -1823,9 +1867,9 @@ namespace HRM_Infrastructure.Migrations
 
             modelBuilder.Entity("HRM_Domain.Entities.Interview", b =>
                 {
-                    b.HasOne("HRM_Domain.Entities.Application", "Application")
-                        .WithMany()
-                        .HasForeignKey("ApplicationID")
+                    b.HasOne("HRM_Domain.Entities.Candidate", "Candidate")
+                        .WithMany("Interviews")
+                        .HasForeignKey("CandidateID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1833,7 +1877,7 @@ namespace HRM_Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("InterviewerID");
 
-                    b.Navigation("Application");
+                    b.Navigation("Candidate");
 
                     b.Navigation("Interviewer");
                 });
@@ -1987,13 +2031,32 @@ namespace HRM_Infrastructure.Migrations
 
             modelBuilder.Entity("HRM_Domain.Entities.Offer", b =>
                 {
-                    b.HasOne("HRM_Domain.Entities.Application", "Application")
+                    b.HasOne("HRM_Domain.Entities.Candidate", "Candidate")
                         .WithMany()
-                        .HasForeignKey("ApplicationID")
+                        .HasForeignKey("CandidateID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Application");
+                    b.Navigation("Candidate");
+                });
+
+            modelBuilder.Entity("HRM_Domain.Entities.OfferAllowance", b =>
+                {
+                    b.HasOne("HRM_Domain.Entities.SalaryComponent", "SalaryComponent")
+                        .WithMany()
+                        .HasForeignKey("ComponentID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HRM_Domain.Entities.Offer", "Offer")
+                        .WithMany("OfferAllowances")
+                        .HasForeignKey("OfferID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Offer");
+
+                    b.Navigation("SalaryComponent");
                 });
 
             modelBuilder.Entity("HRM_Domain.Entities.Payroll", b =>
@@ -2190,6 +2253,16 @@ namespace HRM_Infrastructure.Migrations
                     b.Navigation("Employee");
 
                     b.Navigation("TrainingCourse");
+                });
+
+            modelBuilder.Entity("HRM_Domain.Entities.Candidate", b =>
+                {
+                    b.Navigation("Interviews");
+                });
+
+            modelBuilder.Entity("HRM_Domain.Entities.Offer", b =>
+                {
+                    b.Navigation("OfferAllowances");
                 });
 
             modelBuilder.Entity("HRM_Domain.Entities.Role", b =>

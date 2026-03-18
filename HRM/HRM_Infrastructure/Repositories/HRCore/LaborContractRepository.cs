@@ -17,6 +17,7 @@ namespace HRM_Infrastructure.Repositories.HRCore
         {
             var query = _context.LaborContracts
                 .Include(c => c.Employee)
+                .ThenInclude(e => e.Department)
                 .AsQueryable();
 
             var totalRecords = await query.CountAsync();

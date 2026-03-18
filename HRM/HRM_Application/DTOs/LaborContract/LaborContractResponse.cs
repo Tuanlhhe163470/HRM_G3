@@ -8,7 +8,7 @@ namespace HRM_Application.DTOs.LaborContract.Responses
         public int ContractID { get; set; }
 
         public BaseReferenceResponse? Employee { get; set; }
-
+        public string? DepartmentName { get; set; }
         public string ContractType { get; set; } = string.Empty;
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }

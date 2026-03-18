@@ -187,7 +187,7 @@ export default function ApproveRequestPage() {
       <Card variant="borderless">
         <div className="header-section">
           <Title level={3} className="title-text">
-            DANH SÁCH CHỜ PHÊ DUYỆT - {departmentDisplayName}
+            DANH SÁCH CHỜ PHÊ DUYỆT
           </Title>
           <Badge
             count={data.length}

@@ -47,6 +47,11 @@ namespace HRM_Application.Services.TimeAttendance
             var today = DateTime.Today;
             var now = DateTime.Now;
 
+            if (!IsWithinOfficeRadius(request.Latitude, request.Longitude))
+            {
+                throw new InvalidOperationException("Vị trí của bạn không hợp lệ hoặc nằm ngoài phạm vi công ty (100m). Vui lòng bật định vị và thử lại!");
+            }
+
             // 1. CHẶN CHECK-IN NGÀY LỄ
             var holiday = await _publicHolidayRepo.GetHolidayByDateAsync(today);
             if (holiday != null)
@@ -153,6 +158,11 @@ namespace HRM_Application.Services.TimeAttendance
         public async Task<AttendanceLogResponse> CheckOutAsync(int employeeId, CheckOutRequest request)
         {
             var today = DateTime.Today;
+
+            if (!IsWithinOfficeRadius(request.Latitude, request.Longitude))
+            {
+                throw new InvalidOperationException("Vị trí của bạn không hợp lệ hoặc nằm ngoài phạm vi công ty. Không thể Check-out!");
+            }
 
             var log = await _attendanceRepo.GetActiveLogAsync(employeeId);
             if (log == null)
@@ -373,36 +383,34 @@ namespace HRM_Application.Services.TimeAttendance
 
         private async Task SyncMissingDataAsync(int employeeId, DateTime fromDate, DateTime toDate)
         {
-            // Lấy Shift mặc định để gán ID (bắt buộc phải có ShiftId mới lưu được log)
             var activeShifts = await _shiftRepo.GetActiveShiftAsync();
             var shift = activeShifts?.FirstOrDefault();
             if (shift == null) return;
 
-            var workDaysList = new List<DayOfWeek>();
-            if (!string.IsNullOrEmpty(shift.WorkDays))
-            {
-                workDaysList = shift.WorkDays.Split(',')
-                    .Select(d => (DayOfWeek)(int.Parse(d)))
-                    .ToList();
-            }
+            var workDaysList = string.IsNullOrEmpty(shift.WorkDays)
+                ? new List<DayOfWeek>()
+                : shift.WorkDays.Split(',').Select(d => (DayOfWeek)(int.Parse(d))).ToList();
+
+            // 1. Lấy tất cả log chấm công trong tháng
+            var existingLogs = await _attendanceRepo.GetByMonthAsync(employeeId, fromDate.Month, fromDate.Year);
+            var existingDates = existingLogs.Select(x => x.WorkDate.Date).ToHashSet();
+
+            // 2. Lấy tất cả ngày lễ trong khoảng thời gian này
+            var holidaysInMonth = await _publicHolidayRepo.GetHolidaysInRangeAsync(fromDate, toDate);
+
+            // 3. Lấy tất cả đơn xin nghỉ có phép trong tháng
+            var leavesInMonth = await _leaveRequestRepo.GetApprovedLeavesInRangeAsync(employeeId, fromDate, toDate);
 
             var logsToAdd = new List<AttendanceLog>();
 
-            // Vòng lặp quét từng ngày
             for (var date = fromDate; date <= toDate; date = date.AddDays(1))
             {
-                // 0. Kiểm tra xem ngày này ĐÃ CÓ record nào trong DB chưa (bất kể status gì)
-                bool hasLog = await _attendanceRepo.HasAttendanceAsync(employeeId, date);
-                if (hasLog)
-                {
-                    // Nếu có rồi thì thôi, không ghi đè (Logic check MissingCheckout đã làm ở bước trước đó rồi)
-                    continue;
-                }
+                if (existingDates.Contains(date.Date)) continue;
 
                 bool isWorkingDay = workDaysList.Contains(date.DayOfWeek);
 
-                // 1. ƯU TIÊN CAO NHẤT: KIỂM TRA NGÀY LỄ
-                var holiday = await _publicHolidayRepo.GetHolidayByDateAsync(date);
+                // 1. KIỂM TRA NGÀY LỄ (Kiểm tra trong list RAM)
+                var holiday = holidaysInMonth.FirstOrDefault(h => date.Date >= h.StartDate.Date && date.Date <= h.EndDate.Date);
                 if (holiday != null)
                 {
                     if (!isWorkingDay) continue;
@@ -411,21 +419,18 @@ namespace HRM_Application.Services.TimeAttendance
                         EmployeeId = employeeId,
                         ShiftId = shift.Id,
                         WorkDate = date,
-                        Status = AttendanceStatus.Holiday, // <--- Status Nghỉ Lễ
+                        Status = AttendanceStatus.Holiday,
                         IsSystemGenerated = true,
                         Note = $"[System: Nghỉ lễ {holiday.HolidayName}]",
-                        WorkingHours = 8 // Thường nghỉ lễ vẫn được tính 8h công hưởng lương
+                        WorkingHours = 8
                     });
-                    continue; // Xong ngày này, nhảy sang ngày tiếp theo ngay
-                }
-
-                // 2. ƯU TIÊN NHÌ: CHECK NGAY LAM VIEC THEO SHIFT CONFIG
-                if (!workDaysList.Contains(date.DayOfWeek))
-                {
                     continue;
                 }
 
-                var approvedLeave = await _leaveRequestRepo.GetApprovedLeaveOnDateAsync(employeeId, date);
+                if (!isWorkingDay) continue;
+
+                // 2. CHECK XIN NGHỈ PHÉP 
+                var approvedLeave = leavesInMonth.FirstOrDefault(l => date.Date >= l.StartDate.Date && date.Date <= l.EndDate.Date);
                 if (approvedLeave != null)
                 {
                     logsToAdd.Add(new AttendanceLog
@@ -433,7 +438,7 @@ namespace HRM_Application.Services.TimeAttendance
                         EmployeeId = employeeId,
                         ShiftId = shift.Id,
                         WorkDate = date,
-                        Status = AttendanceStatus.OnLeave, // Trạng thái 9: Nghỉ có phép
+                        Status = AttendanceStatus.OnLeave,
                         IsSystemGenerated = true,
                         Note = $"[System: Nghỉ có phép] {approvedLeave.LeaveType?.Name}",
                         WorkingHours = 0
@@ -441,173 +446,60 @@ namespace HRM_Application.Services.TimeAttendance
                     continue;
                 }
 
-                // 3. CUỐI CÙNG: KHÔNG LỄ, KHÔNG CUỐI TUẦN, KHÔNG LOG -> VẮNG MẶT
+                // 3. KHÔNG CÓ GÌ CẢ -> VẮNG MẶT
                 logsToAdd.Add(new AttendanceLog
                 {
                     EmployeeId = employeeId,
                     ShiftId = shift.Id,
                     WorkDate = date,
-                    Status = AttendanceStatus.Absent, // <--- Status Vắng
+                    Status = AttendanceStatus.Absent,
                     IsSystemGenerated = true,
                     Note = "[System: Vắng mặt không phép]",
                     WorkingHours = 0
                 });
             }
 
-            // Batch Insert
-            if (logsToAdd.Any())
-            {
-                await _attendanceRepo.AddRangeAsync(logsToAdd);
-            }
+            if (logsToAdd.Any()) await _attendanceRepo.AddRangeAsync(logsToAdd);
         }
-
-        // Tính "Ngày công chuẩn" ĐỘNG dựa trên cấu hình Ca làm việc ---
-        private decimal GetStandardWorkDays(int year, int month, string workDaysConfig)
+        
+        private bool IsWithinOfficeRadius(double? userLat, double? userLon)
         {
-            if (string.IsNullOrEmpty(workDaysConfig)) return 0;
+            // Nếu thiết bị không gửi lên tọa độ (Do user chặn quyền GPS)
+            if (userLat == null || userLon == null) return false;
 
-            var allowedDays = workDaysConfig.Split(',')
-                                            .Select(d => (DayOfWeek)int.Parse(d))
-                                            .ToList();
+            var officeLocations = new List<(double Latitude, double Longitude, string Name)>
+                {
+                    // Cơ sở 1: Hoài Đức, Hà Nội (Đã chuyển đổi sang hệ thập phân)
+                    (21.065222, 105.715528, "Cơ sở Hoài Đức"),
+        
+                    // Cơ sở 2: Tòa Delta, Đại học FPT, Hòa Lạc
+                    (21.014175, 105.525060, "Đại học FPT - Tòa Delta"),
+                    (21.0296, 105.8553, "Vị trí Test Demo")
+                };
 
-            int daysInMonth = DateTime.DaysInMonth(year, month);
-            int workDays = 0;
+            double allowedRadiusInMeters = 100.0;
 
-            for (int i = 1; i <= daysInMonth; i++)
+            //KIỂM TRA QUÉT QUA TỪNG CƠ SỞ
+            foreach (var office in officeLocations)
             {
-                DateTime date = new DateTime(year, month, i);
+                // tính khoảng cách
+                var dLat = (userLat.Value - office.Latitude) * Math.PI / 180.0;
+                var dLon = (userLon.Value - office.Longitude) * Math.PI / 180.0;
 
-                // Nếu ngày đó nằm trong danh sách WorkDays của ca làm việc -> Tính là 1 ngày công
-                if (allowedDays.Contains(date.DayOfWeek))
+                var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                        Math.Cos(office.Latitude * Math.PI / 180.0) * Math.Cos(userLat.Value * Math.PI / 180.0) *
+                        Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+
+                var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+                var distance = 6371000 * c;
+
+                if (distance <= allowedRadiusInMeters)
                 {
-                    workDays++;
-                }
-            }
-            return workDays;
-        }
-
-        // --- 2. HÀM CHÍNH: TỔNG HỢP CÔNG TOÀN CÔNG TY ---
-        public async Task CalculateCompanyTimesheetAsync(int month, int year)
-        {
-            // =========================================================================
-            // BƯỚC 1: CHUẨN BỊ MỐC DỮ LIỆU (BASE DATA)
-            // =========================================================================
-            var activeShifts = await _shiftRepo.GetActiveShiftAsync();
-            if (activeShifts == null || !activeShifts.Any()) throw new Exception("Không có ca nào.");
-
-            // 2.1 Kéo toàn bộ log chấm công của cả công ty trong tháng
-            var allLogs = await _attendanceRepo.GetAllLogsByMonthAsync(month, year);
-            var groupedByEmployee = allLogs.GroupBy(x => x.EmployeeId);
-
-            // 2.2 Kéo toàn bộ OT đã duyệt và biến thành Dictionary trên RAM
-            var allApprovedOTs = await _otRepo.GetApprovedOTByMonthAsync(month, year);
-
-            // Tạo từ điển: Key là EmployeeId, Value là Tổng số giờ OT của người đó
-            var otDictionary = allApprovedOTs
-                .GroupBy(x => x.EmployeeId)
-                .ToDictionary(
-                    group => group.Key,
-                    group => group.Sum(x => x.ApprovedHours)
-                );
-
-            var timesheetsToAdd = new List<MonthlyTimesheet>();
-            var timesheetsToUpdate = new List<MonthlyTimesheet>();
-
-            foreach (var group in groupedByEmployee)
-            {
-                int empId = group.Key;
-                var logs = group.ToList();
-
-                // tìm shiftId xuất hiện nhiều log trong tháng
-                var dominantShiftId = logs
-                    .Where(x => x.ShiftId > 0)
-                    .GroupBy(x => x.ShiftId)
-                    .OrderByDescending(g => g.Count())
-                    .Select(g => g.Key)
-                    .FirstOrDefault();
-
-                var employeeShift = activeShifts.FirstOrDefault(s => s.Id == dominantShiftId)
-                     ?? activeShifts.First();
-
-                decimal standardDays = GetStandardWorkDays(year, month, employeeShift.WorkDays);
-
-                // 3.1 Tính toán Ngày công
-                decimal actualWorkDays = logs.Count(x =>
-                    x.Status == AttendanceStatus.OnTime ||
-                    x.Status == AttendanceStatus.Late ||
-                    x.Status == AttendanceStatus.EarlyLeave);
-
-                decimal paidLeaveDays = logs.Count(x =>
-                    x.Status == AttendanceStatus.Holiday ||
-                    x.Status == AttendanceStatus.OnLeave);
-
-                decimal loggedUnpaidLeave = logs.Count(x =>
-                    x.Status == AttendanceStatus.Absent ||
-                    x.Status == AttendanceStatus.MissingCheckOut);
-
-                decimal totalAccountedDays = actualWorkDays + paidLeaveDays + loggedUnpaidLeave;
-                decimal missingDays = standardDays - totalAccountedDays;
-                decimal unpaidLeaveDays = loggedUnpaidLeave + Math.Max(missingDays, 0); // Dùng Math.Max cho Clean Code
-
-                // 3.2 Tính toán Thời lượng & Vi phạm
-                double totalHours = Math.Round(logs.Where(x =>
-                    x.Status == AttendanceStatus.OnTime ||
-                    x.Status == AttendanceStatus.Late ||
-                    x.Status == AttendanceStatus.EarlyLeave)
-                    .Sum(x => x.WorkingHours ?? 0), 2);
-
-                int totalLateMins = logs.Sum(x => x.LateMinutes);
-                int totalEarlyMins = logs.Sum(x => x.EarlyLeaveMinutes);
-
-                // Nếu không có OT thì trả về 0, không bị lỗi Null
-                double totalOtHours = otDictionary.GetValueOrDefault(empId, 0);
-
-                // 3.3 Khớp nối với Bảng chốt công (Timesheet) hiện tại
-                // Note cho tương lai: Chỗ này có thể nâng cấp tiếp thành Bulk Fetch để triệt tiêu N+1 hoàn toàn
-                var existingRecord = await _monthlyTimesheetRepo.GetByEmployeeAndMonthAsync(empId, month, year);
-
-                if (existingRecord != null)
-                {
-                    // Bảo vệ dữ liệu: Nếu HR đã khóa sổ thì hệ thống không được tự ý sửa
-                    if (existingRecord.Status == TimesheetStatus.Locked) continue;
-
-                    existingRecord.StandardWorkDays = standardDays;
-                    existingRecord.ActualWorkDays = actualWorkDays;
-                    existingRecord.PaidLeaveDays = paidLeaveDays;
-                    existingRecord.UnpaidLeaveDays = unpaidLeaveDays;
-                    existingRecord.TotalWorkingHours = totalHours;
-                    existingRecord.TotalOvertimeHours = totalOtHours;
-                    existingRecord.TotalLateMinutes = totalLateMins;
-                    existingRecord.TotalEarlyLeaveMinutes = totalEarlyMins;
-
-                    existingRecord.LastCalculatedDate = DateTime.Now;
-                    existingRecord.Status = TimesheetStatus.Draft; // Luôn trả về Nháp nếu có biến động công
-
-                    timesheetsToUpdate.Add(existingRecord);
-                }
-                else
-                {
-                    timesheetsToAdd.Add(new MonthlyTimesheet
-                    {
-                        EmployeeID = empId,
-                        Month = month,
-                        Year = year,
-                        StandardWorkDays = standardDays,
-                        ActualWorkDays = actualWorkDays,
-                        PaidLeaveDays = paidLeaveDays,
-                        UnpaidLeaveDays = unpaidLeaveDays,
-                        TotalWorkingHours = totalHours,
-                        TotalOvertimeHours = totalOtHours,
-                        TotalLateMinutes = totalLateMins,
-                        TotalEarlyLeaveMinutes = totalEarlyMins,
-                        Status = TimesheetStatus.Draft,
-                        LastCalculatedDate = DateTime.Now
-                    });
+                    return true;
                 }
             }
 
-            if (timesheetsToAdd.Any()) await _monthlyTimesheetRepo.AddRangeAsync(timesheetsToAdd);
-            if (timesheetsToUpdate.Any()) await _monthlyTimesheetRepo.UpdateRangeAsync(timesheetsToUpdate);
+            return false;
         }
     }
 }

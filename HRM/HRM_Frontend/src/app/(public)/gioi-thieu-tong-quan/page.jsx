@@ -175,7 +175,7 @@ export default function HRMOverviewPage() {
                     { required: true, message: "Vui lòng nhập tên công ty" },
                   ]}
                 >
-                  <Input placeholder="Acme Corp." className="rounded-md" />
+                  <Input placeholder="FPT Software." className="rounded-md" />
                 </Form.Item>
                 <Form.Item
                   name="email"
@@ -191,7 +191,7 @@ export default function HRMOverviewPage() {
                   ]}
                 >
                   <Input
-                    placeholder="john.doe@example.com"
+                    placeholder="nguyenvana@example.com"
                     className="rounded-md"
                   />
                 </Form.Item>
@@ -207,7 +207,7 @@ export default function HRMOverviewPage() {
                   ]}
                 >
                   <Input
-                    placeholder="+1 (555) 123-4567"
+                    placeholder="+84 123 456 789"
                     className="rounded-md"
                   />
                 </Form.Item>

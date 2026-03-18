@@ -24,5 +24,6 @@ namespace HRM_Application.DTOs.Employee
 
         public DateTime? JoinDate { get; set; }
         public string Status { get; set; } = string.Empty;
+        public int? CandidateID { get; set; }
     }
 }

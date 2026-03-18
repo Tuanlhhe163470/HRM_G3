@@ -59,7 +59,15 @@ namespace HRM_API.Controllers
         [HttpGet("pending")]
         public async Task<IActionResult> GetPendingRequests()
         {
-            var data = await _advanceService.GetPendingRequestsAsync();
+            var claimId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                          ?? User.FindFirst("EmployeeID")?.Value;
+
+            if (string.IsNullOrEmpty(claimId) || !int.TryParse(claimId, out int userId))
+                return Unauthorized();
+
+            string userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
+
+            var data = await _advanceService.GetPendingRequestsAsync(userId, userRole);
             return Ok(data);
         }
 
@@ -67,7 +75,15 @@ namespace HRM_API.Controllers
         [HttpGet("all")]
         public async Task<IActionResult> GetAllRequests()
         {
-            var data = await _advanceService.GetAllAdvancesAsync();
+            var claimId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                          ?? User.FindFirst("EmployeeID")?.Value;
+
+            if (string.IsNullOrEmpty(claimId) || !int.TryParse(claimId, out int userId))
+                return Unauthorized();
+
+            string userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
+
+            var data = await _advanceService.GetAllAdvancesAsync(userId, userRole);
             return Ok(data);
         }
 
