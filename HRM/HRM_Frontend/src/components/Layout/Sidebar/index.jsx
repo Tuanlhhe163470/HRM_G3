@@ -338,10 +338,10 @@ export default function SidebarHRM() {
             ),
             icon: <FileSearchOutlined />,
           },
-          { 
-            key: "/attendance/approvals/overtime", 
-            label: <Link href="/attendance/approvals/overtime">Duyệt OT</Link>, 
-            icon: <FileSearchOutlined /> 
+          {
+            key: "/attendance/approvals/overtime",
+            label: <Link href="/attendance/approvals/overtime">Duyệt OT</Link>,
+            icon: <FileSearchOutlined />
           },
         ],
       });
@@ -367,6 +367,13 @@ export default function SidebarHRM() {
             ),
             icon: <TableOutlined />,
           },
+          // Menu 2: Quản lý quỹ nghỉ phép (Object thứ hai)
+          {
+            key: "/attendance/leave-balances",
+            label: <Link href="/attendance/leave-balances">Quản lý quỹ nghỉ phép</Link>,
+            // Gợi ý: Bạn có thể đổi icon này thành <CalendarOutlined /> hoặc <AppstoreOutlined /> cho đỡ trùng với icon Bảng công
+            icon: <TableOutlined />
+          }
         ],
       });
 
