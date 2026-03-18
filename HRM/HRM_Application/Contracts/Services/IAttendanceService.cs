@@ -15,6 +15,5 @@ namespace HRM_Application.Contracts.Services
         // Check-out
         Task<AttendanceLogResponse> CheckOutAsync(int employeeId, CheckOutRequest request);
         Task<MyTimesheetSummaryResponse> GetMyAttendanceLogsAsync(int employeeId, int month, int year);
-        Task CalculateCompanyTimesheetAsync(int month, int year);
     }
 }
