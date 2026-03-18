@@ -51,8 +51,8 @@ export default function SidebarHRM() {
 
   // --- MODULE TUYỂN DỤNG ---
   const getRecruitmentItems = () => {
-    if (role === "Employee") return []; 
-    
+    if (role === "Employee") return [];
+
     if (role === "HR") return [
       {
         key: "sub-jobposting",
@@ -94,8 +94,8 @@ export default function SidebarHRM() {
 
   // --- MODULE NHÂN SỰ ---
   const getCoreHRItems = () => {
-    if (role === "Employee") return []; 
-    
+    if (role === "Employee") return [];
+
     return [
       {
         key: "/core-hr/employees",
@@ -138,22 +138,22 @@ export default function SidebarHRM() {
       items.push({
         key: "sub-approval-center",
         label: <span className="font-bold text-[13px] uppercase tracking-tight">Trung tâm phê duyệt</span>,
-        icon: <AuditOutlined/>,
+        icon: <AuditOutlined />,
         children: [
-          { 
-            key: "/attendance/approvals/explanations", 
-            label: <Link href="/attendance/approvals/explanations">Duyệt giải trình</Link>, 
-            icon: <FileSearchOutlined /> 
+          {
+            key: "/attendance/approvals/explanations",
+            label: <Link href="/attendance/approvals/explanations">Duyệt giải trình</Link>,
+            icon: <FileSearchOutlined />
           },
-          { 
-            key: "/attendance/approvals/leaves", 
-            label: <Link href="/attendance/approvals/leaves">Duyệt nghỉ phép</Link>, 
-            icon: <FileSearchOutlined /> 
+          {
+            key: "/attendance/approvals/leaves",
+            label: <Link href="/attendance/approvals/leaves">Duyệt nghỉ phép</Link>,
+            icon: <FileSearchOutlined />
           },
-          { 
-            key: "/attendance/approvals/overtime", 
-            label: <Link href="/attendance/approvals/overtime">Duyệt OT</Link>, 
-            icon: <FileSearchOutlined /> 
+          {
+            key: "/attendance/approvals/overtime",
+            label: <Link href="/attendance/approvals/overtime">Duyệt OT</Link>,
+            icon: <FileSearchOutlined />
           },
         ],
       });
@@ -166,11 +166,19 @@ export default function SidebarHRM() {
         label: <span className="font-bold text-[13px] uppercase tracking-tight">Quản lý toàn công ty</span>,
         icon: <TeamOutlined />,
         children: [
-          { 
+          // Menu 1: Bảng công tổng hợp (Object thứ nhất)
+          {
             key: "/attendance/company-timesheet",
-            label: <Link href="/attendance/company-timesheet">Bảng công tổng hợp</Link>, 
-            icon: <TableOutlined /> 
+            label: <Link href="/attendance/company-timesheet">Bảng công tổng hợp</Link>,
+            icon: <TableOutlined />
           },
+          // Menu 2: Quản lý quỹ nghỉ phép (Object thứ hai)
+          {
+            key: "/attendance/leave-balances",
+            label: <Link href="/attendance/leave-balances">Quản lý quỹ nghỉ phép</Link>,
+            // Gợi ý: Bạn có thể đổi icon này thành <CalendarOutlined /> hoặc <AppstoreOutlined /> cho đỡ trùng với icon Bảng công
+            icon: <TableOutlined />
+          }
         ],
       });
 
@@ -188,7 +196,7 @@ export default function SidebarHRM() {
   const getPayrollItems = () => {
     const items = [];
 
-      // 1. SIDEBAR QUẢN LÝ (CHỈ DÀNH CHO MANAGER, HR, ADMIN)
+    // 1. SIDEBAR QUẢN LÝ (CHỈ DÀNH CHO MANAGER, HR, ADMIN)
     // Nhân viên (Employee) bình thường sẽ KHÔNG BAO GIỜ nhìn thấy mục này
     if (role !== "Employee") {
       items.push({
@@ -207,7 +215,7 @@ export default function SidebarHRM() {
             icon: <CalculatorFilled />,
           },
           {
-            key: "/payroll", 
+            key: "/payroll",
             label: <Link href="/payroll">Cấu hình lương</Link>,
             icon: <SettingOutlined />,
           },
@@ -227,20 +235,20 @@ export default function SidebarHRM() {
       label: <span className="font-bold text-[13px] uppercase tracking-tight">Lương & Tạm ứng</span>,
       icon: <DollarOutlined />,
       children: [
-        { 
-          key: "/my-payroll", 
-          label: <Link href="/my-payroll">Phiếu lương của tôi</Link>, 
-          icon: <SnippetsOutlined /> 
+        {
+          key: "/my-payroll",
+          label: <Link href="/my-payroll">Phiếu lương của tôi</Link>,
+          icon: <SnippetsOutlined />
         },
-        { 
-          key: "/my-advance", 
-          label: <Link href="/my-advance">Xin ứng lương</Link>, 
-          icon: <FormOutlined /> 
+        {
+          key: "/my-advance",
+          label: <Link href="/my-advance">Xin ứng lương</Link>,
+          icon: <FormOutlined />
         },
-        { 
-          key: "/my-advance-history", 
-          label: <Link href="/my-advance-history">Lịch sử ứng lương</Link>, 
-          icon: <AccountBookOutlined /> 
+        {
+          key: "/my-advance-history",
+          label: <Link href="/my-advance-history">Lịch sử ứng lương</Link>,
+          icon: <AccountBookOutlined />
         },
       ],
     });
@@ -271,14 +279,14 @@ export default function SidebarHRM() {
     if (path.includes("recruitment") || path.includes("candidate") || path.includes("job-postings")) return getRecruitmentItems();
     if (path.includes("core-hr") || path.includes("employee") || path.includes("department")) return getCoreHRItems();
     if (path.includes("attendance") || path.includes("checkin") || path.includes("timesheet") || path.includes("leave")) return getAttendanceItems();
-    
+
     // Nếu URL có chứa chữ "payroll" HOẶC "advance" -> Load menu Lương
     if (path.includes("payroll") || path.includes("advance")) {
       return getPayrollItems();
     }
-    
+
     if (path.includes("evaluation")) return getEvaluationItems();
-    
+
     // FALLBACK: Tránh lỗi trắng màn hình khi user đứng ở trang chủ (/)
     if (role === "Employee") return getPayrollItems();
     return getCoreHRItems();
