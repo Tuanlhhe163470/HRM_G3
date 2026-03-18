@@ -13,5 +13,7 @@ namespace HRM_Application.DTOs.TimeAttendance
         public string? CheckOutIp { get; set; }
 
         public string? Note { get; set; }
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
     }
 }
