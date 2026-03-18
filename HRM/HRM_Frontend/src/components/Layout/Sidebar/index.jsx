@@ -304,21 +304,10 @@ export default function SidebarHRM() {
       ),
       icon: <UserOutlined />,
       children: [
-        {
-          key: "/attendance/my-timesheet",
-          label: <Link href="/attendance/my-timesheet">Bảng chấm công</Link>,
-          icon: <CalendarOutlined />,
-        },
-        {
-          key: "/attendance/overtime",
-          label: <Link href="/attendance/overtime">Đăng ký OT</Link>,
-          icon: <ClockCircleOutlined />,
-        },
-        {
-          key: "/attendance/leave-request",
-          label: <Link href="/attendance/leave-request">Nghỉ phép</Link>,
-          icon: <AuditOutlined />,
-        },
+        { key: "/attendance/my-timesheet", label: <Link href="/attendance/my-timesheet">Bảng chấm công</Link>, icon: <CalendarOutlined /> },
+        { key: "/attendance/explanation", label: <Link href="/attendance/explanation">Giải trình chấm công</Link>, icon: <AuditOutlined /> },
+        { key: "/attendance/overtime", label: <Link href="/attendance/overtime">Đăng ký OT</Link>, icon: <ClockCircleOutlined /> },
+        { key: "/attendance/leave-request", label: <Link href="/attendance/leave-request">Nghỉ phép</Link>, icon: <AuditOutlined /> },
       ],
     });
 

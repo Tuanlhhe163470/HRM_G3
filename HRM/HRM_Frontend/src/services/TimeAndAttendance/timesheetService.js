@@ -13,6 +13,9 @@ const timesheetService = {
     return await axiosClient.post('/Timesheet/calculate', null, {
       params: { month, year }
     });
+  },
+  lockTimesheets: async (month, year) => {
+    return await axiosClient.post(`/Timesheet/lock?month=${month}&year=${year}`);
   }
 };
 

@@ -93,10 +93,28 @@ namespace HRM_API.Controllers
             throw new UnauthorizedAccessException("Không tìm thấy ID người dùng trong Token. Vui lòng đăng nhập lại!");
         }
 
-        // Hàm lấy IP Address
+        // Hàm lấy IP Address 
         private string GetClientIpAddress()
         {
-            return "127.0.0.1";
+            var ip = string.Empty;
+
+            var forwardedHeader = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(forwardedHeader))
+            {
+                ip = forwardedHeader.Split(',').FirstOrDefault()?.Trim();
+            }
+
+            if (string.IsNullOrEmpty(ip) && HttpContext.Connection.RemoteIpAddress != null)
+            {
+                ip = HttpContext.Connection.RemoteIpAddress.ToString();
+
+                if (ip == "::1")
+                {
+                    ip = "127.0.0.1";
+                }
+            }
+
+            return string.IsNullOrEmpty(ip) ? "Unknown IP" : ip;
         }
     }
 }

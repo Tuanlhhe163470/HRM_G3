@@ -6,7 +6,7 @@ namespace HRM_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize(Roles = "HR, Admin")]
+    [Authorize(Roles = "HR, Admin")]
     public class TimesheetController : ControllerBase
     {
         private readonly IAttendanceService _attendanceService;
@@ -30,7 +30,7 @@ namespace HRM_API.Controllers
                 }
 
                 // Gọi cỗ máy tính toán chạy
-                await _attendanceService.CalculateCompanyTimesheetAsync(month, year);
+                await _monthlyTimesheetService.CalculateCompanyTimesheetAsync(month, year);
 
                 return Ok(new
                 {
@@ -52,7 +52,6 @@ namespace HRM_API.Controllers
                 if (month < 1 || month > 12 || year < 2000)
                     return BadRequest(new { message = "Tháng hoặc năm không hợp lệ!" });
 
-                // Controller CHỈ gọi Service
                 var data = await _monthlyTimesheetService.GetCompanyTimesheetsAsync(month, year);
 
                 return Ok(new { data = data });
@@ -60,6 +59,30 @@ namespace HRM_API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Lỗi khi tải dữ liệu: " + ex.Message });
+            }
+        }
+
+        [HttpPost("lock")]
+        public async Task<IActionResult> LockCompanyTimesheet([FromQuery] int month, [FromQuery] int year)
+        {
+            try
+            {
+                if (month < 1 || month > 12 || year < 2000)
+                {
+                    return BadRequest(new { message = "Tháng hoặc năm không hợp lệ!" });
+                }
+
+                await _monthlyTimesheetService.LockCompanyTimesheetAsync(month, year);
+
+                return Ok(new
+                {
+                    message = $"Đã KHÓA SỔ thành công bảng công toàn công ty tháng {month}/{year}!",
+                    status = "success"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
         }
     }

@@ -10,5 +10,8 @@ namespace HRM_Application.Contracts.Services
     public interface IMonthlyTimesheetService
     {
         Task<List<MonthlyTimesheetResponse>> GetCompanyTimesheetsAsync(int month, int year);
+        Task CalculateCompanyTimesheetAsync(int month, int year);
+
+        Task LockCompanyTimesheetAsync(int month, int year);
     }
 }
