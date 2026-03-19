@@ -47,9 +47,12 @@ namespace HRM_Application.Services.TimeAttendance
             var today = DateTime.Today;
             var now = DateTime.Now;
 
-            if (!IsWithinOfficeRadius(request.Latitude, request.Longitude))
+            bool isInsideOffice = IsWithinOfficeRadius(request.Latitude, request.Longitude);
+            string systemWarning = "";
+
+            if (!isInsideOffice)
             {
-                throw new InvalidOperationException("Vị trí của bạn không hợp lệ hoặc nằm ngoài phạm vi công ty (100m). Vui lòng bật định vị và thử lại!");
+                systemWarning = "[⚠️ CẢNH BÁO: Chấm công ngoài phạm vi văn phòng hoặc không có GPS] ";
             }
 
             // 1. CHẶN CHECK-IN NGÀY LỄ
@@ -134,7 +137,7 @@ namespace HRM_Application.Services.TimeAttendance
                 WorkDate = determinedWorkDate, // [FIX BUG LOGIC]: Lưu đúng ngày ca làm việc, không dùng "today"
                 CheckInTime = now,
                 CheckInIp = request.CheckInIp,
-                Note = request.Note,
+                Note = (systemWarning + request.Note).Trim(),
                 Status = AttendanceStatus.OnTime,
                 WorkingHours = 0
             };
@@ -159,9 +162,12 @@ namespace HRM_Application.Services.TimeAttendance
         {
             var today = DateTime.Today;
 
-            if (!IsWithinOfficeRadius(request.Latitude, request.Longitude))
+            bool isInsideOffice = IsWithinOfficeRadius(request.Latitude, request.Longitude);
+            string systemWarning = "";
+
+            if (!isInsideOffice)
             {
-                throw new InvalidOperationException("Vị trí của bạn không hợp lệ hoặc nằm ngoài phạm vi công ty. Không thể Check-out!");
+                systemWarning = " | [⚠️ Out: Ngoài phạm vi]";
             }
 
             var log = await _attendanceRepo.GetActiveLogAsync(employeeId);
@@ -181,7 +187,8 @@ namespace HRM_Application.Services.TimeAttendance
 
             log.CheckOutTime = DateTime.Now;
             log.CheckOutIp = request.CheckOutIp;
-            if (!string.IsNullOrEmpty(request.Note)) log.Note += $" | Out: {request.Note}";
+            string userNote = string.IsNullOrEmpty(request.Note) ? "" : $" | Out: {request.Note}";
+            log.Note += systemWarning + userNote;
 
             if (log.ShiftConfig != null)
             {

@@ -127,33 +127,56 @@ export default function EmployeeDashboard() {
       }
 
       if (attendanceStatus === 'NOT_CHECKED_IN') {
-        await attendanceService.checkIn({ 
+        // Lấy response trả về từ Backend để kiểm tra
+        const res = await attendanceService.checkIn({ 
             note: "Check-in từ Web Dashboard",
             ...locationData
         });
         
-        // 2. Thay thế alert Check-in
-        notice({
-          msg: "Check-in thành công!",
-          desc: "Chúc bạn một ngày làm việc hiệu quả.",
-          isSuccess: true
-        });
+        // Trích xuất Note (đề phòng API bọc trong res.data.data hoặc res.data)
+        const responseData = res.data?.data || res.data || {};
+        const returnedNote = responseData.note || "";
+        
+        // Kiểm tra xem Backend có chèn chữ "CẢNH BÁO" vào Note không
+        if (returnedNote.includes("CẢNH BÁO")) {
+          notice({
+            msg: "Check-in có cảnh báo!",
+            desc: "Hệ thống ghi nhận bạn đang ở ngoài phạm vi công ty. Dữ liệu đã được lưu để HR xem xét.",
+            isSuccess: true // Vẫn cho là true để hiện icon thành công, hoặc bạn có thể đổi logic style nếu muốn
+          });
+        } else {
+          notice({
+            msg: "Check-in thành công!",
+            desc: "Chúc bạn một ngày làm việc hiệu quả.",
+            isSuccess: true
+          });
+        }
         
         setAttendanceStatus('CHECKED_IN'); 
       } 
       else if (attendanceStatus === 'CHECKED_IN') {
         if (window.confirm("Bạn có chắc chắn muốn kết thúc ca làm việc?")) {
-            await attendanceService.checkOut({ 
+            const res = await attendanceService.checkOut({ 
                 note: "Check-out từ Web Dashboard",
                 ...locationData
             });
             
-            // 3. Thay thế alert Check-out
-            notice({
-              msg: "Check-out thành công!",
-              desc: "Hẹn gặp lại bạn.",
-              isSuccess: true
-            });
+            const responseData = res.data?.data || res.data || {};
+            const returnedNote = responseData.note || "";
+
+            if (returnedNote.includes("Ngoài phạm vi")) {
+              notice({
+                msg: "Check-out có cảnh báo!",
+                desc: "Hệ thống ghi nhận bạn check-out ngoài công ty. Dữ liệu đã được đánh dấu.",
+                isSuccess: true
+              });
+            } else {
+              notice({
+                msg: "Check-out thành công!",
+                desc: "Hẹn gặp lại bạn.",
+                isSuccess: true
+              });
+            }
             
             setAttendanceStatus('COMPLETED');
         }
@@ -162,7 +185,6 @@ export default function EmployeeDashboard() {
     } catch (error) {
       const msg = error.response?.data?.message || error.message;
       
-      // 4. Thay thế alert báo lỗi
       notice({
         msg: "Có lỗi xảy ra",
         desc: msg,
