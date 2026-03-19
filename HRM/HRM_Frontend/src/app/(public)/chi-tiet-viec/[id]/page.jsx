@@ -59,7 +59,6 @@ export default function JobDetailsPage() {
   });
   const [fileList, setFileList] = useState([]);
 
-  
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -96,11 +95,15 @@ export default function JobDetailsPage() {
 
   // HÀM KIỂM TRA SỐ ĐIỆN THOẠI (VIỆT NAM)
   const validatePhone = (phone) => {
-    return /(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})\b/.test(phone);
+    // Regex giải thích:
+    // ^0[0-9]{9}$ : Bắt đầu bằng 0 và có đúng 9 chữ số theo sau (Tổng 10)
+    // | : Hoặc
+    // ^\+84[0-9]{9}$ : Bắt đầu bằng +84 và có đúng 9 chữ số theo sau (Tổng 12)
+    const phoneRegex = /^(0[0-9]{9}|\+84[0-9]{9})$/;
+    return phoneRegex.test(phone);
   };
 
   const handleApply = async () => {
-    // 1. Validate thông tin (Giữ nguyên các bước validate của bạn)
     if (
       !candidate.fullName.trim() ||
       !candidate.email.trim() ||
@@ -112,19 +115,46 @@ export default function JobDetailsPage() {
       });
       return;
     }
-    // ... validate email, phone, fileList, isAgreed ...
-
+    if (!validatePhone(candidate.phone)) {
+      notification.error({
+        title: "Số điện thoại không hợp lệ",
+        description:
+          "Số điện thoại phải có 10 số (bắt đầu bằng 0) hoặc 12 ký tự (bắt đầu bằng +84).",
+      });
+      return;
+    }
+    if (!validateEmail(candidate.email)) {
+      notification.error({
+        title: "Lỗi định dạng",
+        description: "Email không đúng định dạng!",
+      });
+      return;
+    }
+    if (fileList.length === 0) {
+      notification.warning({
+        title: "Thiếu hồ sơ",
+        description:
+          "Vui lòng tải lên CV của bạn (định dạng PDF) để ứng tuyển.",
+      });
+      return;
+    }
+    if (!isAgreed) {
+      notification.warning({
+        title: "Chưa xác nhận",
+        description:
+          "Vui lòng tích chọn cam kết thông tin chính xác trước khi gửi.",
+      });
+      return;
+    }
     setApplyLoading(true);
 
     try {
-      // TẠO FORM DATA (Bắt buộc để hết lỗi 415)
       const formData = new FormData();
       formData.append("FullName", candidate.fullName);
       formData.append("Email", candidate.email);
       formData.append("Phone", candidate.phone);
-      formData.append("JobID", id); // ID lấy từ useParams()
+      formData.append("JobID", id);
 
-      // "CVFile" phải trùng khớp với tên thuộc tính trong DTO ở Backend
       if (fileList[0]) {
         formData.append("CVFile", fileList[0]);
       }
@@ -162,6 +192,39 @@ export default function JobDetailsPage() {
     return "Thỏa thuận";
   };
 
+  const handlePhoneKeyPress = (e) => {
+    const allowKeys = [
+      "Backspace",
+      "Delete",
+      "Tab",
+      "Enter",
+      "ArrowLeft",
+      "ArrowRight",
+      "Home",
+      "End",
+    ];
+
+    // Nếu người dùng nhấn các phím chức năng trên thì cho phép thực hiện
+    if (allowKeys.includes(e.key)) return;
+
+    // 2. Cho phép tổ hợp phím Ctrl+A, Ctrl+C, Ctrl+V (để người dùng copy/paste)
+    if (
+      (e.ctrlKey || e.metaKey) &&
+      ["a", "c", "v", "x"].includes(e.key.toLowerCase())
+    ) {
+      return;
+    }
+
+    // 3. Cho phép dấu "+" nhưng CHỈ ở vị trí đầu tiên (index 0)
+    if (e.key === "+" && e.target.selectionStart === 0) return;
+
+    // 4. Cho phép các phím số từ 0-9
+    if (/[0-9]/.test(e.key)) return;
+
+    // Ngoài các trường hợp trên, chặn tất cả (chữ cái, ký tự đặc biệt khác)
+    e.preventDefault();
+  };
+
   const uploadProps = {
     onRemove: () => {
       setFileList([]);
@@ -169,7 +232,8 @@ export default function JobDetailsPage() {
     },
     beforeUpload: (file) => {
       const isAllowed =
-        file.type === "application/pdf" && file.name.toLowerCase().endsWith(".pdf");
+        file.type === "application/pdf" &&
+        file.name.toLowerCase().endsWith(".pdf");
       if (!isAllowed) {
         notification.error({
           title: "Sai định dạng",
@@ -377,6 +441,8 @@ export default function JobDetailsPage() {
                   <Input
                     prefix={<PhoneOutlined className="text-gray-300" />}
                     placeholder="Số điện thoại *"
+                    onKeyDown={handlePhoneKeyPress}
+                    maxLength={12}
                     value={candidate.phone}
                     onChange={(e) =>
                       setCandidate({ ...candidate, phone: e.target.value })

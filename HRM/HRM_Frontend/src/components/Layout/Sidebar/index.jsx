@@ -591,11 +591,11 @@ export default function SidebarHRM() {
       <Menu
         mode="inline"
         selectedKeys={[pathname]}
-        // PHẦN ĐÃ SỬA: Đã thêm các mục Lương để nó tự động mở ra khi vào trang
         defaultOpenKeys={[
           "job-posting",
           "offer",
-          "sub-candidate",
+          "/recruitment/candidates/list",
+          "sub-candidate-tracking",
           "sub-my-attendance",
           "sub-my-payroll",
           "sub-manage-payroll",

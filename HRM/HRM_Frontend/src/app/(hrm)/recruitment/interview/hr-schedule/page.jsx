@@ -300,17 +300,17 @@ export default function InterviewSchedulePage() {
                     </div>
                   </div>
                 </div>
-                <Button
-                  type="primary"
-                  block
-                  icon={<PlusOutlined />}
-                  className={`h-11 rounded-xl font-bold ${checkIsScheduled(candidateInfo.candidateID) ? "bg-slate-400 border-none" : "bg-[#154398]"}`}
-                  onClick={() => setIsModalOpen(true)}
-                >
-                  {checkIsScheduled(candidateInfo.candidateID)
-                    ? "Đặt thêm lịch hẹn"
-                    : "Thiết lập lịch hẹn"}
-                </Button>
+                {!checkIsScheduled(candidateInfo.candidateID) && (
+                  <Button
+                    type="primary"
+                    block
+                    icon={<PlusOutlined />}
+                    className="h-11 rounded-xl font-bold bg-[#154398]"
+                    onClick={() => setIsModalOpen(true)}
+                  >
+                    Thiết lập lịch hẹn
+                  </Button>
+                )}
                 <Button
                   type="link"
                   size="small"
