@@ -84,19 +84,19 @@ export default function CompanyTimesheetPage() {
     setIsCalculating(true);
     try {
       await timesheetService.calculateTimesheets(month, year);
-
       notice({
         msg: "Hoàn tất",
-        desc: `Đã tính toán xong công tháng ${month}/${year}.`,
+        desc: `Đã tính toán xong...`,
         isSuccess: true,
       });
-
-      // Reload lại lưới dữ liệu sau khi server tính xong
       fetchTimesheets();
     } catch (error) {
+      // Sửa chỗ này
       notice({
         msg: "Lỗi tính toán",
-        desc: "Hệ thống gặp sự cố khi tính toán công. Vui lòng báo cáo với IT.",
+        desc:
+          error.response?.data?.message ||
+          "Hệ thống gặp sự cố khi tính toán công.",
         isSuccess: false,
       });
     } finally {

@@ -23,24 +23,20 @@ namespace HRM_API.Controllers
         {
             try
             {
-                // Validate đầu vào cơ bản
                 if (month < 1 || month > 12 || year < 2000)
-                {
                     return BadRequest(new { message = "Tháng hoặc năm không hợp lệ!" });
-                }
 
-                // Gọi cỗ máy tính toán chạy
                 await _monthlyTimesheetService.CalculateCompanyTimesheetAsync(month, year);
 
-                return Ok(new
-                {
-                    message = $"Đã tổng hợp thành công dữ liệu chấm công tháng {month}/{year} cho toàn công ty!",
-                    status = "success"
-                });
+                return Ok(new { message = $"Đã tổng hợp thành công tháng {month}/{year}!", status = "success" });
             }
-            catch (Exception ex)
+            catch (InvalidOperationException ex) 
             {
-                return StatusCode(500, new { message = "Lỗi hệ thống khi tính toán: " + ex.Message });
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex) 
+            {
+                return BadRequest(new { message = ex.Message });
             }
         }
 
