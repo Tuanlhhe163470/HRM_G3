@@ -9,6 +9,7 @@ import {
   PhoneOutlined, UserOutlined, ExclamationCircleOutlined
 } from "@ant-design/icons";
 import departmentService from "@/services/Department/departmentService";
+import employeeService from "@/services/HRCore/employeeService";
 import CustomModal from "@/components/Modal/CustomModal";
 
 const { Text } = Typography;
@@ -19,8 +20,11 @@ export default function DepartmentManagementPage() {
 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [deptEmployees, setDeptEmployees] = useState([]); 
+  
+  const [managerCandidates, setManagerCandidates] = useState([]);
   const [isLoadingEmployees, setIsLoadingEmployees] = useState(false);
+  // State mới: Nhận diện phòng ban trống để đổi câu thông báo cho HR
+  const [isEmptyDept, setIsEmptyDept] = useState(false);
   
   const [searchText, setSearchText] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,7 +40,7 @@ export default function DepartmentManagementPage() {
       const res = await departmentService.getAll({ pageNumber: 1, pageSize: 100 });
       setData(res?.data || res || []);
     } catch (error) {
-      notification.error({ message: "Lỗi", description: "Không thể tải danh sách phòng ban" });
+      notification.error({ title: "Lỗi", description: "Không thể tải danh sách phòng ban" });
     } finally {
       setLoading(false);
     }
@@ -44,56 +48,74 @@ export default function DepartmentManagementPage() {
 
   useEffect(() => { fetchData(); }, []);
 
-  const fetchEmployeesByDept = async (deptId) => {
+  const handleOpenCreate = async () => {
+    setIsCreateMode(true);
+    setSelectedId(null);
+    setIsEmptyDept(true); // Form tạo mới mặc định là cho phép chọn tất cả
+    form.resetFields();
+    setIsModalOpen(true);
+
     setIsLoadingEmployees(true);
     try {
-      const res = await departmentService.getEmployeesByDept(deptId);
-      console.log("Employees in Dept:", res.data);
-      setDeptEmployees(res?.data || []);
+      const res = await employeeService.getAll({ PageNumber: 1, PageSize: 1000 });
+      const empList = res?.data?.data || res?.data || res || []; 
+      setManagerCandidates(empList);
     } catch (error) {
-      notification.error({ message: "Lỗi", description: "Không thể lấy danh sách nhân viên của phòng này" });
+      notification.error({ title: "Lỗi", description: "Không thể lấy danh sách nhân sự" });
     } finally {
       setIsLoadingEmployees(false);
     }
   };
 
-  const handleOpenCreate = () => {
-    setIsCreateMode(true);
-    setSelectedId(null);
-    setDeptEmployees([]);
-    form.resetFields();
-    setIsModalOpen(true);
-  };
-
   const handleOpenEdit = async (record) => {
     setIsCreateMode(false);
     setSelectedId(record.departmentID);
-    setIsModalOpen(true);
     
-    setDeptEmployees([]);
-    await fetchEmployeesByDept(record.departmentID);
-
     form.setFieldsValue({
       departmentName: record.departmentName,
       phone: record.phone,
-      managerID: record.manager?.id, 
+      managerID: record.manager?.id || record.managerID, 
     });
+    
+    setIsModalOpen(true);
+
+    setIsLoadingEmployees(true);
+    try {
+      // 1. Thử lấy nhân viên của phòng ban này trước
+      let res = await employeeService.getByDepartment(record.departmentID, { PageNumber: 1, PageSize: 1000 });
+      let empList = res?.data?.data || res?.data || res || [];
+      
+      // 2. FALLBACK LOGIC: Nếu phòng chưa có nhân viên nào, tự động lấy toàn bộ công ty
+      if (empList.length === 0) {
+        setIsEmptyDept(true);
+        const allRes = await employeeService.getAll({ PageNumber: 1, PageSize: 1000 });
+        empList = allRes?.data?.data || allRes?.data || allRes || [];
+      } else {
+        setIsEmptyDept(false);
+      }
+
+      setManagerCandidates(empList);
+    } catch (error) {
+      notification.error({ title: "Lỗi", description: "Không thể tải nhân sự của phòng ban này" });
+    } finally {
+      setIsLoadingEmployees(false);
+    }
   };
 
   const onFinish = async (values) => {
     try {
       if (isCreateMode) {
         await departmentService.create(values);
-        notification.success({ message: "Thành công", description: "Đã tạo phòng ban mới." });
+        notification.success({ title: "Thành công", description: "Đã tạo phòng ban mới." });
       } else {
         await departmentService.update(selectedId, values);
-        notification.success({ message: "Thành công", description: "Cập nhật thông tin thành công." });
+        notification.success({ title: "Thành công", description: "Cập nhật thông tin thành công." });
       }
       setIsModalOpen(false);
       fetchData();
     } catch (error) {
       notification.error({
-        message: "Thao tác thất bại",
+        title: "Thao tác thất bại",
         description: error.response?.data?.message || "Vui lòng kiểm tra lại dữ liệu.",
       });
     }
@@ -102,13 +124,18 @@ export default function DepartmentManagementPage() {
   const handleDelete = async () => {
     try {
       await departmentService.delete(deleteId);
-      notification.success({ message: "Thành công", description: "Đã xóa phòng ban." });
+      notification.success({ title: "Thành công", description: "Đã xóa phòng ban." });
       setIsConfirmOpen(false);
       fetchData();
     } catch (error) {
-      notification.error({
-        message: "Lỗi xóa phòng ban",
-        description: error.response?.data?.message || "Hành động không hợp lệ.",
+      setIsConfirmOpen(false); 
+      
+      const errorData = error.response?.data;
+      const errorMessage = errorData?.message || (typeof errorData === 'string' ? errorData : "Phòng ban này không thể xóa lúc này.");
+
+      notification.warning({
+        title: "Không thể thực hiện",
+        description: errorMessage,
       });
     }
   };
@@ -241,18 +268,34 @@ export default function DepartmentManagementPage() {
               <Form.Item 
                 name="managerID" 
                 label={<span className="font-bold">Trưởng phòng</span>}
-                tooltip="Chỉ có thể bổ nhiệm nhân viên đang thuộc phòng ban này"
+                tooltip={
+                  isCreateMode 
+                    ? "Bạn có thể chọn bất kỳ nhân viên nào" 
+                    : isEmptyDept 
+                      ? "Phòng ban trống: Cho phép chọn từ toàn bộ công ty" 
+                      : "Chỉ hiển thị nhân viên đang thuộc phòng ban này"
+                }
               >
                 <Select 
-                  placeholder={isCreateMode ? "Tạo phòng trước" : "Chọn nhân viên quản lý"} 
+                  placeholder="Chọn nhân viên quản lý" 
                   className="h-10 w-full"
-                  disabled={isCreateMode} 
                   loading={isLoadingEmployees}
                   allowClear
+                  showSearch
+                  optionFilterProp="children"
+                  filterOption={(input, option) =>
+                    (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
+                  }
                 >
-                  {deptEmployees.map((emp) => (
-                    <Select.Option key={emp.id} value={emp.id}>{emp.name}</Select.Option>
-                  ))}
+                  {managerCandidates.map((emp) => {
+                    const id = emp.employeeID;
+                    const name = emp.fullName;
+                    return (
+                      <Select.Option key={id} value={id}>
+                        {name} 
+                      </Select.Option>
+                    );
+                  })}
                 </Select>
               </Form.Item>
             </Col>
@@ -260,7 +303,7 @@ export default function DepartmentManagementPage() {
         </Form>
       </CustomModal>
 
-      {/* MODAL XÁC NHẬN XÓA */}
+     {/* MODAL XÁC NHẬN XÓA */}
       <CustomModal
         open={isConfirmOpen}
         title={<span className="text-red-600 font-bold uppercase">Xác nhận xóa phòng ban</span>}
@@ -273,8 +316,16 @@ export default function DepartmentManagementPage() {
       >
         <div className="flex items-start gap-4 py-4 text-left">
           <ExclamationCircleOutlined style={{ fontSize: "24px", color: "#ff4d4f" }} />
-          <div>
-            <Text>Bạn có chắc chắn muốn xóa phòng ban này?</Text> <br />
+          <div className="flex flex-col gap-3">
+            <Text className="text-base font-medium text-slate-800">
+              Bạn có chắc chắn muốn xóa phòng ban này khỏi hệ thống?
+            </Text>
+            
+            <div className="bg-orange-50 border border-orange-200 p-3 rounded-xl mt-1">
+              <Text className="text-orange-700 text-[13px] leading-relaxed block">
+                <span className="font-bold">⚠️ Lưu ý:</span> Hệ thống chỉ cho phép xóa khi phòng ban <strong>không còn nhân sự nào</strong>. Vui lòng đảm bảo đã thuyên chuyển toàn bộ nhân viên trước khi thực hiện.
+              </Text>
+            </div>
           </div>
         </div>
       </CustomModal>

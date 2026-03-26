@@ -49,8 +49,26 @@ namespace HRM_API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            await _departmentService.DeleteDepartmentAsync(id);
-            return Ok(new { message = "Xóa phòng ban thành công" });
+            try
+            {
+                await _departmentService.DeleteDepartmentAsync(id);
+                return Ok(new { message = "Xóa phòng ban thành công" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Bắt lỗi nghiệp vụ (phòng ban đang có nhân viên) và trả về 400 Bad Request
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                // Bắt lỗi không tìm thấy và trả về 404 Not Found
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                // Các lỗi hệ thống khác trả về 500
+                return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống: " + ex.Message });
+            }
         }
         [HttpGet("{id}/employees")]
         public async Task<IActionResult> GetEmployeesByDept(int id)
