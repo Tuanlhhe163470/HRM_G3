@@ -188,7 +188,7 @@ namespace HRM_Application.Services.Recruitment
                 var result = await _candidateRepository.UpdateStatusAsync(id, "Rejected");
                 if (result)
                 {
-                    string subject = $"[HRM System] Thông báo kết quả ứng tuyển - Vị trí {jobTitle}";
+                    string subject = $"[HRM SYSTEM] Thông báo kết quả ứng tuyển - Vị trí {jobTitle}";
                     string body = $@"
 <div style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #f0f0f0; border-radius: 8px; overflow: hidden;'>
     <div style='background-color: #154398; padding: 20px; text-align: center;'>
@@ -198,7 +198,7 @@ namespace HRM_Application.Services.Recruitment
     <div style='padding: 30px; background-color: #ffffff;'>
         <p style='font-size: 16px;'>Chào <strong>{candidate.FullName}</strong>,</p>
         
-        <p>Lời đầu tiên, đội ngũ tuyển dụng <strong>HRM System</strong> xin cảm ơn bạn đã dành thời gian và tâm huyết quan tâm đến vị trí <strong>{jobTitle}</strong>.</p>
+        <p>Lời đầu tiên, đội ngũ tuyển dụng <strong>HRM SYSTEM</strong> xin cảm ơn bạn đã dành thời gian và tâm huyết quan tâm đến vị trí <strong>{jobTitle}</strong>.</p>
         
         <p>Sau khi xem xét kỹ lưỡng hồ sơ và các yêu cầu chuyên môn, chúng tôi rất tiếc phải thông báo rằng bạn chưa phù hợp để đi tiếp cùng chúng tôi trong đợt tuyển dụng này.</p>
         
@@ -211,7 +211,7 @@ namespace HRM_Application.Services.Recruitment
         <p>Hy vọng sẽ có cơ hội hợp tác với bạn trong những dự án sắp tới. Chúc bạn luôn gặt hái được nhiều thành công trên con đường sự nghiệp.</p>
         
         <p style='margin-top: 30px;'>Trân trọng,</p>
-        <p><strong>Ban Tuyển dụng HRM System</strong></p>
+        <p><strong>Ban Tuyển dụng HRM SYSTEM</strong></p>
     </div>
     
     <div style='background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 12px; color: #888;'>
@@ -234,31 +234,73 @@ namespace HRM_Application.Services.Recruitment
         {
             // 1. Kiểm tra ứng viên tồn tại
             var candidate = await _candidateRepository.GetByIdAsync(dto.CandidateID);
-            if (candidate == null) return false;
-
-            // 2. LOGIC KIỂM TRA: Ứng viên đã có lịch phỏng vấn chưa?
-            // Sử dụng _interviewRepository để kiểm tra trong bảng dbo.Interviews
-            var existingInterviews = await _interviewRepository.GetByCandidateIdAsync(dto.CandidateID);
-            if (existingInterviews != null && existingInterviews.Any())
-            {
-                // Nếu đã có lịch, không cho phép lên lịch lại để tránh spam email
-                throw new Exception("Ứng viên này đã được lên lịch phỏng vấn trước đó.");
-            }
-
-            // 3. Nếu chưa có, tiến hành lưu lịch mới
-            var interview = _mapper.Map<Interview>(dto);
-            interview.Result = "Pending";
-            await _interviewRepository.AddAsync(interview);
-
-            // 4. Cập nhật trạng thái ứng viên
-            await _candidateRepository.UpdateStatusAsync(dto.CandidateID, "Interview");
+            if (candidate == null) throw new Exception("Không tìm thấy ứng viên.");
 
             string jobTitle = candidate.JobPosting?.Title ?? "Vị trí ứng tuyển";
-            string subject = $"[HRM System] Thư mời phỏng vấn - Vị trí {jobTitle}";
+            string subject;
+            string emailBody;
 
-            string emailBody = $@"
+            // 2. Kiểm tra xem ứng viên đã có lịch phỏng vấn chưa
+            // Lưu ý: Giả sử GetByCandidateIdAsync trả về List<Interview> hoặc IEnumerable<Interview>
+            var existingInterviews = await _interviewRepository.GetByCandidateIdAsync(dto.CandidateID);
+            var existingInterview = existingInterviews?.FirstOrDefault(); // Lấy lịch gần nhất
+
+            if (existingInterview != null)
+            {
+                // ----------------------------------------------------
+                // TRƯỜNG HỢP CẬP NHẬT (RESCHEDULE)
+                // ----------------------------------------------------
+                existingInterview.InterviewDate = dto.InterviewDate;
+                existingInterview.InterviewType = dto.InterviewType;
+                existingInterview.Location = dto.Location;
+                existingInterview.InterviewerID = dto.InterviewerID;
+
+
+                await _interviewRepository.UpdateAsync(existingInterview);
+
+                // Cấu hình nội dung Email DỜI LỊCH
+                subject = $"[HRM SYSTEM] THAY ĐỔI LỊCH PHỎNG VẤN - VỊ TRÍ {jobTitle}";
+                emailBody = GenerateEmailBody(
+                    candidate.FullName,
+                    jobTitle,
+                    "Chúng tôi xin thông báo lịch phỏng vấn của bạn đã được <strong>CẬP NHẬT LẠI</strong> với thông tin mới như sau:",
+                    dto);
+            }
+            else
+            {
+                // ----------------------------------------------------
+                // TRƯỜNG HỢP TẠO MỚI HOÀN TOÀN
+                // ----------------------------------------------------
+                var interview = _mapper.Map<Interview>(dto);
+                interview.Result = "Pending";
+                await _interviewRepository.AddAsync(interview);
+
+                // Cập nhật trạng thái ứng viên
+                await _candidateRepository.UpdateStatusAsync(dto.CandidateID, "Interview");
+
+                // Cấu hình nội dung Email MỜI MỚI
+                subject = $"[HRM SYSTEM] THƯ MỜI PHỎNG VẤN - VỊ TRÍ {jobTitle}";
+                emailBody = GenerateEmailBody(
+                    candidate.FullName,
+                    jobTitle,
+                    "Sau quá trình xem xét hồ sơ, chúng tôi trân trọng thông báo bạn đã vượt qua vòng sàng lọc và được mời tham gia buổi phỏng vấn với thông tin chi tiết như sau:",
+                    dto);
+            }
+
+            // 3. Gửi Email thông báo
+            if (!string.IsNullOrEmpty(candidate.Email))
+            {
+                await _emailService.SendEmailAsync(candidate.Email, subject, emailBody);
+            }
+
+            return true;
+        }
+
+        // Hàm hỗ trợ tạo template Email để code sạch sẽ và dễ bảo trì hơn
+        private string GenerateEmailBody(string fullName, string jobTitle, string messageIntro, ScheduleInterviewDto dto)
+        {
+            return $@"
 <div style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #f0f0f0; border-radius: 8px; overflow: hidden;'>
-    
     <div style='background-color: #154398; padding: 20px; text-align: center;'>
         <h2 style='color: #ffffff; margin: 0; text-transform: uppercase; letter-spacing: 2px;'>
             HRM SYSTEM
@@ -266,45 +308,29 @@ namespace HRM_Application.Services.Recruitment
     </div>
     
     <div style='padding: 30px; background-color: #ffffff;'>
-        <p style='font-size: 16px;'>Chào <strong>{candidate.FullName}</strong>,</p>
+        <p style='font-size: 16px;'>Chào <strong>{fullName}</strong>,</p>
         
-        <p>
-            Trước tiên, đội ngũ tuyển dụng <strong>HRM System</strong> xin cảm ơn bạn đã quan tâm và ứng tuyển 
-            vào vị trí <strong>{jobTitle}</strong>.
-        </p>
+        <p>Trước tiên, đội ngũ tuyển dụng <strong>HRM SYSTEM</strong> xin cảm ơn bạn đã quan tâm và ứng tuyển vào vị trí <strong>{jobTitle}</strong>.</p>
 
-        <p>
-            Sau quá trình xem xét hồ sơ, chúng tôi trân trọng thông báo bạn đã vượt qua vòng sàng lọc 
-            và được mời tham gia buổi phỏng vấn với thông tin chi tiết như sau:
-        </p>
+        <p>{messageIntro}</p>
 
         <div style='background-color: #f8fafc; border-left: 4px solid #154398; padding: 15px; margin: 20px 0;'>
             <p style='margin: 5px 0;'><strong>📅 Thời gian:</strong> {dto.InterviewDate:dd/MM/yyyy HH:mm}</p>
             <p style='margin: 5px 0;'><strong>📍 Địa điểm:</strong> {dto.Location}</p>
             <p style='margin: 5px 0;'><strong>💼 Hình thức:</strong> {dto.InterviewType}</p>
+            {(string.IsNullOrEmpty(dto.Note) ? "" : $"<p style='margin: 5px 0;'><strong>📝 Ghi chú:</strong> {dto.Note}</p>")}
         </div>
 
-        <p>
-            Vui lòng phản hồi email này hoặc xác nhận tham gia trước thời gian phỏng vấn 
-            để chúng tôi có thể chuẩn bị tốt nhất cho buổi trao đổi.
-        </p>
-
-        <p>
-            Chúng tôi rất mong được gặp và trao đổi cùng bạn về cơ hội hợp tác sắp tới.
-        </p>
+        <p>Vui lòng phản hồi email này hoặc xác nhận tham gia trước thời gian phỏng vấn để chúng tôi có thể chuẩn bị tốt nhất cho buổi trao đổi.</p>
 
         <p style='margin-top: 30px;'>Trân trọng,</p>
-        <p><strong>Ban Tuyển dụng HRM System</strong></p>
+        <p><strong>Ban Tuyển dụng HRM SYSTEM</strong></p>
     </div>
     
     <div style='background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 12px; color: #888;'>
-        <p style='margin: 5px 0;'>Vui lòng phản hồi sớm nhất có thể để chúng tôi có thể sắp xếp một buổi phỏng vấn với bạn.</p>
         <p style='margin: 5px 0;'>Chúc bạn sẽ có kết quả tốt nhất trong buổi phỏng vấn sắp tới.</p>
     </div>
 </div>";
-
-            await _emailService.SendEmailAsync(candidate.Email, subject, emailBody);
-            return true;
         }
         public async Task<IEnumerable<ScheduleInterviewDto>> GetAllInterviewsAsync()
         {

@@ -25,6 +25,7 @@ import {
   CheckCircleOutlined,
   SolutionOutlined,
   MailOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 import { useSearchParams, useRouter } from "next/navigation";
 import candidateService from "@/services/Recruitment/candidateService";
@@ -130,6 +131,31 @@ export default function InterviewSchedulePage() {
   const dailyInterviews = interviews.filter((item) =>
     dayjs(item.interviewDate).isSame(dayjs(selectedDay.date), "day"),
   );
+
+  const handleOpenModal = () => {
+    const isScheduled = checkIsScheduled(candidateInfo?.candidateID);
+
+    if (isScheduled) {
+      // Tìm lịch hẹn hiện tại của ứng viên này
+      const existingInv = interviews.find(
+        (inv) => inv.candidateID === parseInt(candidateInfo.candidateID),
+      );
+
+      if (existingInv) {
+        form.setFieldsValue({
+          interviewDate: dayjs(existingInv.interviewDate),
+          interviewType: existingInv.interviewType || "Online",
+          location: existingInv.location,
+          note: existingInv.note,
+        });
+      }
+    } else {
+      // Nếu chưa có lịch thì làm sạch form
+      form.resetFields();
+    }
+
+    setIsModalOpen(true);
+  };
 
   const handleSchedule = async (values) => {
     setLoadingSubmit(true);
@@ -283,9 +309,6 @@ export default function InterviewSchedulePage() {
                       >
                         {candidateInfo.fullName}
                       </Text>
-                      {checkIsScheduled(candidateInfo.candidateID) && (
-                        <CheckCircleOutlined className="text-green-500 text-lg" />
-                      )}
                     </div>
                     <div className="flex flex-col mt-1">
                       <Text type="secondary" className="text-xs truncate">
@@ -311,6 +334,31 @@ export default function InterviewSchedulePage() {
                     Thiết lập lịch hẹn
                   </Button>
                 )}
+                <Button
+                  type={
+                    checkIsScheduled(candidateInfo.candidateID)
+                      ? "default"
+                      : "primary"
+                  }
+                  block
+                  icon={
+                    checkIsScheduled(candidateInfo.candidateID) ? (
+                      <EditOutlined />
+                    ) : (
+                      <PlusOutlined />
+                    )
+                  }
+                  className={`h-11 rounded-xl font-bold transition-all ${
+                    checkIsScheduled(candidateInfo.candidateID)
+                      ? "border-blue-500 text-blue-600 bg-blue-50 hover:bg-blue-100"
+                      : "bg-[#154398] text-white"
+                  }`}
+                  onClick={handleOpenModal}
+                >
+                  {checkIsScheduled(candidateInfo.candidateID)
+                    ? "Cập nhật lịch hẹn "
+                    : "Thiết lập lịch hẹn"}
+                </Button>
                 <Button
                   type="link"
                   size="small"
@@ -445,7 +493,9 @@ export default function InterviewSchedulePage() {
       <Modal
         title={
           <Title level={4} className="m-0 text-[#154398]">
-            LỊCH HẸN PHỎNG VẤN
+            {candidateInfo && checkIsScheduled(candidateInfo.candidateID)
+              ? "CẬP NHẬT LỊCH PHỎNG VẤN"
+              : "LÊN LỊCH PHỎNG VẤN"}
           </Title>
         }
         open={isModalOpen}
