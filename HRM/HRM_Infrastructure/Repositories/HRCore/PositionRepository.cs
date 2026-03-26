@@ -59,5 +59,9 @@ namespace HRM_Infrastructure.Repositories.HRCore
 
             return await query.AnyAsync();
         }
+        public async Task<bool> HasEmployeesAsync(int id)
+        {
+            return await _context.Employees.AnyAsync(e => e.PositionID == id);
+        }
     }
 }

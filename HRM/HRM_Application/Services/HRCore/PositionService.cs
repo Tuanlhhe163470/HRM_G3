@@ -37,6 +37,15 @@ namespace HRM_Application.Services.HRCore
             var position = await _positionRepository.GetByIdAsync(id);
             if (position == null)
                 return false;
+
+            // KIỂM TRA: Vị trí này có nhân viên nào đang đảm nhiệm không?
+            // Lưu ý: Đảm bảo bạn đã khai báo hàm HasEmployeesAsync trong IPositionRepository
+            bool hasEmployees = await _positionRepository.HasEmployeesAsync(id);
+            if (hasEmployees)
+            {
+                throw new InvalidOperationException("Không thể xóa chức danh đang có nhân viên đảm nhiệm. Vui lòng thuyên chuyển nhân viên trước!");
+            }
+
             await _positionRepository.DeleteAsync(position);
             return true;
         }

@@ -10,5 +10,6 @@ namespace HRM_Application.Contracts.Repositories
         Task UpdateAsync(Position position);
         Task DeleteAsync(Position position);
         Task<bool> IsPositionNameExistsAsync(string positionName, int? excludeId = null);
+        Task<bool> HasEmployeesAsync(int id);
     }
 }

@@ -82,13 +82,24 @@ namespace HRM_API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var isSuccess = await _positionService.DeletePositionAsync(id);
-            if (!isSuccess)
+            try
             {
-                return NotFound(new { message = $"Không tìm thấy chức danh với ID = {id} để xóa." });
-            }
+                var isSuccess = await _positionService.DeletePositionAsync(id);
+                if (!isSuccess)
+                {
+                    return NotFound(new { message = $"Không tìm thấy chức danh với ID = {id} để xóa." });
+                }
 
-            return NoContent();
+                return NoContent(); 
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống: " + ex.Message });
+            }
         }
     }
 }
