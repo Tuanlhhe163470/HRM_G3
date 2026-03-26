@@ -188,6 +188,11 @@ export default function EmployeeListPage() {
     }
   };
 
+  const disabledDate = (current) => {
+    // Chặn tất cả các ngày sau ngày này (Ngày hiện tại - 15 năm)
+    return current && current > dayjs().subtract(15, "year").endOf("day");
+  };
+
   const columns = [
     {
       title: "Nhân viên",
@@ -403,10 +408,29 @@ export default function EmployeeListPage() {
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item label="Ngày sinh" name="dateOfBirth">
+              <Form.Item
+                label={<span className="font-bold">Ngày sinh</span>}
+                name="dateOfBirth"
+                validateTrigger={["onChange", "onBlur"]}
+                rules={[
+                  { message: "Vui lòng chọn ngày sinh" },
+                  {
+                    validator: (_, value) => {
+                      if (value && dayjs().diff(value, "year") < 15) {
+                        return Promise.reject(
+                          new Error("Nhân viên phải từ 15 tuổi trở lên!"),
+                        );
+                      }
+                      return Promise.resolve();
+                    },
+                  },
+                ]}
+              >
                 <DatePicker
                   className="w-full h-10 rounded-lg"
                   format="DD/MM/YYYY"
+                  disabledDate={disabledDate} 
+                  placeholder="Chọn ngày sinh"
                 />
               </Form.Item>
             </Col>

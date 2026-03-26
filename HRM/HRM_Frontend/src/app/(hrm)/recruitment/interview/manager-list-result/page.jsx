@@ -318,6 +318,7 @@ export default function ManagerEvaluationHistoryPage() {
           </Button>,
         ]}
         width={700}
+        zIndex={2000}
         centered
       >
         {selectedCandidate && (

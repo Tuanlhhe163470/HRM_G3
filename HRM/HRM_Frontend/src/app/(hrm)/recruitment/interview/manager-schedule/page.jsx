@@ -75,9 +75,11 @@ export default function ManagerInterviewPage() {
   const [candidateInfo, setCandidateInfo] = useState(null);
   const [waitingCandidates, setWaitingCandidates] = useState([]);
   const [interviews, setInterviews] = useState([]);
+  const [isValid, setIsValid] = useState(false);
   const [isEvalModalOpen, setIsEvalModalOpen] = useState(false);
   const [form] = Form.useForm();
-
+  const formValues = Form.useWatch([], form);
+  const isSubmitDisabled = !formValues?.score || !formValues?.comment?.trim();
   // 1. Giải mã Token lấy thông tin Manager
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -564,7 +566,12 @@ export default function ManagerInterviewPage() {
         <Form
           form={form}
           layout="vertical"
-          onFinish={handleEvaluation}
+          onFinish={async () => {
+            try {
+              const values = await form.validateFields();
+              handleEvaluation(values);
+            } catch (err) {}
+          }}
           onValuesChange={handleValuesChange}
           className="mt-6"
         >
@@ -640,6 +647,7 @@ export default function ManagerInterviewPage() {
               type="primary"
               htmlType="submit"
               className="flex-1 h-12 rounded-xl bg-[#154398] font-bold"
+              disabled={isSubmitDisabled}
             >
               Lưu đánh giá
             </Button>

@@ -124,24 +124,28 @@ export default function AccountManagementPage() {
       content: `Bạn có chắc chắn muốn đặt lại mật khẩu cho tài khoản "${record.username}" về mặc định (123456)?`,
       type: "warning",
       onOk: async () => {
-  try {
-  
+        try {
+          if (!record.accountID) {
+            notification.error({
+              title: "Lỗi",
+              description: "ID tài khoản không hợp lệ!",
+            });
+            return;
+          }
 
-    if (!record.accountID) {
-      notification.error({ title: "Lỗi", description: "ID tài khoản không hợp lệ!" });
-      return;
-    }
-
-    await accountService.changePassword(record.accountID, "123456");
-    notification.success({ title: "Thành công", description: "Mật khẩu đã về 123456" });
-    setIsConfirmOpen(false);
-  } catch (error) {
-   notification.error({
-    title: "Lỗi reset mật khẩu",
-    description: error.response?.data?.message,
-  })
-  }
-},
+          await accountService.changePassword(record.accountID, "123456");
+          notification.success({
+            title: "Thành công",
+            description: "Mật khẩu đã về 123456",
+          });
+          setIsConfirmOpen(false);
+        } catch (error) {
+          notification.error({
+            title: "Lỗi reset mật khẩu",
+            description: error.response?.data?.message,
+          });
+        }
+      },
     });
     setIsConfirmOpen(true);
   };
@@ -195,36 +199,46 @@ export default function AccountManagementPage() {
   };
 
   const onFinish = async (values) => {
-  try {
-    if (isCreateMode) {
-      await accountService.createAccount(values);
-      notification.success({ message: "Thành công", description: "Đã cấp tài khoản mới." });
-    } else {
-      // KIỂM TRA BIẾN selectedRecord
-      if (!selectedRecord || !selectedRecord.accountID) {
-        notification.error({ message: "Lỗi", description: "Không xác định được ID tài khoản cần cập nhật!" });
-        return;
+    try {
+      if (isCreateMode) {
+        await accountService.createAccount(values);
+        notification.success({
+          message: "Thành công",
+          description: "Đã cấp tài khoản mới.",
+        });
+      } else {
+        // KIỂM TRA BIẾN selectedRecord
+        if (!selectedRecord || !selectedRecord.accountID) {
+          notification.error({
+            message: "Lỗi",
+            description: "Không xác định được ID tài khoản cần cập nhật!",
+          });
+          return;
+        }
+
+        const payload = { roleID: values.roleID };
+
+        // SỬA TẠI ĐÂY: Sử dụng accountID từ selectedRecord đã được gán khi nhấn nút Sửa
+        await axiosClient.put(`/Accounts/${selectedRecord.accountID}`, payload);
+
+        notification.success({
+          message: "Thành công",
+          description: "Đã cập nhật vai trò.",
+        });
       }
 
-      const payload = { roleID: values.roleID };
-      
-      // SỬA TẠI ĐÂY: Sử dụng accountID từ selectedRecord đã được gán khi nhấn nút Sửa
-      await axiosClient.put(`/Accounts/${selectedRecord.accountID}`, payload);
-      
-      notification.success({ message: "Thành công", description: "Đã cập nhật vai trò." });
+      setIsModalOpen(false);
+      form.resetFields();
+      fetchData(); // Load lại bảng
+    } catch (error) {
+      console.error("Update Error:", error);
+      notification.error({
+        message: "Thất bại",
+        description:
+          error.response?.data?.message || "Có lỗi xảy ra khi cập nhật",
+      });
     }
-
-    setIsModalOpen(false);
-    form.resetFields();
-    fetchData(); // Load lại bảng
-  } catch (error) {
-    console.error("Update Error:", error);
-    notification.error({
-      message: "Thất bại",
-      description: error.response?.data?.message || "Có lỗi xảy ra khi cập nhật",
-    });
-  }
-};
+  };
 
   // --- TABLE COLUMNS ---
   const columns = [
@@ -297,28 +311,36 @@ export default function AccountManagementPage() {
             </Button>
           );
         }
+
         const isSelf = record.accountID === currentAdmin?.accountID;
+        const isAdmin = record.roleName === "Admin";
+
         return (
           <Space>
-            <Tooltip title="Sửa vai trò">
-              <Button
-                size="small"
-                icon={<EditOutlined />}
-                onClick={() => {
-                  setIsCreateMode(false);
-                  setSelectedRecord(record);
-                  setIsModalOpen(true);
-                  const rID = roles.find(
-                    (r) => r.roleName === record.roleName,
-                  )?.roleID;
-                  form.setFieldsValue({
-                    fullName: record.fullName,
-                    username: record.username,
-                    roleID: rID,
-                  });
-                }}
-              />
-            </Tooltip>
+            {/* Nút Sửa vai trò: Ẩn nếu là Admin */}
+            {!isAdmin && (
+              <Tooltip title="Sửa vai trò">
+                <Button
+                  size="small"
+                  icon={<EditOutlined />}
+                  onClick={() => {
+                    setIsCreateMode(false);
+                    setSelectedRecord(record);
+                    setIsModalOpen(true);
+                    const rID = roles.find(
+                      (r) => r.roleName === record.roleName,
+                    )?.roleID;
+                    form.setFieldsValue({
+                      fullName: record.fullName,
+                      username: record.username,
+                      roleID: rID,
+                    });
+                  }}
+                />
+              </Tooltip>
+            )}
+
+            {/* Nút Reset mật khẩu: Luôn hiển thị cho tất cả (kể cả Admin) */}
             <Tooltip title="Reset mật khẩu">
               <Button
                 size="small"
@@ -326,25 +348,33 @@ export default function AccountManagementPage() {
                 onClick={() => handleResetPassword(record)}
               />
             </Tooltip>
-            <Tooltip title={record.isActive ? "Khóa" : "Mở"}>
-              <Button
-                size="small"
-                danger={record.isActive}
-                icon={record.isActive ? <LockOutlined /> : <UnlockOutlined />}
-                disabled={isSelf}
-                onClick={() => handleToggleStatus(record)}
-              />
-            </Tooltip>
-            <Tooltip title="Xóa">
-              <Button
-                size="small"
-                danger
-                type="primary"
-                icon={<DeleteOutlined />}
-                disabled={isSelf}
-                onClick={() => handleDelete(record)}
-              />
-            </Tooltip>
+
+            {/* Nút Khóa/Mở khóa: Ẩn nếu là Admin */}
+            {!isAdmin && (
+              <Tooltip title={record.isActive ? "Khóa" : "Mở"}>
+                <Button
+                  size="small"
+                  danger={record.isActive}
+                  icon={record.isActive ? <LockOutlined /> : <UnlockOutlined />}
+                  disabled={isSelf}
+                  onClick={() => handleToggleStatus(record)}
+                />
+              </Tooltip>
+            )}
+
+            {/* Nút Xóa: Ẩn nếu là Admin */}
+            {!isAdmin && (
+              <Tooltip title="Xóa">
+                <Button
+                  size="small"
+                  danger
+                  type="primary"
+                  icon={<DeleteOutlined />}
+                  disabled={isSelf}
+                  onClick={() => handleDelete(record)}
+                />
+              </Tooltip>
+            )}
           </Space>
         );
       },

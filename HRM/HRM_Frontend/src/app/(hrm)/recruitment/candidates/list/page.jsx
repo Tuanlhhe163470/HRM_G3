@@ -199,6 +199,7 @@ export default function CandidateListPage() {
           Offered: { color: "#faad14", label: "Offer" },
           Hired: { color: "green", label: "Hired" },
           Rejected: { color: "red", label: "Loại" },
+          Declined: { color: "volcano", label: "Từ chối Offer" },
         };
         const config = statusMap[status] || { color: "default", label: status };
         return (
@@ -467,6 +468,19 @@ export default function CandidateListPage() {
                     <span className="px-2 font-bold uppercase text-[12px] text-red-600">
                       Loại (
                       {candidates.filter((c) => c.status === "Rejected").length}
+                      )
+                    </span>
+                  ),
+                },
+                {
+                  key: "Declined",
+                  label: (
+                    <span 
+                      className="px-2 font-bold uppercase text-[12px]" 
+                      style={{ color: "#fa541c" }}
+                    >
+                      Từ chối Offer (
+                      {candidates.filter((c) => c.status === "Declined").length}
                       )
                     </span>
                   ),
