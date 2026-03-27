@@ -15,6 +15,7 @@ import {
   Rate,
   Divider,
   Select,
+  Tooltip,
 } from "antd";
 import {
   UserOutlined,
@@ -260,6 +261,13 @@ export default function ManagerInterviewPage() {
     }
   };
 
+  // Logic kiểm tra thời gian phỏng vấn
+  const myInv = interviews.find(
+    (i) => Number(i.candidateID) === Number(candidateInfo?.candidateID),
+  );
+  const isBeforeInterview =
+    myInv && dayjs().isBefore(dayjs(myInv.interviewDate));
+
   return (
     <div className="mx-auto max-w-[1440px] p-6 lg:p-10 flex flex-col gap-8 text-left min-h-screen">
       <div className="flex justify-between items-end">
@@ -422,15 +430,30 @@ export default function ManagerInterviewPage() {
 
                   {/* Chỉ hiện nút Đánh giá nếu trạng thái là Interview */}
                   {candidateInfo.status === "Interview" ? (
-                    <Button
-                      type="primary"
-                      icon={<EditOutlined />}
-                      block
-                      className="bg-[#154398] rounded-xl font-bold"
-                      onClick={() => setIsEvalModalOpen(true)}
-                    >
-                      Đánh giá
-                    </Button>
+                    isBeforeInterview ? (
+                      <Tooltip
+                        title={`Chưa đến ngày phỏng vấn (${dayjs(myInv.interviewDate).format("HH:mm - DD/MM/YYYY")}). Không thể đánh giá.`}
+                      >
+                        <Button
+                          disabled
+                          icon={<ClockCircleOutlined />}
+                          block
+                          className="rounded-xl font-bold bg-slate-100 text-slate-400 border-none"
+                        >
+                          Chưa đến lịch
+                        </Button>
+                      </Tooltip>
+                    ) : (
+                      <Button
+                        type="primary"
+                        icon={<EditOutlined />}
+                        block
+                        className="bg-[#154398] rounded-xl font-bold"
+                        onClick={() => setIsEvalModalOpen(true)}
+                      >
+                        Đánh giá
+                      </Button>
+                    )
                   ) : (
                     <Button
                       disabled
@@ -453,7 +476,7 @@ export default function ManagerInterviewPage() {
                 </Button>
               </div>
             ) : (
-              <div className="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
                 {waitingCandidates.length > 0 ? (
                   waitingCandidates.map((item) => (
                     <div
@@ -501,7 +524,7 @@ export default function ManagerInterviewPage() {
               </span>
             }
           >
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[280px] overflow-y-auto pr-2 custom-scrollbar">
               {dailyInterviews.length > 0 ? (
                 dailyInterviews.map((inv, idx) => (
                   <div

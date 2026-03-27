@@ -118,14 +118,28 @@ namespace HRM_API.Controllers
                 return BadRequest(new { message = "Thông tin đánh giá không hợp lệ." });
             }
 
-            var result = await _candidateService.EvaluateCandidateAsync(request);
-
-            if (result)
+            try
             {
-                return Ok(new { message = "Lưu đánh giá và cập nhật trạng thái ứng viên thành công!" });
-            }
+                // Gọi Service
+                var result = await _candidateService.EvaluateCandidateAsync(request);
 
-            return BadRequest(new { message = "Không tìm thấy lịch phỏng vấn phù hợp để đánh giá ứng viên này." });
+                if (result)
+                {
+                    return Ok(new { message = "Lưu đánh giá và cập nhật trạng thái ứng viên thành công!" });
+                }
+
+                return BadRequest(new { message = "Không tìm thấy lịch phỏng vấn phù hợp để đánh giá ứng viên này." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Bắt lỗi logic từ Service (ví dụ: Chưa đến giờ phỏng vấn) và trả về 400
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                // Bắt các lỗi hệ thống không lường trước được và trả về 500
+                return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống: " + ex.Message });
+            }
         }
         [HttpPost("{id}/send-fail-email")]
         [Authorize(Roles = "HR")] 

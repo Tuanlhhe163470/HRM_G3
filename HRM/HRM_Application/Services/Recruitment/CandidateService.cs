@@ -346,6 +346,12 @@ namespace HRM_Application.Services.Recruitment
 
             if (interview == null) return false;
 
+            // --- BỔ SUNG LOGIC CHẶN ĐÁNH GIÁ TRƯỚC GIỜ ---
+            if (DateTime.Now < interview.InterviewDate)
+            {
+                throw new InvalidOperationException($"Chưa đến thời gian phỏng vấn! Lịch hẹn dự kiến là {interview.InterviewDate:dd/MM/yyyy HH:mm}. Vui lòng thực hiện đánh giá sau thời gian này.");
+            }
+
             // Gán dữ liệu đánh giá mới
             interview.Score = request.Score;
             interview.Comments = request.Comment;
