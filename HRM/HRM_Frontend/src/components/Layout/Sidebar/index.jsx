@@ -409,23 +409,27 @@ export default function SidebarHRM() {
           key: "/payroll/payroll-processing",
           label: <Link href="/payroll/payroll-processing">Xử lý bảng lương</Link>,
           icon: <FileSearchOutlined />,
-        },
-        {
+        }
+      ];
+
+      if (role !== "Manager") {
+        manageChildren.push({
           key: "/payroll/calculation",
           label: <Link href="/payroll/calculation">Tính lương tự động</Link>,
           icon: <CalculatorFilled />,
-        },
-        {
+        });
+        manageChildren.push({
           key: "/payroll", 
           label: <Link href="/payroll">Cấu hình lương</Link>,
           icon: <SettingOutlined />,
-        },
-        {
-          key: "/advance-approvals",
-          label: <Link href="/advance-approvals">Duyệt ứng lương</Link>,
-          icon: <AuditOutlined />,
-        },
-      ];
+        });
+      }
+
+      manageChildren.push({
+        key: "/advance-approvals",
+        label: <Link href="/advance-approvals">Duyệt ứng lương</Link>,
+        icon: <AuditOutlined />,
+      });
 
       items.push({
         key: "sub-manage-payroll",
@@ -435,30 +439,6 @@ export default function SidebarHRM() {
           </span>
         ),
         icon: <SettingOutlined />,
-        children: [
-          {
-            key: "/payroll/payroll-processing",
-            label: (
-              <Link href="/payroll/payroll-processing">Xử lý bảng lương</Link>
-            ),
-            icon: <FileSearchOutlined />,
-          },
-          {
-            key: "/payroll/calculation",
-            label: <Link href="/payroll/calculation">Tính lương tự động</Link>,
-            icon: <CalculatorFilled />,
-          },
-          {
-            key: "/payroll",
-            label: <Link href="/payroll">Cấu hình lương</Link>,
-            icon: <SettingOutlined />,
-          },
-          {
-            key: "/advance-approvals",
-            label: <Link href="/advance-approvals">Duyệt ứng lương</Link>,
-            icon: <AuditOutlined />,
-          },
-        ],
         children: manageChildren
       });
     }

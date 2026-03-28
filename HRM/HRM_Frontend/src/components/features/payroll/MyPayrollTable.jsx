@@ -89,11 +89,21 @@ export default function MyPayrollTable({ data, loading, employeeName }) {
                 </div>
 
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <h3 className="text-sm font-bold text-gray-800 mb-5">Lịch sử phê duyệt</h3>
+                    <h3 className="text-sm font-bold text-gray-800 mb-5">Trạng thái phiếu lương</h3>
                     <div className="relative pl-4 border-l-2 border-blue-500 space-y-6">
                         <div className="relative">
                             <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 bg-blue-500 rounded-full border-2 border-white"></div>
-                            <span className="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">Đã duyệt</span>
+                            {data.status === 'Approved' || data.status === 'APPROVED' ? (
+                                <span className="bg-green-100 text-green-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">Đã duyệt</span>
+                            ) : data.status === 'Draft' || data.status === 'DRAFT' ? (
+                                <span className="bg-yellow-100 text-yellow-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">Chờ duyệt</span>
+                            ) : data.status === 'Rejected' || data.status === 'REJECTED' ? (
+                                <span className="bg-red-100 text-red-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">Từ chối</span>
+                            ) : data.status === 'Paid' || data.status === 'PAID' ? (
+                                <span className="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">Đã thanh toán</span>
+                            ) : (
+                                <span className="bg-gray-100 text-gray-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">{data.status || 'Đang xử lý'}</span>
+                            )}
                             <h4 className="text-sm font-bold text-gray-800 mt-1.5">Tháng {data.month} / {data.year}</h4>
                         </div>
                     </div>

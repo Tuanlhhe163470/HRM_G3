@@ -1,9 +1,10 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Select, Space, Card, Typography, Tag, message } from 'antd';
-import { CalculatorOutlined, FileExcelOutlined } from '@ant-design/icons';
+import { CalculatorOutlined, FileExcelOutlined, StopOutlined } from '@ant-design/icons';
 import { payrollService } from '@/services/Payroll/payrollService';
 import { exportPayrollToExcel } from '@/utils/payrollExport';
+import { useRouter } from 'next/navigation';
 
 const { Title, Text } = Typography;
 
@@ -14,6 +15,30 @@ export default function PayrollCalculationPage() {
     const [loading, setLoading] = useState(false);
     const [calculating, setCalculating] = useState(false);
     const [exporting, setExporting] = useState(false);
+    
+    // --- STATE AUTHORIZATION ---
+    const router = useRouter();
+    const [isAuthorized, setIsAuthorized] = useState(true);
+    const [isCheckingRole, setIsCheckingRole] = useState(true);
+
+    // Kiểm tra quyền khi vào trang
+    useEffect(() => {
+        const userStr = localStorage.getItem("user");
+        if (userStr) {
+            try {
+                const userObj = JSON.parse(userStr);
+                const role = userObj.roleName;
+                if (role === 'Manager' || role === 'Employee') {
+                    setIsAuthorized(false);
+                }
+            } catch (e) {
+                console.error("Lỗi parse thông tin user:", e);
+            }
+        } else {
+            setIsAuthorized(false);
+        }
+        setIsCheckingRole(false);
+    }, []);
 
     // --- STATE TÌM KIẾM & SẮP XẾP ---
     const [searchTerm, setSearchTerm] = useState('');
@@ -154,6 +179,25 @@ export default function PayrollCalculationPage() {
             ),
         },
     ];
+
+    if (isCheckingRole) {
+        return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>Đang tải...</div>;
+    }
+
+    if (!isAuthorized) {
+        return (
+            <div style={{ padding: '40px', textAlign: 'center', background: '#fff', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <StopOutlined style={{ fontSize: '64px', color: '#ff4d4f', marginBottom: '16px' }} />
+                <Title level={3} style={{ color: '#cf1322' }}>Quyền Truy Cập Bị Từ Chối</Title>
+                <Text style={{ fontSize: '16px', color: '#595959', marginBottom: '24px' }}>
+                    Bạn không có quyền hạn phân quyền để xem hoặc thao tác trên trang "Tính lương hệ thống".
+                </Text>
+                <Button type="primary" onClick={() => router.push('/')}>
+                    Quay Về Trang Chủ
+                </Button>
+            </div>
+        );
+    }
 
     return (
         <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>

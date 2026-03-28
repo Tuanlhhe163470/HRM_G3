@@ -3,6 +3,7 @@ import { Table, Button, Modal, message, Space, Tag, Select, Input } from 'antd';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { payrollService } from '@/services/Payroll/payrollService';
+import { exportPayrollToExcel } from '@/utils/payrollExport';
 
 export default function PayrollProcessingPage() {
   const router = useRouter();
@@ -67,7 +68,6 @@ export default function PayrollProcessingPage() {
     router.push(`/payroll/adjustment?employeeId=${employeeId}`);
   };
 
-  // 4. Xử lý Phê duyệt (Manager)
   const handleApprove = async (id, isApproved) => {
     try {
       await payrollService.approvePayroll(id, isApproved, 3);
@@ -75,6 +75,27 @@ export default function PayrollProcessingPage() {
       fetchPayroll();
     } catch (err) {
       messageApi.error("Lỗi khi phê duyệt");
+    }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      // Export all payrolls currently shown (filtered and sorted)
+      await exportPayrollToExcel(filteredAndSortedData, selectedMonth, selectedYear);
+      messageApi.success("Xuất file Excel thành công!");
+    } catch (error) {
+      console.error("Lỗi khi xuất excel:", error);
+      messageApi.error("Có lỗi xảy ra khi tạo file Excel.");
+    }
+  };
+
+  const handleResubmit = async (id) => {
+    try {
+      await payrollService.resubmitPayroll(id);
+      messageApi.success("Đã trình duyệt lại bảng lương thành công!");
+      fetchPayroll();
+    } catch (err) {
+      messageApi.error("Lỗi khi trình duyệt lại");
     }
   };
 
@@ -134,6 +155,12 @@ export default function PayrollProcessingPage() {
               <Button size="small" danger onClick={() => handleApprove(record.payrollID, false)}>Từ chối</Button>
             </>
           )}
+
+          {record.status === 'Rejected' && (userRole === 'HR' || userRole === 'Admin') && (
+            <Button size="small" type="primary" onClick={() => handleResubmit(record.payrollID)}>
+              Trình duyệt lại
+            </Button>
+          )}
         </Space>
       ),
     },
@@ -151,7 +178,12 @@ export default function PayrollProcessingPage() {
               Tháng {selectedMonth < 10 ? `0${selectedMonth}` : selectedMonth}/{selectedYear}
             </p>
           </div>
-          <Button type="primary" onClick={fetchPayroll} loading={loading}>Làm mới dữ liệu</Button>
+          <Space>
+            <Button onClick={handleExportExcel} style={{ background: '#107c41', color: 'white', borderColor: '#107c41' }}>
+              📊 Xuất Excel
+            </Button>
+            <Button type="primary" onClick={fetchPayroll} loading={loading}>Làm mới dữ liệu</Button>
+          </Space>
         </div>
 
         {/* Toolbar Tìm Kiếm, Sắp Xếp và Chọn Tháng/Năm */}

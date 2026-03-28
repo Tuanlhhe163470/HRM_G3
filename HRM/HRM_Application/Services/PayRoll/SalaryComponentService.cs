@@ -20,7 +20,6 @@ namespace HRM_Application.Services.PayRoll
             _mapper = mapper;
         }
 
-        // 1. Lấy TẤT CẢ (Dành cho trang Quản trị - Admin cần thấy cả cái đã xóa để khôi phục)
         public async Task<IEnumerable<SalaryComponentDTO>> GetAllComponentsAsync()
         {
             var components = await _repository.GetAllAsync();
@@ -29,7 +28,6 @@ namespace HRM_Application.Services.PayRoll
             return _mapper.Map<IEnumerable<SalaryComponentDTO>>(components.OrderByDescending(x => x.ComponentID));
         }
 
-        // 2. [MỚI] Chỉ lấy các khoản ĐANG HOẠT ĐỘNG (Dành cho Dropdown chọn lương)
         public async Task<IEnumerable<SalaryComponentDTO>> GetActiveComponentsAsync()
         {
             var components = await _repository.GetAllAsync();
@@ -40,7 +38,7 @@ namespace HRM_Application.Services.PayRoll
             return _mapper.Map<IEnumerable<SalaryComponentDTO>>(activeComponents);
         }
 
-        // 3. Lấy chi tiết theo ID
+        // Lấy chi tiết theo ID
         public async Task<SalaryComponentDTO?> GetComponentByIdAsync(int id)
         {
             var component = await _repository.GetByIdAsync(id);
@@ -48,7 +46,7 @@ namespace HRM_Application.Services.PayRoll
             return _mapper.Map<SalaryComponentDTO>(component);
         }
 
-        // 4. Tạo mới
+        // Tạo mới
         public async Task<SalaryComponentDTO> CreateComponentAsync(CreateSalaryComponentDTO request)
         {
             var entity = _mapper.Map<SalaryComponent>(request);
@@ -60,7 +58,6 @@ namespace HRM_Application.Services.PayRoll
             return _mapper.Map<SalaryComponentDTO>(result);
         }
 
-        // 5. Cập nhật
         public async Task<bool> UpdateComponentAsync(int id, UpdateSalaryComponentDTO request)
         {
             var existingComponent = await _repository.GetByIdAsync(id);
@@ -73,17 +70,14 @@ namespace HRM_Application.Services.PayRoll
             return true;
         }
 
-        // 6. Xóa mềm (Soft Delete)
         public async Task<bool> DeleteComponentAsync(int id)
         {
             var component = await _repository.GetByIdAsync(id);
             if (component == null) return false;
 
-            // --- LOGIC SOFT DELETE ---
-            // Thay vì xóa bay khỏi DB, ta chỉ set IsActive = false
             component.IsActive = false;
 
-            // Gọi hàm Update của Repository để lưu thay đổi trạng thái
+            // thay đổi trạng thái
             await _repository.UpdateAsync(component);
 
             return true;
