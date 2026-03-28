@@ -45,6 +45,8 @@ namespace HRM_Domain.Entities
         [ForeignKey("ManagerID")]
         public virtual Employee? Manager { get; set; } // Self-join
 
+        public virtual ICollection<LeaveBalance> LeaveBalances { get; set; } = new List<LeaveBalance>();
+
         public DateTime? JoinDate { get; set; }
 
         [StringLength(20)]

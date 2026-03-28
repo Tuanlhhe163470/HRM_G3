@@ -242,8 +242,10 @@ namespace HRM_Application.Services.TimeAttendance
 
             // 2. Kiểm tra đơn Xin nghỉ (Leave)
             var pendingLeaves = await _leaveRepo.GetPendingRequestsAsync();
-            var hasPendingLeaves = pendingLeaves.Any(x => x.StartDate.Month <= month && x.EndDate.Month >= month && x.StartDate.Year == year);
+            DateTime firstDay = new DateTime(year, month, 1);
+            DateTime lastDay = firstDay.AddMonths(1).AddDays(-1);
 
+            var hasPendingLeaves = pendingLeaves.Any(x => x.StartDate.Date <= lastDay.Date && x.EndDate.Date >= firstDay.Date);
             if (hasPendingLeaves)
                 throw new InvalidOperationException($"Không thể khóa sổ! Vẫn còn Đơn Xin nghỉ phép liên quan đến tháng {month} đang chờ duyệt.");
 
@@ -268,19 +270,18 @@ namespace HRM_Application.Services.TimeAttendance
         private decimal GetStandardWorkDays(int year, int month, string workDaysConfig)
         {
             if (string.IsNullOrEmpty(workDaysConfig)) return 0;
+            var allowedDays = workDaysConfig.Split(',').Select(d => (DayOfWeek)int.Parse(d)).ToList();
 
-            var allowedDays = workDaysConfig.Split(',')
-                                            .Select(d => (DayOfWeek)int.Parse(d))
-                                            .ToList();
+            int daysToCalculate = DateTime.DaysInMonth(year, month);
+            if (year == DateTime.Now.Year && month == DateTime.Now.Month)
+            {
+                daysToCalculate = DateTime.Now.Day;
+            }
 
-            int daysInMonth = DateTime.DaysInMonth(year, month);
             int workDays = 0;
-
-            for (int i = 1; i <= daysInMonth; i++)
+            for (int i = 1; i <= daysToCalculate; i++) 
             {
                 DateTime date = new DateTime(year, month, i);
-
-                // Nếu ngày đó nằm trong danh sách WorkDays của ca làm việc -> Tính là 1 ngày công
                 if (allowedDays.Contains(date.DayOfWeek))
                 {
                     workDays++;
@@ -288,6 +289,5 @@ namespace HRM_Application.Services.TimeAttendance
             }
             return workDays;
         }
-
     }
 }

@@ -19,6 +19,7 @@ namespace HRM_Application.DTOs.TimeAttendance
         public DateTime? CheckOutTime { get; set; }
 
         public double WorkingHours { get; set; }
+        public double OvertimeHours { get; set; }
         public string Status { get; set; }
         public string? Note { get; set; }
     }

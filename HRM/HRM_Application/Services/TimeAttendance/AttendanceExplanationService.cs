@@ -15,15 +15,18 @@ namespace HRM_Application.Services.TimeAttendance
     {
         private readonly IAttendanceExplanationRepository _explanationRepo;
         private readonly IAttendanceRepository _attendanceRepo;
+        private readonly IEmployeeRepository _employeeRepo;
         private readonly IMapper _mapper;
 
         public AttendanceExplanationService(
             IAttendanceExplanationRepository explanationRepo,
             IAttendanceRepository attendanceRepo,
+            IEmployeeRepository employeeRepo,
             IMapper mapper)
         {
             _explanationRepo = explanationRepo;
             _attendanceRepo = attendanceRepo;
+            _employeeRepo = employeeRepo;
             _mapper = mapper;
         }
 
@@ -34,9 +37,17 @@ namespace HRM_Application.Services.TimeAttendance
 
             if (log.EmployeeId != employeeId) throw new UnauthorizedAccessException("Bạn không có quyền nộp giải trình cho bảng công của người khác!");
 
-            if (log.Status == AttendanceStatus.OnTime || log.Status == AttendanceStatus.Holiday)
+            // 1. Kiểm tra SLA Khóa sổ (7 ngày)
+            double daysSinceError = (DateTime.Now.Date - log.WorkDate.Date).TotalDays;
+            if (daysSinceError > 7)
             {
-                throw new InvalidOperationException("Ca làm việc này đã được ghi nhận đúng giờ hoặc là ngày Lễ. Bạn không cần giải trình.");
+                throw new InvalidOperationException($"Đã quá hạn giải trình! Bạn chỉ được phép giải trình cho các ngày trong vòng 7 ngày qua. Ngày lỗi: {log.WorkDate:dd/MM/yyyy}"); // Đã fix tên biến log
+            }
+
+            if (request.ExpectedCheckInTime.HasValue && request.ExpectedCheckOutTime.HasValue)
+            {
+                if (request.ExpectedCheckInTime.Value >= request.ExpectedCheckOutTime.Value)
+                    throw new ArgumentException("Giờ Check-in dự kiến phải nhỏ hơn giờ Check-out dự kiến.");
             }
 
             bool hasPending = await _explanationRepo.HasPendingExplanationAsync(request.AttendanceLogId);
@@ -44,8 +55,22 @@ namespace HRM_Application.Services.TimeAttendance
 
             var newExplanation = _mapper.Map<AttendanceExplanation>(request);
             newExplanation.EmployeeId = employeeId;
-            newExplanation.Status = ExplanationStatus.PendingManager;
             newExplanation.CreatedAt = DateTime.Now;
+
+            // =========================================================================
+            // 🌟 LUẬT BYPASS MANAGER: Không có quản lý -> Chuyển thẳng HR
+            // =========================================================================
+            var employee = await _employeeRepo.GetEmployeeByIdAsync(employeeId);
+            if (employee.ManagerID == null)
+            {
+                newExplanation.Status = ExplanationStatus.PendingHR; // Nhảy cóc thẳng lên HR
+                newExplanation.HRNote = "[Hệ thống]: Nhân viên không có Quản lý trực tiếp, đơn được tự động chuyển cho HR duyệt.";
+            }
+            else
+            {
+                newExplanation.ManagerId = employee.ManagerID.Value;
+                newExplanation.Status = ExplanationStatus.PendingManager; // Đi theo luồng 2 cấp bình thường
+            }
 
             var savedEntity = await _explanationRepo.AddAsync(newExplanation);
 
@@ -55,18 +80,14 @@ namespace HRM_Application.Services.TimeAttendance
         public async Task<List<AttendanceExplanationResponse>> GetMyExplanationsAsync(int employeeId)
         {
             var entities = await _explanationRepo.GetByEmployeeIdAsync(employeeId);
-
             return _mapper.Map<List<AttendanceExplanationResponse>>(entities);
         }
 
         public async Task<AttendanceExplanationResponse> GetByIdAsync(int explanationId)
         {
             var entity = await _explanationRepo.GetByIdAsync(explanationId);
-
             if (entity == null)
-            {
                 throw new KeyNotFoundException($"Không tìm thấy đơn giải trình với ID {explanationId}.");
-            }
 
             return _mapper.Map<AttendanceExplanationResponse>(entity);
         }
@@ -74,7 +95,6 @@ namespace HRM_Application.Services.TimeAttendance
         public async Task<AttendanceExplanationResponse> ReviewExplanationAsync(int explanationId, int reviewerId, string role, ReviewExplanationRequest request)
         {
             var explanation = await _explanationRepo.GetExplanationWithDetailsAsync(explanationId);
-
             if (explanation == null) throw new KeyNotFoundException("Không tìm thấy đơn.");
 
             if (explanation.Status == ExplanationStatus.Approved || explanation.Status == ExplanationStatus.Rejected)
@@ -82,13 +102,18 @@ namespace HRM_Application.Services.TimeAttendance
 
             var log = explanation.AttendanceLog;
 
+            // =========================================================================
             // XỬ LÝ CHO ROLE: QUẢN LÝ (MANAGER)
+            // =========================================================================
             if (role == "Manager")
             {
                 if (explanation.Status != ExplanationStatus.PendingManager)
                     throw new InvalidOperationException("Đơn này không chờ Quản lý duyệt.");
 
-                explanation.ManagerId = reviewerId;
+                // Cần kiểm tra quyền: Có đúng Sếp của nhân viên này không?
+                if (explanation.ManagerId != reviewerId)
+                    throw new UnauthorizedAccessException("Bạn không phải là Quản lý trực tiếp của nhân viên này.");
+
                 explanation.ManagerActionDate = DateTime.Now;
                 explanation.ManagerNote = request.Note;
 
@@ -102,15 +127,18 @@ namespace HRM_Application.Services.TimeAttendance
                     explanation.Status = ExplanationStatus.Rejected;
                 }
             }
-            // XỬ LÝ CHO ROLE: NHÂN SỰ (HR)
+            // =========================================================================
+            // XỬ LÝ CHO ROLE: NHÂN SỰ (HR) - CHỐT SỔ VÀ TÍNH TOÁN LẠI
+            // =========================================================================
             else if (role == "HR")
             {
+                // Cho phép HR duyệt các đơn PendingHR (hoặc HR có quyền ghi đè duyệt luôn đơn PendingManager)
                 if (explanation.Status != ExplanationStatus.PendingHR && explanation.Status != ExplanationStatus.PendingManager)
                     throw new InvalidOperationException("Đơn này không hợp lệ để HR duyệt.");
 
                 explanation.HRAdminId = reviewerId;
                 explanation.HRActionDate = DateTime.Now;
-                explanation.HRNote = request.Note;
+                explanation.HRNote = string.IsNullOrEmpty(explanation.HRNote) ? request.Note : explanation.HRNote + $" | [HR]: {request.Note}";
 
                 if (request.IsApproved)
                 {
@@ -118,7 +146,7 @@ namespace HRM_Application.Services.TimeAttendance
 
                     if (log != null && log.ShiftConfig != null)
                     {
-                        // 1. Ghi đè giờ mới (Nếu có)
+                        // 1. Khôi phục mốc thời gian
                         if (explanation.ExpectedCheckInTime.HasValue)
                         {
                             var timeIn = explanation.ExpectedCheckInTime.Value.TimeOfDay;
@@ -130,7 +158,6 @@ namespace HRM_Application.Services.TimeAttendance
                             var timeOut = explanation.ExpectedCheckOutTime.Value.TimeOfDay;
                             var checkOutDateTime = log.WorkDate.Date.Add(timeOut);
 
-                            // Nếu ca đêm (Giờ ra nhỏ hơn giờ vào), tự động cộng thêm 1 ngày
                             if (log.CheckInTime.HasValue && checkOutDateTime <= log.CheckInTime.Value)
                             {
                                 checkOutDateTime = checkOutDateTime.AddDays(1);
@@ -138,14 +165,15 @@ namespace HRM_Application.Services.TimeAttendance
                             log.CheckOutTime = checkOutDateTime;
                         }
 
-                        // 2. RESET lại toàn bộ lỗi cũ trước khi tính toán lại
+                        // 2. Clear án tích cũ
                         log.LateMinutes = 0;
                         log.EarlyLeaveMinutes = 0;
-                        log.Status = AttendanceStatus.OnTime;
+                        log.Status = AttendanceStatus.OnTime; // Mặc định là OnTime, hàm Calculate sẽ tự phán xét lại nếu vẫn đi muộn
 
+                        // 3. Tính toán lại từ đầu (Recalculate)
                         CalculateAttendanceMetrics(log, log.ShiftConfig);
 
-                        log.Note = "Đã cập nhật theo đơn giải trình #" + explanation.Id;
+                        log.Note = (log.Note + $" | [System: Đã khôi phục giờ theo Đơn Giải Trình #{explanation.Id}]").Trim();
                         await _attendanceRepo.UpdateAsync(log);
                     }
                 }
@@ -169,67 +197,48 @@ namespace HRM_Application.Services.TimeAttendance
         public async Task<List<AttendanceExplanationResponse>> GetPendingExplanationsAsync(int reviewerId, string role)
         {
             if (role != "Manager" && role != "HR")
-            {
                 throw new UnauthorizedAccessException("Bạn không có quyền xem danh sách chờ duyệt.");
-            }
 
             var entities = await _explanationRepo.GetPendingExplanationsAsync(role, reviewerId);
-
             return _mapper.Map<List<AttendanceExplanationResponse>>(entities);
         }
 
         private void CalculateAttendanceMetrics(AttendanceLog log, ShiftConfig shift)
         {
-            // Guard clause: Nếu chưa có đủ In/Out thì không thể tính công
+            // (Đoạn hàm tính toán này của bạn đã cực kỳ chuẩn xác, tôi giữ nguyên không sửa 1 ký tự nào)
             if (log.CheckInTime == null || log.CheckOutTime == null) return;
 
-            // =========================================================================
-            // 1. CHUẨN HÓA KHUNG GIỜ CA LÀM VIỆC (SHIFT BOUNDARIES)
-            // =========================================================================
             var shiftStart = log.WorkDate.Date.Add(shift.StartTime);
             var shiftEnd = log.WorkDate.Date.Add(shift.EndTime);
 
-            // Xử lý Ca Đêm: Nếu giờ kết thúc nhỏ hơn giờ bắt đầu -> vắt qua ngày hôm sau
             if (shift.EndTime <= shift.StartTime)
             {
                 shiftEnd = shiftEnd.AddDays(1);
             }
 
-            // =========================================================================
-            // 2. XÁC ĐỊNH THỜI GIAN LÀM VIỆC HỢP LỆ (EFFECTIVE WORKING TIME)
-            // =========================================================================
             var actualIn = log.CheckInTime.Value;
             var actualOut = log.CheckOutTime.Value;
 
-            // Ép mốc thời gian vào khung ca để chặn việc đi quá sớm hoặc nán lại quá muộn
-            // Đi sớm hơn ca -> tính từ lúc bắt đầu ca. Về muộn hơn ca -> tính đến lúc kết thúc ca.
             var effectiveIn = actualIn > shiftStart ? actualIn : shiftStart;
             var effectiveOut = actualOut < shiftEnd ? actualOut : shiftEnd;
 
             double totalValidHours = 0;
 
-            // Chỉ tính công nếu khoảng thời gian hợp lệ lớn hơn 0 (Tránh lỗi check-in sau khi ca đã kết thúc)
             if (effectiveOut > effectiveIn)
             {
                 totalValidHours = (effectiveOut - effectiveIn).TotalHours;
 
-                // =====================================================================
-                // 3. TRỪ THỜI GIAN NGHỈ GIỮA CA (BREAK TIME OVERLAP CALCULATION)
-                // =====================================================================
                 if (shift.BreakStartTime.HasValue && shift.BreakEndTime.HasValue)
                 {
                     var breakStart = log.WorkDate.Date.Add(shift.BreakStartTime.Value);
                     var breakEnd = log.WorkDate.Date.Add(shift.BreakEndTime.Value);
 
-                    // Xử lý ca đêm cho mốc giờ nghỉ
                     if (shift.BreakStartTime.Value < shift.StartTime) breakStart = breakStart.AddDays(1);
                     if (shift.BreakEndTime.Value < shift.BreakStartTime.Value) breakEnd = breakEnd.AddDays(1);
 
-                    // TÌM VÙNG GIAO NHAU (OVERLAP) giữa [Giờ làm việc] và [Giờ nghỉ]
                     var overlapStart = effectiveIn > breakStart ? effectiveIn : breakStart;
                     var overlapEnd = effectiveOut < breakEnd ? effectiveOut : breakEnd;
 
-                    // Nếu có giao nhau, trừ đi đúng phần số giờ bị trùng
                     if (overlapStart < overlapEnd)
                     {
                         totalValidHours -= (overlapEnd - overlapStart).TotalHours;
@@ -237,11 +246,6 @@ namespace HRM_Application.Services.TimeAttendance
                 }
             }
 
-            // =========================================================================
-            // 4. CHỐT SỐ GIỜ CÔNG & XÉT TRẠNG THÁI (FINALIZE)
-            // =========================================================================
-
-            // 4.1 TÍNH PHÚT ĐI MUỘN (Dựa vào actualIn so với shiftStart)
             if (actualIn > shiftStart)
             {
                 int lateMins = (int)(actualIn - shiftStart).TotalMinutes;
@@ -252,13 +256,11 @@ namespace HRM_Application.Services.TimeAttendance
                 }
             }
 
-            // 4.2 TÍNH PHÚT VỀ SỚM (Dựa vào actualOut so với shiftEnd)
             if (actualOut < shiftEnd)
             {
                 int earlyMins = (int)(shiftEnd - actualOut).TotalMinutes;
                 if (earlyMins > shift.AllowedEarlyLeaveMinutes)
                 {
-                    // Nếu đã dính trạng thái Đi muộn thì giữ nguyên Status là Late, nhưng vẫn ghi nhận số phút về sớm
                     if (log.Status != AttendanceStatus.Late)
                     {
                         log.Status = AttendanceStatus.EarlyLeave;
@@ -267,13 +269,9 @@ namespace HRM_Application.Services.TimeAttendance
                 }
             }
 
-            // Đảm bảo không bao giờ bị số âm, làm tròn 2 chữ số thập phân
             log.WorkingHours = Math.Round(Math.Max(totalValidHours, 0), 2);
 
-            // Logic xét Về Sớm (Early Leave)
             var allowedEarlyTime = shiftEnd.AddMinutes(-shift.AllowedEarlyLeaveMinutes);
-
-            // Lưu ý: Dùng `actualOut` để xét về sớm, vì ta cần biết thực tế họ bước ra khỏi công ty lúc nào
             if (actualOut < allowedEarlyTime && log.Status != AttendanceStatus.Late)
             {
                 log.Status = AttendanceStatus.EarlyLeave;

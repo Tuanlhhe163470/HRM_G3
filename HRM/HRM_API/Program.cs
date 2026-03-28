@@ -13,6 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.FileProviders;
 using System.Text;
 using System.IO;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = new FileExtensionContentTypeProvider();
@@ -38,8 +39,11 @@ builder.Services.AddAuthentication(options =>
 });
 
 // 2. Add services to the container.
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    }); builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "HRM G3 API", Version = "v1" });
