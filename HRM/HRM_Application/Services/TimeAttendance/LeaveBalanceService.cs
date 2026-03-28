@@ -2,6 +2,7 @@
 using HRM_Application.Commons.Pagination;
 using HRM_Application.Contracts.Repositories;
 using HRM_Application.Contracts.Services;
+using HRM_Application.DTOs.Commons;
 using HRM_Application.DTOs.LeaveBalance.Requests;
 using HRM_Application.DTOs.LeaveBalance.Responses;
 using HRM_Application.Interfaces.Repositories;
@@ -26,10 +27,39 @@ namespace HRM_Application.Services.HRCore
             _mapper = mapper;
         }
 
-        public async Task<PagedResponse<LeaveBalanceResponse>> GetAllAsync(PaginationFilter filter)
+        public async Task<PagedResponse<LeaveBalanceResponse>> GetAllAsync(PaginationFilter filter, int year, int leaveTypeId)
         {
-            var pagedEntities = await _repository.GetAllAsync(filter);
-            var dtoList = _mapper.Map<List<LeaveBalanceResponse>>(pagedEntities.Data);
+            // 1. Gọi Repo lấy danh sách Employee (kèm theo LeaveBalances bên trong nếu có)
+            var pagedEntities = await _repository.GetAllAsync(filter, year, leaveTypeId);
+
+            // 2. Map từ Employee sang DTO LeaveBalanceResponse
+            var dtoList = pagedEntities.Data.Select(emp =>
+            {
+                // Lấy quỹ phép đầu tiên tìm được (nếu trống thì balance = null)
+                var balance = emp.LeaveBalances?.FirstOrDefault();
+
+                return new LeaveBalanceResponse
+                {
+                    Id = balance != null ? balance.Id : 0,
+
+                    // Map BaseReference cho Frontend (Giữ đúng cấu trúc DTO của bạn)
+                    Employee = new BaseReferenceResponse { Id = emp.EmployeeID, Name = emp.FullName },
+                    LeaveType = balance != null
+                                ? new BaseReferenceResponse { Id = balance.LeaveTypeId, Name = "Phép năm" }
+                                : null,
+
+                    Year = year,
+                    TotalDays = balance != null ? balance.TotalDays : 0,
+                    UsedDays = balance != null ? balance.UsedDays : 0,
+
+                    EmployeeId = emp.EmployeeID,
+                    EmployeeName = emp.FullName,
+                    PositionName = emp.Position?.PositionName ?? "",
+                    DepartmentName = emp.Department?.DepartmentName ?? "",
+                    IsAllocated = balance != null
+                };
+            }).ToList();
+
             return new PagedResponse<LeaveBalanceResponse>(dtoList, pagedEntities.PageNumber, pagedEntities.PageSize, pagedEntities.TotalRecords);
         }
 
@@ -41,29 +71,64 @@ namespace HRM_Application.Services.HRCore
 
         public async Task GenerateAnnualLeaveBalancesAsync(GenerateLeaveBalanceRequest request)
         {
-            // 1. Nếu năm nay đã tạo rồi thì không tạo nữa
-            var hasGenerated = await _repository.HasGeneratedForYearAsync(request.Year, request.LeaveTypeId);
-            if (hasGenerated) throw new InvalidOperationException($"Quỹ phép cho năm {request.Year} đã được khởi tạo trước đó!");
-
-            // 2. Lấy toàn bộ nhân viên (nhớ đổi sang lấy employee active)
+            // 1. Lấy toàn bộ nhân viên đang làm việc
             var allEmployees = await _employeeRepository.GetAllEmployeesAsync();
-            var activeEmployees = allEmployees.Where(e => e.Status == "Active").ToList();
+            var activeEmployees = allEmployees
+                .Where(e => e.Status == "Active" || e.Status == "Working")
+                .ToList();
 
-            if (!activeEmployees.Any()) throw new InvalidOperationException("Không có nhân viên Active nào để cấp phép.");
+            if (!activeEmployees.Any()) throw new InvalidOperationException("Không có nhân viên hợp lệ để cấp phép.");
+
+            // 2. Lấy những người ĐÃ CÓ phép trong năm nay
+            var existingBalances = await _repository.GetBalancesByYearAsync(request.Year, request.LeaveTypeId);
+            var existingEmpIds = existingBalances.Select(b => b.EmployeeId).ToHashSet();
+
+            // 3. Lọc ra NHỮNG NGƯỜI CHƯA CÓ PHÉP (VD: Lê Văn Tài, chienkv...)
+            var employeesNeedingBalance = activeEmployees
+                .Where(e => !existingEmpIds.Contains(e.EmployeeID))
+                .ToList();
+
+            // 4. Nếu ai cũng có phép rồi thì mới báo lỗi này
+            if (!employeesNeedingBalance.Any())
+                throw new InvalidOperationException($"Toàn bộ nhân viên đã được cấp phép cho năm {request.Year}. Không có ai cần cấp mới.");
 
             var newBalances = new List<LeaveBalance>();
-            foreach (var emp in activeEmployees)
+
+            foreach (var emp in employeesNeedingBalance)
             {
+                double totalDaysAllocated = request.DefaultDays;
+
+                // 5. TÍNH PHÉP THEO TỶ LỆ CHO NGƯỜI MỚI VÀO (Prorated Leave)
+                if (emp.JoinDate.HasValue && emp.JoinDate.Value.Year == request.Year)
+                {
+                    int joinMonth = emp.JoinDate.Value.Month;
+                    int joinDay = emp.JoinDate.Value.Day;
+
+                    // Vào trước ngày 15 -> tính tháng đó. Vào sau ngày 15 -> tính từ tháng sau.
+                    int effectiveStartMonth = joinDay <= 15 ? joinMonth : joinMonth + 1;
+
+                    if (effectiveStartMonth <= 12)
+                    {
+                        int monthsWorked = 12 - effectiveStartMonth + 1;
+                        totalDaysAllocated = Math.Round((request.DefaultDays / 12.0) * monthsWorked, 1);
+                    }
+                    else
+                    {
+                        totalDaysAllocated = 0;
+                    }
+                }
+
                 newBalances.Add(new LeaveBalance
                 {
                     EmployeeId = emp.EmployeeID,
                     LeaveTypeId = request.LeaveTypeId,
                     Year = request.Year,
-                    TotalDays = request.DefaultDays,
-                    UsedDays = 0 // Mới tạo thì chưa dùng ngày nào
+                    TotalDays = totalDaysAllocated,
+                    UsedDays = 0
                 });
             }
 
+            // 6. Lưu vào DB
             await _repository.AddRangeAsync(newBalances);
         }
 

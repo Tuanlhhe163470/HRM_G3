@@ -1,8 +1,10 @@
 ﻿using HRM_Application.Contracts.Services;
 using HRM_Application.DTOs.TimeAttendance;
+using HRM_Application.Services.HRCore;
 using HRM_Application.Services.TimeAttendance;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 
 namespace HRM_API.Controllers
@@ -13,10 +15,12 @@ namespace HRM_API.Controllers
     public class AttendanceController : ControllerBase
     {
         private readonly IAttendanceService _attendanceService;
+        private readonly ILeaveBalanceService _leaveBalanceService;
 
-        public AttendanceController(IAttendanceService attendanceService)
+        public AttendanceController(IAttendanceService attendanceService, ILeaveBalanceService leaveBalanceService)
         {
             _attendanceService = attendanceService;
+            _leaveBalanceService = leaveBalanceService;
         }
 
         // --- 1. API CHECK-IN ---
@@ -77,6 +81,28 @@ namespace HRM_API.Controllers
             var logs = await _attendanceService.GetMyAttendanceLogsAsync(userId, m, y);
 
             return Ok(new { data = logs });
+        }
+
+        [HttpGet("my-leave-balance/year/{year}")]
+        public async Task<IActionResult> GetMyLeaveBalance(int year)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+
+                int annualLeaveTypeId = 1;
+
+                var result = await _leaveBalanceService.GetByEmployeeAndYearAsync(userId, annualLeaveTypeId, year);
+
+                if (result == null)
+                    return Ok(new { TotalDays = 0, UsedDays = 0, RemainingDays = 0 });
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi hệ thống: " + ex.Message });
+            }
         }
 
         // --- HELPER METHODS (Private) ---

@@ -21,12 +21,13 @@ namespace HRM_API.Controllers
             _service = service;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] PaginationFilter filter)
+        [HttpGet("year/{year}/leavetype/{leaveTypeId}")]
+        public async Task<IActionResult> GetAll([FromQuery] PaginationFilter filter, int year, int leaveTypeId)
         {
             try
             {
-                var result = await _service.GetAllAsync(filter);
+                // Chuyền đủ 3 tham số xuống Service
+                var result = await _service.GetAllAsync(filter, year, leaveTypeId);
                 return Ok(result);
             }
             catch (Exception ex)

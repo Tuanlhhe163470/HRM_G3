@@ -28,17 +28,31 @@ namespace HRM_Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<PagedResponse<LeaveBalance>> GetAllAsync(PaginationFilter filter)
+        public async Task<PagedResponse<Employee>> GetAllAsync(PaginationFilter filter, int year, int leaveTypeId)
         {
-            var query = _context.LeaveBalances
-                .Include(l => l.Employee)
-                .Include(l => l.LeaveType)
+            var query = _context.Employees
+                .Include(e => e.LeaveBalances.Where(lb => lb.Year == year && lb.LeaveTypeId == leaveTypeId))
+                .Include(e => e.Department)
+                .Include(e => e.Position)
+                .Where(e => e.Status == "Active" || e.Status == "Working")
                 .AsQueryable();
 
             var totalRecords = await query.CountAsync();
-            var data = await query.Skip((filter.PageNumber - 1) * filter.PageSize).Take(filter.PageSize).ToListAsync();
 
-            return new PagedResponse<LeaveBalance>(data, filter.PageNumber, filter.PageSize, totalRecords);
+            var data = await query
+                .OrderBy(e => e.EmployeeID) // Nên có OrderBy để phân trang chuẩn
+                .Skip((filter.PageNumber - 1) * filter.PageSize)
+                .Take(filter.PageSize)
+                .ToListAsync();
+
+            return new PagedResponse<Employee>(data, filter.PageNumber, filter.PageSize, totalRecords);
+        }
+
+        public async Task<List<LeaveBalance>> GetBalancesByYearAsync(int year, int leaveTypeId)
+        {
+            return await _context.LeaveBalances
+                .Where(x => x.Year == year && x.LeaveTypeId == leaveTypeId)
+                .ToListAsync();
         }
 
         public async Task<LeaveBalance?> GetByIdAsync(int id)

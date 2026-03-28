@@ -40,7 +40,6 @@ export default function LeaveBalancesPage() {
   const fetchBalances = async () => {
     setIsLoading(true);
     try {
-      // Gọi API lấy quỹ phép. (Có thể truyền year vào param nếu Backend hỗ trợ lọc)
       const res = await leaveBalanceService.getAllBalances({ year });
       setBalances(res.data?.data || res.data || []);
     } catch (error) {
@@ -57,14 +56,11 @@ export default function LeaveBalancesPage() {
   // ==========================================
   // 3. ACTIONS LOGIC
   // ==========================================
-
-  // Hành động 1: Khởi tạo phép đầu năm cho toàn công ty
   const handleGenerateBalances = async () => {
-    if (!window.confirm(`Bạn có chắc chắn muốn cấp quỹ phép (12 ngày) cho toàn bộ nhân viên trong năm ${year} không?`)) return;
+    if (!window.confirm(`Bạn có chắc chắn muốn quét và cấp quỹ phép tự động cho các nhân viên trong năm ${year} không?`)) return;
 
     setIsGenerating(true);
     try {
-      // Payload mặc định: Cấp 12 ngày phép năm (ID thường là 1)
       await leaveBalanceService.generateBalances({ year: year, defaultDays: 12, leaveTypeId: 1 });
       notice({ msg: "Thành công", desc: `Đã khởi tạo quỹ phép cho năm ${year}`, isSuccess: true });
       fetchBalances();
@@ -75,14 +71,12 @@ export default function LeaveBalancesPage() {
     }
   };
 
-  // Mở Modal điều chỉnh tay
   const openAdjustModal = (balance) => {
     setSelectedBalance(balance);
     setAdjustForm({ newTotalDays: balance.totalDays, reason: "" });
     setIsModalOpen(true);
   };
 
-  // Hành động 2: Lưu điều chỉnh tay
   const submitAdjust = async (e) => {
     e.preventDefault();
     setIsAdjusting(true);
@@ -104,11 +98,13 @@ export default function LeaveBalancesPage() {
   const filteredBalances = useMemo(() => {
     return balances.filter(b => {
       const keyword = searchTerm.toLowerCase();
-      // Bắt trường hợp Backend trả về object Employee lồng bên trong
-      const empName = (b.employee?.name || "").toLowerCase();
-      const empCode = (b.employee?.id || "").toString().toLowerCase();
+      // Ánh xạ theo cấu trúc DTO mới từ Backend
+      const empName = (b.employeeName || "").toLowerCase();
+      const empCode = (b.employeeId || "").toString().toLowerCase();
+      const deptName = (b.departmentName || "").toLowerCase();
+      const posName = (b.positionName || "").toLowerCase();
 
-      return empName.includes(keyword) || empCode.includes(keyword);
+      return empName.includes(keyword) || empCode.includes(keyword) || deptName.includes(keyword) || posName.includes(keyword);
     });
   }, [balances, searchTerm]);
 
@@ -141,7 +137,6 @@ export default function LeaveBalancesPage() {
 
       {/* FILTER BAR */}
       <div className="flex flex-wrap items-center gap-4 p-4 border-b border-slate-100 bg-slate-50/50">
-        {/* Chọn năm */}
         <div className="flex items-center border border-slate-200 bg-white rounded-md px-3 py-1.5 shadow-sm">
           <CalendarOutlined className="text-slate-400 mr-2" />
           <span className="text-sm font-medium text-slate-600 mr-2">Năm:</span>
@@ -153,15 +148,13 @@ export default function LeaveBalancesPage() {
           />
         </div>
 
-        {/* Thanh dọc ngăn cách */}
         <div className="w-px h-6 bg-slate-200 mx-1"></div>
 
-        {/* Ô Search */}
         <div className="flex items-center border border-slate-200 bg-white rounded-md px-3 py-1.5 shadow-sm flex-1 max-w-md focus-within:ring-1 focus-within:ring-indigo-500 transition-all">
           <SearchOutlined className="text-slate-400 mr-2" />
           <input
             type="text"
-            placeholder="Tìm theo tên hoặc mã nhân viên..."
+            placeholder="Tìm theo tên, mã NV, phòng ban..."
             className="w-full text-sm outline-none text-slate-700 bg-transparent placeholder-slate-400"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -176,15 +169,14 @@ export default function LeaveBalancesPage() {
         ) : filteredBalances.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 text-slate-500 text-sm">
             <HistoryOutlined className="text-3xl mb-2 text-slate-300" />
-            Chưa có dữ liệu quỹ phép cho năm {year}. Hãy bấm "Cấp phép tự động".
+            Không tìm thấy dữ liệu.
           </div>
         ) : (
           <table className="w-full text-sm text-left border-collapse rounded-lg overflow-hidden ring-1 ring-slate-200">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="px-4 py-3 font-semibold text-slate-600 w-16 text-center">ID</th>
-                <th className="px-4 py-3 font-semibold text-slate-600">Nhân viên</th>
-                <th className="px-4 py-3 font-semibold text-slate-600">Loại phép</th>
+                <th className="px-4 py-3 font-semibold text-slate-600 w-16 text-center">Mã NV</th>
+                <th className="px-4 py-3 font-semibold text-slate-600">Thông tin Nhân viên</th>
                 <th className="px-4 py-3 font-semibold text-slate-600 text-center">Tổng được cấp</th>
                 <th className="px-4 py-3 font-semibold text-slate-600 text-center">Đã dùng</th>
                 <th className="px-4 py-3 font-semibold text-slate-600 text-center">Còn lại</th>
@@ -193,28 +185,51 @@ export default function LeaveBalancesPage() {
             </thead>
             <tbody>
               {filteredBalances.map((item) => {
-                const remaining = item.totalDays - item.usedDays;
+                // Nếu chưa cấp phép, cho bằng 0 để tránh lỗi hiển thị NaN
+                const remaining = item.isAllocated ? (item.totalDays - item.usedDays) : 0;
+                
                 return (
-                  <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-3 text-center text-slate-500 font-mono">#{item.employee?.id}</td>
-                    <td className="px-4 py-3 font-bold text-slate-800">{item.employee?.name || "Không xác định"}</td>
-                    <td className="px-4 py-3 text-slate-600">
-                      <span className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-semibold">
-                        {item.leaveType?.name || "Phép năm"}
-                      </span>
+                  <tr key={item.employeeId} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3 text-center text-slate-500 font-mono font-medium">#{item.employeeId}</td>
+                    <td className="px-4 py-3">
+                      <div className="font-bold text-slate-800">{item.employeeName}</div>
+                      <div className="text-xs text-slate-500 mt-0.5">
+                        {item.positionName} {item.departmentName ? `• ${item.departmentName}` : ""}
+                      </div>
                     </td>
-                    <td className="px-4 py-3 text-center font-bold text-slate-700">{item.totalDays}</td>
-                    <td className="px-4 py-3 text-center font-semibold text-orange-600">{item.usedDays}</td>
+                    
                     <td className="px-4 py-3 text-center">
-                      <span className={`font-black ${remaining <= 0 ? "text-red-500" : "text-emerald-600"}`}>
-                        {remaining}
-                      </span>
+                      {item.isAllocated ? (
+                         <span className="font-bold text-slate-700">{item.totalDays}</span>
+                      ) : (
+                         <span className="text-xs italic text-rose-500 bg-rose-50 px-2 py-1 rounded border border-rose-100">Chưa cấp phép</span>
+                      )}
                     </td>
+                    
+                    <td className="px-4 py-3 text-center">
+                      {item.isAllocated ? (
+                        <span className="font-semibold text-orange-600">{item.usedDays}</span>
+                      ) : (
+                        <span className="text-slate-300">-</span>
+                      )}
+                    </td>
+                    
+                    <td className="px-4 py-3 text-center">
+                      {item.isAllocated ? (
+                        <span className={`font-black ${remaining <= 0 ? "text-red-500" : "text-emerald-600"}`}>
+                          {remaining}
+                        </span>
+                      ) : (
+                        <span className="text-slate-300">-</span>
+                      )}
+                    </td>
+                    
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => openAdjustModal(item)}
-                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                        title="Điều chỉnh tay"
+                        disabled={!item.isAllocated}
+                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+                        title={item.isAllocated ? "Điều chỉnh tay" : "Vui lòng cấp phép trước khi điều chỉnh"}
                       >
                         <EditOutlined />
                       </button>
@@ -233,7 +248,7 @@ export default function LeaveBalancesPage() {
           <div className="bg-white p-6 rounded-xl w-[400px] shadow-2xl animate-in fade-in zoom-in duration-200">
             <h3 className="font-bold text-lg mb-1 text-slate-800">Điều chỉnh phép ngoại lệ</h3>
             <p className="text-sm text-slate-500 mb-4">
-              Nhân viên: <span className="font-bold text-slate-700">{selectedBalance?.employee?.name}</span>
+              Nhân viên: <span className="font-bold text-slate-700">{selectedBalance?.employeeName}</span>
             </p>
 
             <form onSubmit={submitAdjust} className="flex flex-col gap-4">

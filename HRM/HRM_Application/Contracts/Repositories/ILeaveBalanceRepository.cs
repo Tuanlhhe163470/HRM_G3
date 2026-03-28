@@ -1,4 +1,5 @@
 ﻿using HRM_Application.Commons.Pagination;
+using HRM_Application.DTOs.LeaveBalance.Responses;
 using HRM_Domain.Entities;
 
 namespace HRM_Application.Interfaces.Repositories
@@ -9,8 +10,8 @@ namespace HRM_Application.Interfaces.Repositories
         Task<List<LeaveBalance>> GetBalancesByEmployeeAsync(int employeeId, int year);
         Task UpdateAsync(LeaveBalance balance);
 
-        Task<PagedResponse<LeaveBalance>> GetAllAsync(PaginationFilter filter);
-        Task<LeaveBalance?> GetByIdAsync(int id);
+        Task<PagedResponse<Employee>> GetAllAsync(PaginationFilter filter, int year, int leaveTypeId); Task<LeaveBalance?> GetByIdAsync(int id);
+        Task<List<LeaveBalance>> GetBalancesByYearAsync(int year, int leaveTypeId);
         Task<LeaveBalance?> GetByEmployeeAndYearAsync(int employeeId, int leaveTypeId, int year);
 
         // Kiểm tra xem năm nay đã tạo quỹ phép chưa (Tránh HR bấm đúp 2 lần)

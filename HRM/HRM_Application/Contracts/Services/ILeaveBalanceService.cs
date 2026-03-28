@@ -7,7 +7,7 @@ namespace HRM_Application.Contracts.Services
 {
     public interface ILeaveBalanceService
     {
-        Task<PagedResponse<LeaveBalanceResponse>> GetAllAsync(PaginationFilter filter);
+        Task<PagedResponse<LeaveBalanceResponse>> GetAllAsync(PaginationFilter filter, int year, int leaveTypeId);
         Task<LeaveBalanceResponse?> GetByEmployeeAndYearAsync(int employeeId, int leaveTypeId, int year);
 
         Task GenerateAnnualLeaveBalancesAsync(GenerateLeaveBalanceRequest request);
