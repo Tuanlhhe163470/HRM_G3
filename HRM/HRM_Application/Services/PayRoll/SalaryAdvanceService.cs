@@ -14,18 +14,37 @@ namespace HRM_Application.Services.PayRoll
     public class SalaryAdvanceService : ISalaryAdvanceService
     {
         private readonly ISalaryAdvanceRepository _repo;
+        private readonly IEmployeeSalaryConfigRepository _configRepo;
         private readonly IMapper _mapper;
 
-        public SalaryAdvanceService(ISalaryAdvanceRepository repo, IMapper mapper)
+        public SalaryAdvanceService(ISalaryAdvanceRepository repo, IEmployeeSalaryConfigRepository configRepo, IMapper mapper)
         {
             _repo = repo;
+            _configRepo = configRepo;
             _mapper = mapper;
         }
 
         public async Task<bool> RequestAdvanceAsync(int employeeId, CreateSalaryAdvanceDTO dto)
         {
             // Logic nghiệp vụ: Số tiền ứng phải lớn hơn 0
-            if (dto.Amount <= 0) return false;
+            if (dto.Amount <= 0) throw new InvalidOperationException("Số tiền ứng phải lớn hơn 0.");
+
+            // Lấy thông tin lương cơ bản của nhân viên
+            var configs = await _configRepo.GetByEmployeeIdAsync(employeeId);
+            var baseSalary = configs
+                .Where(c => c.SalaryComponent != null && c.SalaryComponent.ComponentName == "Base Salary")
+                .Sum(c => c.Amount);
+
+            // Kiểm tra ràng buộc hệ thống: chặn yêu cầu tạm ứng vượt quá 50% lương cơ bản
+            if (baseSalary > 0 && dto.Amount > baseSalary * 0.5m)
+            {
+                throw new InvalidOperationException($"Số tiền tạm ứng ({dto.Amount:N0} VNĐ) không được vượt quá 50% lương cơ bản ({baseSalary:N0} VNĐ).");
+            }
+            else if (baseSalary == 0)
+            {
+                // Nếu nhân viên chưa có cấu hình lương cơ bản thì có thể chặn luôn
+                throw new InvalidOperationException("Bạn chưa được thiết lập Lương cơ bản, không thể ứng lương.");
+            }
 
             var advanceRequest = new SalaryAdvance
             {

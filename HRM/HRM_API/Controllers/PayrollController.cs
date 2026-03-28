@@ -109,6 +109,25 @@ namespace HRM_API.Controllers
             }
         }
 
+        [Authorize(Roles = "HR,Admin")]
+        [HttpPost("{id}/resubmit")]
+        public async Task<IActionResult> Resubmit(int id)
+        {
+            try
+            {
+                await _payrollService.ResubmitPayrollAsync(id);
+                return Ok(new { message = "Đã trình duyệt lại thành công" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
         //[Authorize]
         [HttpGet("my-salary")]
         public async Task<IActionResult> GetMySalary([FromQuery] int month, [FromQuery] int year)

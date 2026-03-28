@@ -59,4 +59,10 @@ export const payrollService = {
             headers: getAuthHeaders()
         });
     },
+
+    resubmitPayroll: (id) => {
+        return axios.post(`${API_URL}/${id}/resubmit`, {}, {
+            headers: getAuthHeaders()
+        });
+    },
 };

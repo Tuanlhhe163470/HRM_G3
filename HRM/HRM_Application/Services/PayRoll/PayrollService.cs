@@ -73,8 +73,18 @@ namespace HRM_Application.Services.PayRoll
                 decimal hourlyRate = salaryPerDay / 8m; // Assuming 8-hour workday
                 decimal otPay = hourlyRate * 1.5m * empOTHours;
 
+                // Tính BHXH dự theo mức trần của luật VN (Mức lương cơ sở: 2.340.000đ, tối đa 20 tháng = 46.800.000đ)
+                // BHTN tối đa 20 tháng lương tối thiểu vùng (Vùng 1: 4.960.000đ -> tối đa 99.200.000đ)
+                decimal salaryForBhxhBhyt = Math.Min(baseSalary, 46800000m);
+                decimal salaryForBhtn = Math.Min(baseSalary, 99200000m);
+                
+                decimal bhxh = salaryForBhxhBhyt * 0.08m;
+                decimal bhyt = salaryForBhxhBhyt * 0.015m;
+                decimal bhtn = salaryForBhtn * 0.01m;
+                decimal insuranceDeduction = bhxh + bhyt + bhtn;
+
                 totalAllowance += otPay;
-                totalDeduction += empAdvances;
+                totalDeduction += (empAdvances + insuranceDeduction);
 
                 // Cộng thêm PaidLeaveDays để tính lương thực tế
                 decimal paidLeavePay = salaryPerDay * timesheet.PaidLeaveDays;
@@ -106,7 +116,7 @@ namespace HRM_Application.Services.PayRoll
             var data = await _payrollRepo.GetMonthlyPayrollAsync(month, year, userId, userRole);
             var dtos = _mapper.Map<List<PayrollDTO>>(data);
 
-            // 👉 ĐÃ THÊM: Gán tay DepartmentName và FullName để gửi sang Frontend (Dashboard)
+            //  Gán tay DepartmentName và FullName để gửi sang Frontend (Dashboard)
             var dataList = data.ToList();
             for (int i = 0; i < dtos.Count; i++)
             {
@@ -172,8 +182,22 @@ namespace HRM_Application.Services.PayRoll
                 throw new UnauthorizedAccessException("Bạn chỉ có thể thao tác với bảng lương của nhân viên thuộc bộ phận của mình.");
             }
 
-            string status = isApproved ? "APPROVED" : "REJECTED"; // Cập nhật IN HOA cho đồng bộ
+            string status = isApproved ? "APPROVED" : "REJECTED"; 
             await _payrollRepo.ApproveStatusAsync(id, status, managerId);
+            return true;
+        }
+
+        public async Task<bool> ResubmitPayrollAsync(int id)
+        {
+            var payroll = await _payrollRepo.GetByIdAsync(id);
+            if (payroll == null) throw new KeyNotFoundException("Không tìm thấy dữ liệu.");
+
+            if (payroll.Status?.ToUpper() != "REJECTED")
+            {
+                throw new InvalidOperationException("Chỉ có thể trình duyệt lại các bảng lương đã bị từ chối.");
+            }
+
+            await _payrollRepo.ApproveStatusAsync(id, "DRAFT", 0);
             return true;
         }
 
@@ -184,15 +208,15 @@ namespace HRM_Application.Services.PayRoll
             if (payroll == null) return null;
 
             var status = payroll.Status?.ToUpper();
-            // Hiển thị khi bảng lương đã được tính (Draft), duyệt (Approved) hoặc chi trả (Paid)
-            if (status != "APPROVED" && status != "PAID" && status != "DRAFT")
+            // Hiển thị khi bảng lương đã được duyệt (Approved) hoặc chi trả (Paid)
+            if (status != "APPROVED" && status != "PAID")
             {
                 return null;
             }
 
             var dto = _mapper.Map<PayrollDTO>(payroll);
 
-            // 👉 ĐÃ THÊM: Gán tay cho phiếu lương cá nhân
+            // Gán tay cho phiếu lương cá nhân
             dto.DepartmentName = payroll.Employee?.Department?.DepartmentName;
             if (string.IsNullOrEmpty(dto.FullName))
             {
@@ -229,6 +253,20 @@ namespace HRM_Application.Services.PayRoll
                 .Where(c => c.SalaryComponent != null && c.SalaryComponent.Type == "Deduction")
                 .Select(c => new SalaryComponentDetailDTO { ComponentName = c.SalaryComponent.ComponentName, Amount = c.Amount })
                 .ToList();
+
+            // Tính lại bảo hiểm theo mức trần để hiển thị
+            decimal salaryForBhxhBhyt = Math.Min(dto.BaseSalary, 46800000m);
+            decimal salaryForBhtn = Math.Min(dto.BaseSalary, 99200000m);
+            decimal autoInsuranceDeduction = (salaryForBhxhBhyt * 0.095m) + (salaryForBhtn * 0.01m); // 8% BHXH + 1.5% BHYT = 9.5%, BHTN 1%
+            
+            if (autoInsuranceDeduction > 0)
+            {
+                dto.Deductions.Add(new SalaryComponentDetailDTO 
+                { 
+                    ComponentName = "Bảo hiểm bắt buộc (BHXH 8%, BHYT 1.5%, BHTN 1%)", 
+                    Amount = autoInsuranceDeduction 
+                });
+            }
 
             return dto;
         }

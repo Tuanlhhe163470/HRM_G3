@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,24 +22,30 @@ namespace HRM_Application.Services.Report
         {
             var approvedPayrolls = await _reportRepo.GetApprovedPayrollsForReportAsync(month, year);
 
-            return approvedPayrolls.Select(p => new InsuranceReportDTO
+            return approvedPayrolls.Select(p => 
             {
-                EmployeeID = p.Employee?.EmployeeID.ToString() ?? "N/A",
-                FullName = p.Employee?.FullName ?? "Unknown",
-                DepartmentName = p.Employee?.Department?.DepartmentName ?? "Chưa phân bổ",
-                BaseSalary = p.BaseSalary,
+                decimal salaryForBhxhBhyt = Math.Min(p.BaseSalary, 46800000m);
+                decimal salaryForBhtn = Math.Min(p.BaseSalary, 99200000m);
 
-                // NLĐ đóng (10.5%)
-                EmpBHXH = p.BaseSalary * 0.08m,
-                EmpBHYT = p.BaseSalary * 0.015m,
-                EmpBHTN = p.BaseSalary * 0.01m,
-                TotalEmpPay = p.BaseSalary * 0.105m,
+                return new InsuranceReportDTO
+                {
+                    EmployeeID = p.Employee?.EmployeeID.ToString() ?? "N/A",
+                    FullName = p.Employee?.FullName ?? "Unknown",
+                    DepartmentName = p.Employee?.Department?.DepartmentName ?? "Chưa phân bổ",
+                    BaseSalary = p.BaseSalary,
 
-                // Công ty đóng (21.5%)
-                CompBHXH = p.BaseSalary * 0.175m,
-                CompBHYT = p.BaseSalary * 0.03m,
-                CompBHTN = p.BaseSalary * 0.01m,
-                TotalCompPay = p.BaseSalary * 0.215m
+                    // NLĐ đóng (10.5% max)
+                    EmpBHXH = salaryForBhxhBhyt * 0.08m,
+                    EmpBHYT = salaryForBhxhBhyt * 0.015m,
+                    EmpBHTN = salaryForBhtn * 0.01m,
+                    TotalEmpPay = (salaryForBhxhBhyt * 0.095m) + (salaryForBhtn * 0.01m),
+
+                    // Công ty đóng (21.5% max)
+                    CompBHXH = salaryForBhxhBhyt * 0.175m,
+                    CompBHYT = salaryForBhxhBhyt * 0.03m,
+                    CompBHTN = salaryForBhtn * 0.01m,
+                    TotalCompPay = (salaryForBhxhBhyt * 0.205m) + (salaryForBhtn * 0.01m)
+                };
             });
         }
 
@@ -51,7 +57,11 @@ namespace HRM_Application.Services.Report
             {
                 decimal bonus = p.AdjustmentAmount > 0 ? p.AdjustmentAmount : 0;
                 decimal totalIncome = p.BaseSalary + p.TotalAllowance + bonus;
-                decimal insuranceDeduct = p.BaseSalary * 0.105m;
+                
+                decimal salaryForBhxhBhyt = Math.Min(p.BaseSalary, 46800000m);
+                decimal salaryForBhtn = Math.Min(p.BaseSalary, 99200000m);
+                decimal insuranceDeduct = (salaryForBhxhBhyt * 0.095m) + (salaryForBhtn * 0.01m);
+                
                 decimal personalDeduct = 11000000m;
 
                 decimal taxableIncome = totalIncome - insuranceDeduct - personalDeduct;

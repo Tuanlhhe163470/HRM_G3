@@ -8,7 +8,7 @@ namespace HRM_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] // Bắt buộc phải đăng nhập mới được ứng lương
+    [Authorize] 
     public class SalaryAdvanceController : ControllerBase
     {
         private readonly ISalaryAdvanceService _advanceService;
@@ -18,29 +18,36 @@ namespace HRM_API.Controllers
             _advanceService = advanceService;
         }
 
-        // 1. API Gửi yêu cầu ứng lương
+        // Gửi yêu cầu ứng lương
         [HttpPost("request")]
         public async Task<IActionResult> RequestAdvance([FromBody] CreateSalaryAdvanceDTO request)
         {
-            // Bóc EmployeeID từ Token y như chức năng xem lương
             var claimId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
                           ?? User.FindFirst("EmployeeID")?.Value;
 
             if (string.IsNullOrEmpty(claimId) || !int.TryParse(claimId, out int employeeId))
                 return Unauthorized(new { message = "Không xác định được danh tính nhân viên." });
 
-            if (request.Amount <= 0)
-                return BadRequest(new { message = "Số tiền ứng phải lớn hơn 0." });
+            try
+            {
+                var success = await _advanceService.RequestAdvanceAsync(employeeId, request);
 
-            var success = await _advanceService.RequestAdvanceAsync(employeeId, request);
+                if (success)
+                    return Ok(new { message = "Đã gửi yêu cầu ứng lương thành công. Vui lòng chờ HR phê duyệt." });
 
-            if (success)
-                return Ok(new { message = "Đã gửi yêu cầu ứng lương thành công. Vui lòng chờ HR phê duyệt." });
-
-            return BadRequest(new { message = "Lỗi khi xử lý yêu cầu." });
+                return BadRequest(new { message = "Lỗi khi xử lý yêu cầu." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Lỗi hệ thống khi xử lý yêu cầu ứng lương." });
+            }
         }
 
-        // 2. API Xem lịch sử ứng lương của bản thân
+        // Xem lịch sử ứng lương 
         [HttpGet("my-history")]
         public async Task<IActionResult> GetMyHistory()
         {
@@ -54,8 +61,8 @@ namespace HRM_API.Controllers
             return Ok(data);
         }
 
-        // 3. API Quản lý xem danh sách đơn đang chờ duyệt
-        // [Authorize(Roles = "Manager,HR,Admin")] // Bạn có thể mở comment này nếu muốn phân quyền
+        // Quản lý xem danh sách đơn đang chờ duyệt
+
         [HttpGet("pending")]
         public async Task<IActionResult> GetPendingRequests()
         {
@@ -71,7 +78,7 @@ namespace HRM_API.Controllers
             return Ok(data);
         }
 
-        // 5. API Quản lý xem toàn bộ lịch sử đơn ứng lương (kể cả đã duyệt / từ chối)
+        // Xem toàn bộ lịch sử đơn ứng lương 
         [HttpGet("all")]
         public async Task<IActionResult> GetAllRequests()
         {
@@ -87,8 +94,7 @@ namespace HRM_API.Controllers
             return Ok(data);
         }
 
-        // 4. API Quản lý Duyệt / Từ chối đơn
-        // [Authorize(Roles = "Manager,HR,Admin")]
+        // Quản lý Duyệt / Từ chối đơn
         [HttpPost("{id}/process")]
         public async Task<IActionResult> ProcessRequest(int id, [FromBody] ProcessAdvanceRequestDTO request)
         {
@@ -99,7 +105,6 @@ namespace HRM_API.Controllers
             if (string.IsNullOrEmpty(claimId) || !int.TryParse(claimId, out int managerId))
                 return Unauthorized(new { message = "Không xác định được danh tính Quản lý." });
 
-            // LOGIC QUAN TRỌNG: Nếu từ chối thì BẮT BUỘC phải có lý do
             if (!request.IsApproved && string.IsNullOrWhiteSpace(request.ManagerNote))
             {
                 return BadRequest(new { message = "Bạn bắt buộc phải nhập lý do khi từ chối đơn ứng lương!" });
