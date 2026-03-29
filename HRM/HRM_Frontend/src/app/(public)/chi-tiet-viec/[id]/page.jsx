@@ -71,7 +71,7 @@ export default function JobDetailsPage() {
             (item) =>
               item.departmentID === currentJob.departmentID &&
               item.jobID !== currentJob.jobID,
-          );
+          )
           setRelatedJobs(related.slice(0, 3));
         }
       } catch (err) {
@@ -84,7 +84,7 @@ export default function JobDetailsPage() {
       }
     };
     fetchData();
-  }, [id]); //
+  }, [id]); 
 
   // HÀM KIỂM TRA ĐỊNH DẠNG EMAIL
   const validateEmail = (email) => {

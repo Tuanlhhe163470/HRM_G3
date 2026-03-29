@@ -203,14 +203,14 @@ export default function AccountManagementPage() {
       if (isCreateMode) {
         await accountService.createAccount(values);
         notification.success({
-          message: "Thành công",
+          title: "Thành công",
           description: "Đã cấp tài khoản mới.",
         });
       } else {
         // KIỂM TRA BIẾN selectedRecord
         if (!selectedRecord || !selectedRecord.accountID) {
           notification.error({
-            message: "Lỗi",
+            title: "Lỗi",
             description: "Không xác định được ID tài khoản cần cập nhật!",
           });
           return;
@@ -222,7 +222,7 @@ export default function AccountManagementPage() {
         await axiosClient.put(`/Accounts/${selectedRecord.accountID}`, payload);
 
         notification.success({
-          message: "Thành công",
+          title: "Thành công",
           description: "Đã cập nhật vai trò.",
         });
       }
@@ -233,7 +233,7 @@ export default function AccountManagementPage() {
     } catch (error) {
       console.error("Update Error:", error);
       notification.error({
-        message: "Thất bại",
+        title: "Thất bại",
         description:
           error.response?.data?.message || "Có lỗi xảy ra khi cập nhật",
       });

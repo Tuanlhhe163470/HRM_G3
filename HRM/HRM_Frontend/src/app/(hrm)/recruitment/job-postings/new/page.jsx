@@ -255,7 +255,7 @@ export default function CreateJobRequisition() {
                   <Form.Item
                     name="vacancies"
                     label="Số lượng"
-                    rules={[{ required: true }]}
+                    rules={[{ required: true,message: "Vui lòng chọn số lượng" }]}
                     initialValue={1}
                   >
                     <InputNumber
@@ -272,10 +272,11 @@ export default function CreateJobRequisition() {
                   <Form.Item
                     name="expiryDate"
                     label="Hạn cuối"
-                    rules={[{ required: true }]}
+                    rules={[{ required: true, message: "Vui lòng chọn ngày hết hạn tin" }]}
                   >
                     <DatePicker
                       showTime
+                      format="DD/MM/YYYY HH:mm"
                       disabledDate={(current) =>
                         current && current < dayjs().startOf("day")
                       }

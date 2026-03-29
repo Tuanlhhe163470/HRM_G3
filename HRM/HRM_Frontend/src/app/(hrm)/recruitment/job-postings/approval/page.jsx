@@ -232,6 +232,7 @@ export default function ApproveRequestPage() {
           width={1000}
           centered
           maskClosable
+          zIndex={2000}
           styles={{
             body: {
               maxHeight: "65vh",
